@@ -6,7 +6,7 @@ import 'package:tutor_finder/views/auth/tutor_signup/tutor_signup_screen.dart';
 import '../../core/widgets/app_primary_button.dart';
 import '../../core/widgets/role_option_card.dart';
 import '../../data/models/user_model.dart';
-import '../../viewmodels/auth_vm.dart';
+import '../../parent_viewmodels/auth_vm.dart';
 
 
 

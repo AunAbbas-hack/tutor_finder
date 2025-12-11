@@ -1,7 +1,8 @@
 // lib/widgets/app_text_field.dart
 import 'package:flutter/material.dart';
+import '../theme/app_colors.dart';
 
-class AppTextField extends StatelessWidget {
+class AppTextField extends StatefulWidget {
   final String label;
   final String hintText;
   final TextInputType keyboardType;
@@ -10,6 +11,7 @@ class AppTextField extends StatelessWidget {
   final TextEditingController? controller;
   final ValueChanged<String>? onChanged;
   final TextInputAction textInputAction;
+  final FocusNode? focusNode;
 
   const AppTextField({
     super.key,
@@ -21,7 +23,44 @@ class AppTextField extends StatelessWidget {
     this.controller,
     this.onChanged,
     this.textInputAction = TextInputAction.next,
+    this.focusNode,
   });
+
+  @override
+  State<AppTextField> createState() => _AppTextFieldState();
+}
+
+class _AppTextFieldState extends State<AppTextField> {
+  late FocusNode _focusNode;
+  bool _isInternalFocusNode = false;
+  bool _hasFocus = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.focusNode != null) {
+      _focusNode = widget.focusNode!;
+    } else {
+      _focusNode = FocusNode();
+      _isInternalFocusNode = true;
+    }
+    _focusNode.addListener(_onFocusChange);
+  }
+
+  void _onFocusChange() {
+    setState(() {
+      _hasFocus = _focusNode.hasFocus;
+    });
+  }
+
+  @override
+  void dispose() {
+    _focusNode.removeListener(_onFocusChange);
+    if (_isInternalFocusNode) {
+      _focusNode.dispose();
+    }
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +70,7 @@ class AppTextField extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          label,
+          widget.label,
           style: theme.textTheme.bodyMedium?.copyWith(
             fontWeight: FontWeight.w600,
             color: Colors.black87,
@@ -39,22 +78,34 @@ class AppTextField extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         TextField(
-          controller: controller,
-          keyboardType: keyboardType,
-          obscureText: obscureText,
-          onChanged: onChanged,
-          textInputAction: textInputAction,
+          controller: widget.controller,
+          focusNode: _focusNode,
+          keyboardType: widget.keyboardType,
+          obscureText: widget.obscureText,
+          onChanged: widget.onChanged,
+          textInputAction: widget.textInputAction,
           decoration: InputDecoration(
-            hintText: hintText,
+            hintText: widget.hintText,
             hintStyle: TextStyle(color: Colors.grey[600]),
             filled: true,
             fillColor: const Color(0xFFF5F6FA),
             contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            suffixIcon: suffixIcon,
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            suffixIcon: widget.suffixIcon,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(
+                color: AppColors.primary,
+                width: 2,
+              ),
             ),
           ),
         ),

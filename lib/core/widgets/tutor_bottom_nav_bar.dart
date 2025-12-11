@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 
-/// Reusable bottom navigation bar
-class AppBottomNavBar extends StatelessWidget {
+/// Tutor-specific bottom navigation bar
+class TutorBottomNavBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
 
-  const AppBottomNavBar({
+  const TutorBottomNavBar({
     super.key,
     required this.currentIndex,
     required this.onTap,
@@ -30,19 +30,23 @@ class AppBottomNavBar extends StatelessWidget {
       ),
       items: const [
         BottomNavigationBarItem(
-          icon: Icon(Icons.home),
-          label: 'Home',
+          icon: Icon(Icons.dashboard_outlined),
+          activeIcon: Icon(Icons.dashboard),
+          label: 'Dashboard',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.calendar_today),
-          label: 'Bookings',
+          icon: Icon(Icons.calendar_today_outlined),
+          activeIcon: Icon(Icons.calendar_today),
+          label: 'Sessions',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.chat_bubble_outline),
+          activeIcon: Icon(Icons.chat_bubble),
           label: 'Messages',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.person_outline),
+          activeIcon: Icon(Icons.person),
           label: 'Profile',
         ),
       ],

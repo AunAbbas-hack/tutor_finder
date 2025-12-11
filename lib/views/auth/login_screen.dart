@@ -1,13 +1,14 @@
 // lib/views/auth/login_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:get/get.dart';
 import 'package:tutor_finder/views/initial/role_selection_screen.dart';
 
 import '../../core/widgets/app_primary_button.dart';
 import '../../core/widgets/app_text.dart';
 import '../../core/widgets/app_textfield.dart';
 import '../../core/widgets/social_login_button.dart';
-import '../../viewmodels/auth_vm.dart';
+import '../../parent_viewmodels/auth_vm.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -31,11 +32,17 @@ class _LoginView extends StatefulWidget {
 class _LoginViewState extends State<_LoginView> {
   final _emailPhoneController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _emailPhoneFocusNode = FocusNode();
+  final _passwordFocusNode = FocusNode();
+  final _focusScopeNode = FocusScopeNode();
 
   @override
   void dispose() {
     _emailPhoneController.dispose();
     _passwordController.dispose();
+    _emailPhoneFocusNode.dispose();
+    _passwordFocusNode.dispose();
+    _focusScopeNode.dispose();
     super.dispose();
   }
 
@@ -44,9 +51,14 @@ class _LoginViewState extends State<_LoginView> {
     final vm = context.watch<AuthViewModel>();
     final theme = Theme.of(context);
 
-    return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
+    return GestureDetector(
+      onTap: () {
+        // Unfocus when tapping outside
+        FocusScope.of(context).unfocus();
+      },
+      child: Scaffold(
+        body: SafeArea(
+          child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -77,6 +89,7 @@ class _LoginViewState extends State<_LoginView> {
                 hintText: 'Enter your email or phone number',
                 keyboardType: TextInputType.emailAddress,
                 controller: _emailPhoneController,
+                focusNode: _emailPhoneFocusNode,
                 onChanged: vm.updateEmailOrPhone,
                 textInputAction: TextInputAction.next,
               ),
@@ -104,6 +117,7 @@ class _LoginViewState extends State<_LoginView> {
               ),
               TextField(
                 controller: _passwordController,
+                focusNode: _passwordFocusNode,
                 obscureText: !vm.isPasswordVisible,
                 onChanged: vm.updatePassword,
                 textInputAction: TextInputAction.done,
@@ -124,6 +138,17 @@ class _LoginViewState extends State<_LoginView> {
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF1A73E8),
+                      width: 2,
+                    ),
                   ),
                 ),
               ),
@@ -152,11 +177,13 @@ class _LoginViewState extends State<_LoginView> {
                     // AuthWrapper automatically handles navigation based on role
                     // No need to manually navigate here
                   } else if (vm.errorMessage != null && mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(vm.errorMessage!),
-                        backgroundColor: Colors.red,
-                      ),
+                    Get.snackbar(
+                      'Error',
+                      vm.errorMessage!,
+                      snackPosition: SnackPosition.BOTTOM,
+                      backgroundColor: Colors.red,
+                      colorText: Colors.white,
+                      duration: const Duration(seconds: 3),
                     );
                   }
                 },
@@ -240,6 +267,7 @@ class _LoginViewState extends State<_LoginView> {
             ],
           ),
         ),
+      ),
       ),
     );
   }

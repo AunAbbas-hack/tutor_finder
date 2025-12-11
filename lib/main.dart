@@ -1,9 +1,10 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:get/get.dart';
 import 'package:tutor_finder/core/theme/app_theme.dart';
 import 'package:tutor_finder/core/widgets/auth_wrapper.dart';
-import 'package:tutor_finder/viewmodels/auth_vm.dart';
+import 'package:tutor_finder/parent_viewmodels/auth_vm.dart';
 
 import 'firebase_options.dart';
 
@@ -28,7 +29,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return GetMaterialApp(
       title: 'Tutor Finder',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,

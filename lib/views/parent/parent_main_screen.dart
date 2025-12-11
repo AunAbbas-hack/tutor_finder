@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:tutor_finder/views/parent/parent_profile_screen.dart';
 import '../../core/widgets/bottom_nav_bar.dart';
-import '../../viewmodels/parent_dashboard_vm.dart';
 import 'parent_dashboard_home.dart';
 import 'bookings_screen_navbar.dart';
+import '../chat/chat_screen.dart';
 
 /// Main parent screen with bottom navigation
 class ParentMainScreen extends StatefulWidget {
@@ -20,18 +21,8 @@ class _ParentMainScreenState extends State<ParentMainScreen> {
   final List<Widget> _screens = [
     const ParentDashboardHome(),
     const BookingsScreenNavbar(),
-    // TODO: Add Messages screen
-    const Scaffold(
-      body: Center(
-        child: Text('Messages - Coming Soon'),
-      ),
-    ),
-    // TODO: Add Saved screen
-    const Scaffold(
-      body: Center(
-        child: Text('Saved - Coming Soon'),
-      ),
-    ),
+    const ChatScreen(), // Messages screen
+    const ParentProfileScreen()
   ];
 
   @override

@@ -3,11 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../data/models/user_model.dart';
 import '../../data/services/user_services.dart';
-import '../../viewmodels/auth_vm.dart';
 import '../../views/auth/login_screen.dart';
 import '../../views/parent/parent_main_screen.dart';
-// TODO: Import tutor and admin dashboards when created
-// import '../../views/tutor/tutor_dashboard_home.dart';
+import '../../views/tutor/tutor_main_screen.dart';
+// TODO: Import admin dashboard when created
 // import '../../views/admin/admin_dashboard_home.dart';
 
 /// AuthWrapper checks if user is logged in and navigates to appropriate screen
@@ -65,12 +64,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
               case UserRole.parent:
                 return const ParentMainScreen();
               case UserRole.tutor:
-                // TODO: Return TutorDashboardHome when created
-                return Scaffold(
-                  body: Center(
-                    child: Text('Tutor Dashboard - Coming Soon\n${userModel.name}'),
-                  ),
-                );
+                return const TutorMainScreen();
               case UserRole.admin:
                 // TODO: Return AdminDashboardHome when created
                 return Scaffold(

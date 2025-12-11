@@ -6,8 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_primary_button.dart';
 import '../../../core/widgets/app_text.dart';
 import '../../../core/widgets/app_textfield.dart';
-import '../../../viewmodels/parent_signup_vm.dart';
-import '../step_indicator/step_indicator.dart';
+import '../../../parent_viewmodels/parent_signup_vm.dart';
 
 
 /// Root widget for the whole Parent signup flow
@@ -39,6 +38,12 @@ class _ParentAccountStepScreenState extends State<ParentAccountStepScreen> {
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
   final _phoneController = TextEditingController();
+  
+  final _nameFocusNode = FocusNode();
+  final _emailFocusNode = FocusNode();
+  final _passwordFocusNode = FocusNode();
+  final _confirmFocusNode = FocusNode();
+  final _phoneFocusNode = FocusNode();
 
   bool _passwordVisible = false;
   bool _confirmPasswordVisible = false;
@@ -50,6 +55,11 @@ class _ParentAccountStepScreenState extends State<ParentAccountStepScreen> {
     _passwordController.dispose();
     _confirmController.dispose();
     _phoneController.dispose();
+    _nameFocusNode.dispose();
+    _emailFocusNode.dispose();
+    _passwordFocusNode.dispose();
+    _confirmFocusNode.dispose();
+    _phoneFocusNode.dispose();
     super.dispose();
   }
 
@@ -107,9 +117,10 @@ class _ParentAccountStepScreenState extends State<ParentAccountStepScreen> {
 
                 // Parent name
                 AppTextField(
-                  label: 'Parent’s Full Name',
+                  label: 'Parents Full Name',
                   hintText: 'Enter your full name',
                   controller: _nameController,
+                  focusNode: _nameFocusNode,
                   onChanged: vm.updateParentName,
                   textInputAction: TextInputAction.next,
                 ),
@@ -121,6 +132,7 @@ class _ParentAccountStepScreenState extends State<ParentAccountStepScreen> {
                   hintText: 'you@example.com',
                   keyboardType: TextInputType.emailAddress,
                   controller: _emailController,
+                  focusNode: _emailFocusNode,
                   onChanged: vm.updateEmail,
                   textInputAction: TextInputAction.next,
                 ),
@@ -137,6 +149,7 @@ class _ParentAccountStepScreenState extends State<ParentAccountStepScreen> {
                 const SizedBox(height: 8),
                 TextField(
                   controller: _passwordController,
+                  focusNode: _passwordFocusNode,
                   obscureText: !_passwordVisible,
                   onChanged: vm.updatePassword,
                   decoration: InputDecoration(
@@ -162,6 +175,17 @@ class _ParentAccountStepScreenState extends State<ParentAccountStepScreen> {
                       borderRadius: BorderRadius.circular(16),
                       borderSide: BorderSide.none,
                     ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(
+                        color: AppColors.primary,
+                        width: 2,
+                      ),
+                    ),
                   ),
                   textInputAction: TextInputAction.next,
                 ),
@@ -178,6 +202,7 @@ class _ParentAccountStepScreenState extends State<ParentAccountStepScreen> {
                 const SizedBox(height: 8),
                 TextField(
                   controller: _confirmController,
+                  focusNode: _confirmFocusNode,
                   obscureText: !_confirmPasswordVisible,
                   onChanged: vm.updateConfirmPassword,
                   decoration: InputDecoration(
@@ -206,6 +231,17 @@ class _ParentAccountStepScreenState extends State<ParentAccountStepScreen> {
                       borderRadius: BorderRadius.circular(16),
                       borderSide: BorderSide.none,
                     ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(
+                        color: AppColors.primary,
+                        width: 2,
+                      ),
+                    ),
                   ),
                   textInputAction: TextInputAction.next,
                 ),
@@ -217,6 +253,7 @@ class _ParentAccountStepScreenState extends State<ParentAccountStepScreen> {
                   hintText: '(123) 456-7890',
                   keyboardType: TextInputType.phone,
                   controller: _phoneController,
+                  focusNode: _phoneFocusNode,
                   onChanged: vm.updatePhone,
                   textInputAction: TextInputAction.done,
                 ),

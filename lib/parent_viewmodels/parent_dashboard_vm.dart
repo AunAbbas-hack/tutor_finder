@@ -62,6 +62,7 @@ class ParentDashboardViewModel extends ChangeNotifier {
         _prefsService = prefsService;
 
   // ---------- State ----------
+  bool _isDisposed = false;
   bool _isLoading = false;
   String? _errorMessage;
   String _userName = '';
@@ -83,6 +84,8 @@ class ParentDashboardViewModel extends ChangeNotifier {
 
   // ---------- Initialize ----------
   Future<void> initialize() async {
+    if (_isDisposed) return;
+    
     _setLoading(true);
     try {
       // Initialize SharedPreferences if not provided
@@ -90,24 +93,37 @@ class ParentDashboardViewModel extends ChangeNotifier {
         _prefsService = await createPreferencesService();
       }
 
+      if (_isDisposed) return;
+
       // Load saved tutor IDs from SharedPreferences
       _savedTutorIds = await _prefsService!.getSavedTutorIds();
+
+      if (_isDisposed) return;
 
       final user = _auth.currentUser;
       if (user != null) {
         final userModel = await _userService.getUserById(user.uid);
-        if (userModel != null) {
+        if (userModel != null && !_isDisposed) {
           _userName = userModel.name;
           _userImageUrl = userModel.imageUrl ?? '';
         }
       }
 
+      if (_isDisposed) return;
+
       await loadTutors();
+      
+      if (_isDisposed) return;
+      
       await loadNotifications();
     } catch (e) {
-      _errorMessage = 'Failed to load dashboard: ${e.toString()}';
+      if (!_isDisposed) {
+        _errorMessage = 'Failed to load dashboard: ${e.toString()}';
+      }
     } finally {
-      _setLoading(false);
+      if (!_isDisposed) {
+        _setLoading(false);
+      }
     }
   }
 
@@ -126,16 +142,20 @@ class ParentDashboardViewModel extends ChangeNotifier {
 
       // Get all tutors from Firestore
       final tutors = await _tutorService.getAllTutors();
+      if (_isDisposed) return;
+      
       if (tutors.isEmpty) {
         _nearbyTutors = [];
         _recommendedTutors = [];
-        notifyListeners();
+        _safeNotifyListeners();
         return;
       }
 
       // Get user data for each tutor
       final tutorsWithUserData = <Map<String, dynamic>>[];
       for (final tutor in tutors) {
+        if (_isDisposed) return;
+        
         final tutorUser = await _userService.getUserById(tutor.tutorId);
         if (tutorUser != null && tutorUser.status == UserStatus.active) {
           tutorsWithUserData.add({
@@ -144,6 +164,8 @@ class ParentDashboardViewModel extends ChangeNotifier {
           });
         }
       }
+      
+      if (_isDisposed) return;
 
       // Calculate distances and create nearby tutors list
       final nearbyTutorsList = <NearbyTutor>[];
@@ -213,13 +235,17 @@ class ParentDashboardViewModel extends ChangeNotifier {
         );
       }).toList();
 
-      notifyListeners();
+      if (!_isDisposed) {
+        _safeNotifyListeners();
+      }
     } catch (e) {
       if (kDebugMode) {
         print('Error loading tutors: $e');
       }
-      _errorMessage = 'Failed to load tutors: ${e.toString()}';
-      notifyListeners();
+      if (!_isDisposed) {
+        _errorMessage = 'Failed to load tutors: ${e.toString()}';
+        _safeNotifyListeners();
+      }
     }
   }
 
@@ -240,8 +266,10 @@ class ParentDashboardViewModel extends ChangeNotifier {
   Future<void> loadNotifications() async {
     try {
       // TODO: Implement notification count from Firestore
-      _notificationCount = 3; // Mock data
-      notifyListeners();
+      if (!_isDisposed) {
+        _notificationCount = 3; // Mock data
+        _safeNotifyListeners();
+      }
     } catch (e) {
       if (kDebugMode) {
         print('Error loading notifications: $e');
@@ -288,7 +316,9 @@ class ParentDashboardViewModel extends ChangeNotifier {
         return tutor;
       }).toList();
 
-      notifyListeners();
+      if (!_isDisposed) {
+        _safeNotifyListeners();
+      }
     } catch (e) {
       _errorMessage = 'Failed to save tutor: ${e.toString()}';
       notifyListeners();
@@ -309,13 +339,28 @@ class ParentDashboardViewModel extends ChangeNotifier {
 
   // ---------- Helpers ----------
   void _setLoading(bool value) {
+    if (_isDisposed) return;
     _isLoading = value;
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   void clearError() {
+    if (_isDisposed) return;
     _errorMessage = null;
-    notifyListeners();
+    _safeNotifyListeners();
+  }
+
+  // Safe notify listeners - checks if disposed before notifying
+  void _safeNotifyListeners() {
+    if (!_isDisposed) {
+      notifyListeners();
+    }
+  }
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    super.dispose();
   }
 }
 

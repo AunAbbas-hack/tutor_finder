@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:get/get.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/app_text.dart';
 import '../../data/models/booking_model.dart';
-import '../../viewmodels/bookings_navbar_vm.dart';
+import '../../parent_viewmodels/bookings_navbar_vm.dart';
 
 class BookingsScreenNavbar extends StatelessWidget {
   const BookingsScreenNavbar({super.key});
@@ -185,30 +186,66 @@ class BookingsScreenNavbar extends StatelessWidget {
           'Cancel Request',
           AppColors.textGrey,
           () async {
-            final confirmed = await showDialog<bool>(
-              context: context,
-              builder: (context) => AlertDialog(
-                title: const AppText('Cancel Booking'),
+            final confirmed = await Get.dialog<bool>(
+              AlertDialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                title: const AppText(
+                  'Cancel Booking',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textDark,
+                  ),
+                ),
                 content: const AppText(
-                    'Are you sure you want to cancel this booking request?'),
+                  'Are you sure you want to cancel this booking request?',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: AppColors.textGrey,
+                  ),
+                ),
                 actions: [
                   TextButton(
-                    onPressed: () => Navigator.pop(context, false),
-                    child: const AppText('No'),
+                    onPressed: () => Get.back(result: false),
+                    child: const AppText(
+                      'No',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: AppColors.textGrey,
+                      ),
+                    ),
                   ),
                   TextButton(
-                    onPressed: () => Navigator.pop(context, true),
+                    onPressed: () => Get.back(result: true),
                     child: const AppText(
                       'Yes, Cancel',
-                      style: TextStyle(color: AppColors.error),
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: AppColors.error,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ],
               ),
+              barrierDismissible: false,
             );
 
             if (confirmed == true) {
               await vm.cancelBooking(booking.bookingId);
+              Get.snackbar(
+                'Success',
+                'Booking cancelled successfully',
+                snackPosition: SnackPosition.BOTTOM,
+                backgroundColor: AppColors.success,
+                colorText: Colors.white,
+                borderRadius: 12,
+                margin: const EdgeInsets.all(16),
+                duration: const Duration(seconds: 2),
+                icon: const Icon(Icons.check_circle, color: Colors.white),
+              );
             }
           },
         );

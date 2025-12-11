@@ -6,8 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_primary_button.dart';
 import '../../../core/widgets/app_text.dart';
 import '../../../core/widgets/app_textfield.dart';
-import '../../../viewmodels/parent_signup_vm.dart';
-import '../step_indicator/step_indicator.dart';
+import '../../../parent_viewmodels/parent_signup_vm.dart';
 
 
 class ParentChildDetailsStepScreen extends StatelessWidget {
@@ -39,9 +38,13 @@ class ParentChildDetailsStepScreen extends StatelessWidget {
             centerTitle: true,
           ),
           body: SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-              child: Column(
+            child: GestureDetector(
+              onTap: () {
+                FocusScope.of(context).unfocus();
+              },
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+                child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // StepIndicator(
@@ -113,6 +116,7 @@ class ParentChildDetailsStepScreen extends StatelessWidget {
                   ),
                 ],
               ),
+            ),
             ),
           ),
         );

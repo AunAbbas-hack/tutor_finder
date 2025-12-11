@@ -20,4 +20,8 @@ class UserService {
     if (!doc.exists) return null;
     return UserModel.fromFirestore(doc);
   }
+
+  Future<void> updateUser(UserModel user) async {
+    await _usersCol.doc(user.userId).update(user.toMap());
+  }
 }

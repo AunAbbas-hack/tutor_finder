@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:get/get.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/app_text.dart';
 import '../../core/widgets/search_bar_widget.dart';
@@ -7,8 +8,10 @@ import '../../core/widgets/tutor_card.dart';
 import '../../core/widgets/recommended_tutor_card.dart';
 import '../../core/widgets/subject_button.dart';
 import '../../core/widgets/bottom_nav_bar.dart';
-import '../../viewmodels/parent_dashboard_vm.dart';
-import '../../viewmodels/auth_vm.dart';
+
+import '../../parent_viewmodels/auth_vm.dart';
+import '../../parent_viewmodels/parent_dashboard_vm.dart';
+import 'parent_profile_screen.dart';
 
 class ParentDashboardHome extends StatefulWidget {
   const ParentDashboardHome({super.key});
@@ -105,28 +108,39 @@ class _DashboardContent extends StatelessWidget {
   Widget _buildHeader(BuildContext context, ParentDashboardViewModel vm) {
     return Row(
       children: [
-        // Profile Picture
-        Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: AppColors.lightBackground,
-            border: Border.all(color: AppColors.border, width: 2),
-            image: vm.userImageUrl.isNotEmpty
-                ? DecorationImage(
-                    image: NetworkImage(vm.userImageUrl),
-                    fit: BoxFit.cover,
+        // Profile Picture (Clickable)
+        InkWell(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ParentProfileScreen(),
+              ),
+            );
+          },
+          borderRadius: BorderRadius.circular(28),
+          child: Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.lightBackground,
+              border: Border.all(color: AppColors.border, width: 2),
+              image: vm.userImageUrl.isNotEmpty
+                  ? DecorationImage(
+                      image: NetworkImage(vm.userImageUrl),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
+            ),
+            child: vm.userImageUrl.isEmpty
+                ? const Icon(
+                    Icons.person,
+                    size: 32,
+                    color: AppColors.iconGrey,
                   )
                 : null,
           ),
-          child: vm.userImageUrl.isEmpty
-              ? const Icon(
-                  Icons.person,
-                  size: 32,
-                  color: AppColors.iconGrey,
-                )
-              : null,
         ),
         const SizedBox(width: 16),
         // Greeting
@@ -195,25 +209,51 @@ class _DashboardContent extends StatelessWidget {
                 onSelected: (value) async {
                   if (value == 'logout') {
                     final authVm = Provider.of<AuthViewModel>(builderContext, listen: false);
-                    final confirmed = await showDialog<bool>(
-                      context: builderContext,
-                      builder: (dialogContext) => AlertDialog(
-                        title: const AppText('Logout'),
-                        content: const AppText('Are you sure you want to logout?'),
+                    final confirmed = await Get.dialog<bool>(
+                      AlertDialog(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        title: const AppText(
+                          'Logout',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textDark,
+                          ),
+                        ),
+                        content: const AppText(
+                          'Are you sure you want to logout?',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: AppColors.textGrey,
+                          ),
+                        ),
                         actions: [
                           TextButton(
-                            onPressed: () => Navigator.pop(dialogContext, false),
-                            child: const AppText('Cancel'),
+                            onPressed: () => Get.back(result: false),
+                            child: const AppText(
+                              'Cancel',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: AppColors.textGrey,
+                              ),
+                            ),
                           ),
                           TextButton(
-                            onPressed: () => Navigator.pop(dialogContext, true),
+                            onPressed: () => Get.back(result: true),
                             child: const AppText(
                               'Logout',
-                              style: TextStyle(color: AppColors.error),
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: AppColors.error,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                         ],
                       ),
+                      barrierDismissible: false,
                     );
 
                     if (confirmed == true && builderContext.mounted) {

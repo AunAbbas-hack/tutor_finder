@@ -78,5 +78,60 @@ class BookingService {
   Future<void> deleteBooking(String bookingId) async {
     await _bookingsCol.doc(bookingId).delete();
   }
+
+  /// Get all bookings for a tutor
+  Future<List<BookingModel>> getBookingsByTutorId(String tutorId) async {
+    try {
+      final snapshot = await _bookingsCol
+          .where('tutorId', isEqualTo: tutorId)
+          .orderBy('createdAt', descending: true)
+          .get();
+
+      return snapshot.docs
+          .map((doc) => BookingModel.fromFirestore(doc))
+          .toList();
+    } catch (e) {
+      return [];
+    }
+  }
+
+  /// Get bookings by status for a tutor
+  Future<List<BookingModel>> getBookingsByTutorAndStatus(
+    String tutorId,
+    BookingStatus status,
+  ) async {
+    try {
+      final snapshot = await _bookingsCol
+          .where('tutorId', isEqualTo: tutorId)
+          .where('status', isEqualTo: BookingModel.statusToString(status))
+          .orderBy('createdAt', descending: true)
+          .get();
+
+      return snapshot.docs
+          .map((doc) => BookingModel.fromFirestore(doc))
+          .toList();
+    } catch (e) {
+      return [];
+    }
+  }
+
+  /// Get upcoming bookings for a tutor (approved and future dates)
+  Future<List<BookingModel>> getUpcomingBookingsForTutor(String tutorId) async {
+    try {
+      final now = DateTime.now();
+      final snapshot = await _bookingsCol
+          .where('tutorId', isEqualTo: tutorId)
+          .where('status', isEqualTo: BookingModel.statusToString(BookingStatus.approved))
+          .orderBy('bookingDate', descending: false)
+          .get();
+
+      return snapshot.docs
+          .map((doc) => BookingModel.fromFirestore(doc))
+          .where((booking) => booking.bookingDate.isAfter(now))
+          .toList();
+    } catch (e) {
+      return [];
+    }
+  }
 }
 

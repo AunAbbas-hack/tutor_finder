@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:get/get.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/app_primary_button.dart';
 import '../../core/widgets/app_text.dart';
 import '../../core/widgets/app_textfield.dart';
-import '../../viewmodels/auth_vm.dart';
-import '../../viewmodels/location_vm.dart';
-import '../../viewmodels/parent_signup_vm.dart';
+import '../../parent_viewmodels/auth_vm.dart';
+import '../../parent_viewmodels/location_vm.dart';
+import '../../parent_viewmodels/parent_signup_vm.dart';
 
 
 class LocationSelectionScreen extends StatelessWidget {
@@ -78,9 +79,13 @@ class _LocationSelectionView extends StatelessWidget {
         centerTitle: true,
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-          child: Column(
+        child: GestureDetector(
+          onTap: () {
+            FocusScope.of(context).unfocus();
+          },
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // 🔵 Parent flow ho to StepIndicator dikhayein
@@ -108,6 +113,17 @@ class _LocationSelectionView extends StatelessWidget {
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(
+                      color: AppColors.primary,
+                      width: 2,
+                    ),
                   ),
                 ),
               ),
@@ -217,10 +233,16 @@ class _LocationSelectionView extends StatelessWidget {
                     final lng = double.tryParse(vm.longitude);
 
                     if (lat == null || lng == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Please enter valid coordinates.'),
-                        ),
+                      Get.snackbar(
+                        'Invalid Input',
+                        'Please enter valid coordinates.',
+                        snackPosition: SnackPosition.BOTTOM,
+                        backgroundColor: AppColors.error,
+                        colorText: Colors.white,
+                        borderRadius: 12,
+                        margin: const EdgeInsets.all(16),
+                        duration: const Duration(seconds: 3),
+                        icon: const Icon(Icons.error, color: Colors.white),
                       );
                       return;
                     }
@@ -239,8 +261,16 @@ class _LocationSelectionView extends StatelessWidget {
                         (route) => false,
                       );
                     } else if (pvm.errorMessage != null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(pvm.errorMessage!)),
+                      Get.snackbar(
+                        'Error',
+                        pvm.errorMessage!,
+                        snackPosition: SnackPosition.BOTTOM,
+                        backgroundColor: AppColors.error,
+                        colorText: Colors.white,
+                        borderRadius: 12,
+                        margin: const EdgeInsets.all(16),
+                        duration: const Duration(seconds: 3),
+                        icon: const Icon(Icons.error, color: Colors.white),
                       );
                     }
                   } else {
@@ -270,8 +300,16 @@ class _LocationSelectionView extends StatelessWidget {
                         (route) => false,
                       );
                     } else if (vm1.errorMessage != null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(vm1.errorMessage!)),
+                      Get.snackbar(
+                        'Error',
+                        vm1.errorMessage!,
+                        snackPosition: SnackPosition.BOTTOM,
+                        backgroundColor: AppColors.error,
+                        colorText: Colors.white,
+                        borderRadius: 12,
+                        margin: const EdgeInsets.all(16),
+                        duration: const Duration(seconds: 3),
+                        icon: const Icon(Icons.error, color: Colors.white),
                       );
                     }
                   }
@@ -280,6 +318,7 @@ class _LocationSelectionView extends StatelessWidget {
 
             ],
           ),
+        ),
         ),
       ),
     );

@@ -5,7 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_primary_button.dart';
 import '../../../core/widgets/app_text.dart';
 import '../../../core/widgets/app_textfield.dart';
-import '../../../viewmodels/parent_signup_vm.dart';
+import '../../../parent_viewmodels/parent_signup_vm.dart';
 import '../location_selection_screen.dart';
 import '../step_indicator/step_indicator.dart';
 
@@ -39,9 +39,13 @@ class ParentPreferencesStepScreen extends StatelessWidget {
             centerTitle: true,
           ),
           body: SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-              child: Column(
+            child: GestureDetector(
+              onTap: () {
+                FocusScope.of(context).unfocus();
+              },
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+                child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // StepIndicator(
@@ -98,6 +102,17 @@ class ParentPreferencesStepScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(16),
                         borderSide: BorderSide.none,
                       ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                          color: AppColors.primary,
+                          width: 2,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -127,6 +142,7 @@ class ParentPreferencesStepScreen extends StatelessWidget {
                   ),
                 ],
               ),
+            ),
             ),
           ),
         );
