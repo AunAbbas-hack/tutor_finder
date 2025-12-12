@@ -24,6 +24,10 @@ class TutorService {
     });
   }
 
+  Future<void> updateTutor(TutorModel tutor) async {
+    await _tutorsCol.doc(tutor.tutorId).update(tutor.toMap());
+  }
+
   /// Get all tutors from Firestore
   Future<List<TutorModel>> getAllTutors() async {
     try {

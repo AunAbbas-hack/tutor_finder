@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:get/get.dart';
+import 'package:tutor_finder/views/parent/tutor_detail_screen.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/app_text.dart';
 import '../../core/widgets/search_bar_widget.dart';
-import '../../core/widgets/tutor_card.dart';
+import '../../core/widgets/tutor_card.dart' show TutorCard, DistanceBadge;
 import '../../core/widgets/recommended_tutor_card.dart';
 import '../../core/widgets/subject_button.dart';
 import '../../core/widgets/bottom_nav_bar.dart';
@@ -322,7 +323,7 @@ class _DashboardContent extends StatelessWidget {
                           distance: tutor.distance,
                           imageUrl: tutor.imageUrl,
                           onTap: () {
-                            // TODO: Navigate to tutor profile
+                            Get.to(() => TutorDetailScreen(tutorId: tutor.tutorId));
                           },
                         ),
                         DistanceBadge(distance: tutor.distance),
@@ -418,7 +419,7 @@ class _DashboardContent extends StatelessWidget {
                     imageUrl: tutor.imageUrl,
                     isSaved: tutor.isSaved,
                     onTap: () {
-                      // TODO: Navigate to tutor profile
+                      Get.to(() => TutorDetailScreen(tutorId: tutor.tutorId));
                     },
                     onSaveTap: () {
                       vm.toggleSaveTutor(tutor.tutorId);

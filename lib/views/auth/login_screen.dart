@@ -57,8 +57,8 @@ class _LoginViewState extends State<_LoginView> {
         FocusScope.of(context).unfocus();
       },
       child: Scaffold(
-        body: SafeArea(
-          child: SingleChildScrollView(
+      body: SafeArea(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -266,8 +266,8 @@ class _LoginViewState extends State<_LoginView> {
               ),
             ],
           ),
+          ),
         ),
-      ),
       ),
     );
   }

@@ -43,9 +43,9 @@ class ParentPreferencesStepScreen extends StatelessWidget {
               onTap: () {
                 FocusScope.of(context).unfocus();
               },
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-                child: Column(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // StepIndicator(
@@ -142,7 +142,7 @@ class ParentPreferencesStepScreen extends StatelessWidget {
                   ),
                 ],
               ),
-            ),
+              ),
             ),
           ),
         );

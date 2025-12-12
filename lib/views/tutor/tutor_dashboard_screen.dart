@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
@@ -119,6 +120,7 @@ class _TutorDashboardScreenState extends State<TutorDashboardScreen> {
               ),
               onPressed: () {
                 // TODO: Navigate to notifications
+                FirebaseAuth.instance.signOut();
               },
             ),
             // Notification badge could be added here if needed

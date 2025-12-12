@@ -90,7 +90,7 @@ class _AppTextFieldState extends State<AppTextField> {
             filled: true,
             fillColor: const Color(0xFFF5F6FA),
             contentPadding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             suffixIcon: widget.suffixIcon,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),

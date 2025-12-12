@@ -83,9 +83,9 @@ class _LocationSelectionView extends StatelessWidget {
           onTap: () {
             FocusScope.of(context).unfocus();
           },
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-            child: Column(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // 🔵 Parent flow ho to StepIndicator dikhayein
@@ -318,7 +318,7 @@ class _LocationSelectionView extends StatelessWidget {
 
             ],
           ),
-        ),
+          ),
         ),
       ),
     );
