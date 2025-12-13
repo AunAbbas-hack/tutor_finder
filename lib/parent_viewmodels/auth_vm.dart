@@ -4,6 +4,7 @@ import '../data/models/user_model.dart';
 import '../data/models/tutor_model.dart';
 import '../data/models/parent_model.dart';
 import '../data/repositories/auth_repository.dart';
+import '../core/utils/debug_logger.dart';
 
 class AuthViewModel extends ChangeNotifier {
   final AuthRepository _authRepository;
@@ -61,6 +62,9 @@ class AuthViewModel extends ChangeNotifier {
       _emailOrPhone.isNotEmpty && _password.isNotEmpty && !_isLoading;
 
   Future<bool> login() async {
+    // #region agent log
+    await DebugLogger.log(location: 'auth_vm.dart:63', message: 'Parent login attempt', data: {'email': _emailOrPhone, 'hasPassword': _password.isNotEmpty}, hypothesisId: 'AUTH-1');
+    // #endregion
     if (!canSubmitLogin) return false;
 
     if (!_emailOrPhone.contains('@')) {
@@ -78,9 +82,15 @@ class AuthViewModel extends ChangeNotifier {
         password: _password,
       );
 
+      // #region agent log
+      await DebugLogger.log(location: 'auth_vm.dart:82', message: 'Parent login success', data: {'email': _emailOrPhone}, hypothesisId: 'AUTH-1');
+      // #endregion
       _setLoading(false);
       return true;
     } on Exception catch (e) {
+      // #region agent log
+      await DebugLogger.log(location: 'auth_vm.dart:87', message: 'Parent login failed', data: {'email': _emailOrPhone, 'error': e.toString()}, hypothesisId: 'AUTH-1');
+      // #endregion
       _setLoading(false);
       _errorMessage = _mapFirebaseError(e);
       return false;

@@ -113,7 +113,11 @@ class AuthRepository {
     await _parentService.createParent(parentWithId);
 
     // 4) students collection (SRS requirement)
-    final studentWithId = student.copyWith(studentId: uid);
+    // Note: During signup, studentId = parentId (same uid), but parentId is set to link to parent
+    final studentWithId = student.copyWith(
+      studentId: uid,
+      parentId: uid, // Parent's uid (same as studentId during initial signup)
+    );
     await _studentService.createStudent(studentWithId);
 
     return cred.user;

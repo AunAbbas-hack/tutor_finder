@@ -80,55 +80,120 @@ class BookingService {
   }
 
   /// Get all bookings for a tutor
+  /// Note: Fetches all bookings and sorts client-side to avoid index requirement
   Future<List<BookingModel>> getBookingsByTutorId(String tutorId) async {
     try {
-      final snapshot = await _bookingsCol
-          .where('tutorId', isEqualTo: tutorId)
-          .orderBy('createdAt', descending: true)
-          .get();
+      // First try with orderBy (if index exists)
+      try {
+        final snapshot = await _bookingsCol
+            .where('tutorId', isEqualTo: tutorId)
+            .orderBy('createdAt', descending: true)
+            .get();
 
-      return snapshot.docs
-          .map((doc) => BookingModel.fromFirestore(doc))
-          .toList();
+        return snapshot.docs
+            .map((doc) => BookingModel.fromFirestore(doc))
+            .toList();
+      } catch (e) {
+        // If index doesn't exist, fetch without orderBy and sort client-side
+        if (e.toString().contains('index')) {
+          final snapshot = await _bookingsCol
+              .where('tutorId', isEqualTo: tutorId)
+              .get();
+
+          final bookings = snapshot.docs
+              .map((doc) => BookingModel.fromFirestore(doc))
+              .toList();
+
+          // Sort by createdAt descending (newest first)
+          bookings.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          return bookings;
+        }
+        rethrow;
+      }
     } catch (e) {
       return [];
     }
   }
 
   /// Get bookings by status for a tutor
+  /// Note: Fetches and filters client-side to avoid complex index requirement
   Future<List<BookingModel>> getBookingsByTutorAndStatus(
     String tutorId,
     BookingStatus status,
   ) async {
     try {
-      final snapshot = await _bookingsCol
-          .where('tutorId', isEqualTo: tutorId)
-          .where('status', isEqualTo: BookingModel.statusToString(status))
-          .orderBy('createdAt', descending: true)
-          .get();
+      // First try with orderBy (if index exists)
+      try {
+        final snapshot = await _bookingsCol
+            .where('tutorId', isEqualTo: tutorId)
+            .where('status', isEqualTo: BookingModel.statusToString(status))
+            .orderBy('createdAt', descending: true)
+            .get();
 
-      return snapshot.docs
-          .map((doc) => BookingModel.fromFirestore(doc))
-          .toList();
+        return snapshot.docs
+            .map((doc) => BookingModel.fromFirestore(doc))
+            .toList();
+      } catch (e) {
+        // If index doesn't exist, fetch without orderBy and filter/sort client-side
+        if (e.toString().contains('index')) {
+          final snapshot = await _bookingsCol
+              .where('tutorId', isEqualTo: tutorId)
+              .get();
+
+          final bookings = snapshot.docs
+              .map((doc) => BookingModel.fromFirestore(doc))
+              .where((booking) => booking.status == status)
+              .toList();
+
+          // Sort by createdAt descending (newest first)
+          bookings.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          return bookings;
+        }
+        rethrow;
+      }
     } catch (e) {
       return [];
     }
   }
 
   /// Get upcoming bookings for a tutor (approved and future dates)
+  /// Note: Fetches and filters client-side to avoid complex index requirement
   Future<List<BookingModel>> getUpcomingBookingsForTutor(String tutorId) async {
     try {
       final now = DateTime.now();
-      final snapshot = await _bookingsCol
-          .where('tutorId', isEqualTo: tutorId)
-          .where('status', isEqualTo: BookingModel.statusToString(BookingStatus.approved))
-          .orderBy('bookingDate', descending: false)
-          .get();
+      
+      // First try with orderBy (if index exists)
+      try {
+        final snapshot = await _bookingsCol
+            .where('tutorId', isEqualTo: tutorId)
+            .where('status', isEqualTo: BookingModel.statusToString(BookingStatus.approved))
+            .orderBy('bookingDate', descending: false)
+            .get();
 
-      return snapshot.docs
-          .map((doc) => BookingModel.fromFirestore(doc))
-          .where((booking) => booking.bookingDate.isAfter(now))
-          .toList();
+        return snapshot.docs
+            .map((doc) => BookingModel.fromFirestore(doc))
+            .where((booking) => booking.bookingDate.isAfter(now))
+            .toList();
+      } catch (e) {
+        // If index doesn't exist, fetch without orderBy and filter/sort client-side
+        if (e.toString().contains('index')) {
+          final snapshot = await _bookingsCol
+              .where('tutorId', isEqualTo: tutorId)
+              .get();
+
+          final bookings = snapshot.docs
+              .map((doc) => BookingModel.fromFirestore(doc))
+              .where((booking) => 
+                  booking.status == BookingStatus.approved &&
+                  booking.bookingDate.isAfter(now))
+              .toList();
+
+          // Sort by bookingDate ascending (earliest first)
+          bookings.sort((a, b) => a.bookingDate.compareTo(b.bookingDate));
+          return bookings;
+        }
+        rethrow;
+      }
     } catch (e) {
       return [];
     }

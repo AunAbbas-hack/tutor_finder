@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tutor_finder/core/theme/app_colors.dart';
 
 class AppPrimaryButton extends StatelessWidget {
   final String label;
@@ -25,6 +26,7 @@ class AppPrimaryButton extends StatelessWidget {
         onPressed: effectiveDisabled ? null : onPressed,
         style: ElevatedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 14),
+          backgroundColor: AppColors.primary,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
           ),

@@ -28,5 +28,42 @@ class StudentService {
   Future<void> deleteStudent(String studentId) async {
     await _studentsCol.doc(studentId).delete();
   }
+
+  /// Get all students for a specific parent
+  Future<List<StudentModel>> getStudentsByParentId(String parentId) async {
+    try {
+      final snapshot = await _studentsCol
+          .where('parentId', isEqualTo: parentId)
+          .get();
+
+      return snapshot.docs
+          .map((doc) {
+            final data = doc.data();
+            return StudentModel.fromMap({
+              ...data,
+              'studentId': data['studentId'] ?? doc.id,
+            });
+          })
+          .toList();
+    } catch (e) {
+      return [];
+    }
+  }
+
+  /// Stream of students for a specific parent (real-time updates)
+  Stream<List<StudentModel>> getStudentsByParentIdStream(String parentId) {
+    return _studentsCol
+        .where('parentId', isEqualTo: parentId)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) {
+              final data = doc.data();
+              return StudentModel.fromMap({
+                ...data,
+                'studentId': data['studentId'] ?? doc.id,
+              });
+            })
+            .toList());
+  }
 }
 

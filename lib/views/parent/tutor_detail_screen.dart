@@ -7,6 +7,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/widgets/app_text.dart';
 import '../../viewmodels/tutor_detail_vm.dart';
 import '../chat/individual_chat_screen.dart';
+import '../../core/utils/debug_logger.dart';
 
 class TutorDetailScreen extends StatelessWidget {
   final String tutorId;
@@ -708,7 +709,13 @@ class TutorDetailScreen extends StatelessWidget {
   }
 
   void _showBookingDialog(BuildContext context, TutorDetailViewModel vm) {
+    // #region agent log
+    DebugLogger.log(location: 'tutor_detail_screen.dart:710', message: 'Booking dialog called', data: {'tutorId': vm.tutorId, 'selectedDate': vm.selectedDate.toString(), 'selectedTime': vm.selectedTimeSlot}, hypothesisId: 'BOOKING-UI-1').catchError((_) {});
+    // #endregion
     // TODO: Implement booking dialog
+    // #region agent log
+    DebugLogger.log(location: 'tutor_detail_screen.dart:712', message: 'Booking dialog not implemented - showing snackbar instead', data: {'tutorId': vm.tutorId}, hypothesisId: 'BOOKING-UI-1').catchError((_) {});
+    // #endregion
     Get.snackbar(
       'Booking Request',
       'Booking request functionality will be implemented',

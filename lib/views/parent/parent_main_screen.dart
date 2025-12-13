@@ -18,11 +18,11 @@ class _ParentMainScreenState extends State<ParentMainScreen> {
   int _currentNavIndex = 0;
 
   // List of screens for each tab
-  final List<Widget> _screens = [
+  List<Widget> get _screens => [
     const ParentDashboardHome(),
     const BookingsScreenNavbar(),
     const ChatScreen(), // Messages screen
-    const ParentProfileScreen()
+    const ParentProfileScreen(showBackButton: false), // Hide back button when from bottom nav
   ];
 
   @override

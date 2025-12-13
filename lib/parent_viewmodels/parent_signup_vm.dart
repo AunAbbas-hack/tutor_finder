@@ -242,9 +242,10 @@ class ParentSignupViewModel extends ChangeNotifier {
     );
   }
 
-  StudentModel buildStudentModel(String userId) {
+  StudentModel buildStudentModel(String userId, {String? parentId}) {
     return StudentModel(
       studentId: userId,
+      parentId: parentId ?? userId, // Default to userId if parentId not provided (for signup, studentId = parentId initially)
       schoolCollege: _childSchool,
       grade: _childGrade,
     );

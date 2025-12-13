@@ -4,6 +4,7 @@ import '../data/models/booking_model.dart';
 import '../data/models/user_model.dart';
 import '../data/services/booking_services.dart';
 import '../data/services/user_services.dart';
+import '../core/utils/debug_logger.dart';
 
 /// Model for displaying booking with tutor info
 class BookingDisplayModel {
@@ -76,12 +77,18 @@ class BookingsNavbarViewModel extends ChangeNotifier {
 
   // ---------- Load Bookings ----------
   Future<void> loadBookings() async {
+    // #region agent log
+    await DebugLogger.log(location: 'bookings_navbar_vm.dart:78', message: 'Loading bookings for parent', data: {'parentId': _auth.currentUser?.uid}, hypothesisId: 'BOOKING-1');
+    // #endregion
     try {
       final user = _auth.currentUser;
       if (user == null) return;
 
       // Get all bookings for current parent
       final bookings = await _bookingService.getBookingsByParentId(user.uid);
+      // #region agent log
+      await DebugLogger.log(location: 'bookings_navbar_vm.dart:84', message: 'Bookings loaded from Firestore', data: {'bookingCount': bookings.length, 'statuses': bookings.map((b) => b.status.toString()).toList()}, hypothesisId: 'BOOKING-1');
+      // #endregion
 
       // Get tutor info for each booking
       final allBookingsList = <BookingDisplayModel>[];
@@ -121,6 +128,9 @@ class BookingsNavbarViewModel extends ChangeNotifier {
       _pendingBookings = pendingList;
       _approvedBookings = approvedList;
       _rejectedBookings = rejectedList;
+      // #region agent log
+      await DebugLogger.log(location: 'bookings_navbar_vm.dart:123', message: 'Bookings categorized by status', data: {'all': _allBookings.length, 'pending': _pendingBookings.length, 'approved': _approvedBookings.length, 'rejected': _rejectedBookings.length}, hypothesisId: 'BOOKING-1');
+      // #endregion
 
       notifyListeners();
     } catch (e) {
@@ -146,9 +156,15 @@ class BookingsNavbarViewModel extends ChangeNotifier {
 
   // ---------- Cancel Booking ----------
   Future<bool> cancelBooking(String bookingId) async {
+    // #region agent log
+    await DebugLogger.log(location: 'bookings_navbar_vm.dart:148', message: 'Cancelling booking', data: {'bookingId': bookingId}, hypothesisId: 'BOOKING-2');
+    // #endregion
     try {
       _setLoading(true);
       await _bookingService.cancelBooking(bookingId);
+      // #region agent log
+      await DebugLogger.log(location: 'bookings_navbar_vm.dart:151', message: 'Booking cancelled successfully', data: {'bookingId': bookingId}, hypothesisId: 'BOOKING-2');
+      // #endregion
       await loadBookings(); // Reload bookings
       _setLoading(false);
       return true;

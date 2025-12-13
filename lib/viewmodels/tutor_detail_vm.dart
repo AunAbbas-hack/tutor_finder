@@ -5,6 +5,7 @@ import '../data/models/user_model.dart';
 import '../data/models/tutor_model.dart';
 import '../data/services/user_services.dart';
 import '../data/services/tutor_services.dart';
+import '../core/utils/debug_logger.dart';
 
 class TutorDetailViewModel extends ChangeNotifier {
   final UserService _userService;
@@ -77,14 +78,23 @@ class TutorDetailViewModel extends ChangeNotifier {
 
   // Initialize and load data
   Future<void> initialize() async {
+    // #region agent log
+    await DebugLogger.log(location: 'tutor_detail_vm.dart:79', message: 'Initializing tutor detail view', data: {'tutorId': tutorId}, hypothesisId: 'TUTOR-DETAIL-1');
+    // #endregion
     _setLoading(true);
     _errorMessage = null;
 
     try {
       // Load tutor user data
       _tutorUser = await _userService.getUserById(tutorId);
+      // #region agent log
+      await DebugLogger.log(location: 'tutor_detail_vm.dart:86', message: 'Tutor user loaded', data: {'tutorId': tutorId, 'found': _tutorUser != null, 'status': _tutorUser?.status.toString()}, hypothesisId: 'TUTOR-DETAIL-1');
+      // #endregion
       if (_tutorUser == null) {
         _errorMessage = 'Tutor not found';
+        // #region agent log
+        await DebugLogger.log(location: 'tutor_detail_vm.dart:89', message: 'Tutor user not found', data: {'tutorId': tutorId}, hypothesisId: 'TUTOR-DETAIL-1');
+        // #endregion
         _setLoading(false);
         notifyListeners();
         return;
@@ -92,8 +102,14 @@ class TutorDetailViewModel extends ChangeNotifier {
 
       // Load tutor profile data
       _tutor = await _tutorService.getTutorById(tutorId);
+      // #region agent log
+      await DebugLogger.log(location: 'tutor_detail_vm.dart:95', message: 'Tutor profile loaded', data: {'tutorId': tutorId, 'found': _tutor != null, 'subjects': _tutor?.subjects.length ?? 0}, hypothesisId: 'TUTOR-DETAIL-1');
+      // #endregion
       if (_tutor == null) {
         _errorMessage = 'Tutor profile not found';
+        // #region agent log
+        await DebugLogger.log(location: 'tutor_detail_vm.dart:98', message: 'Tutor profile not found', data: {'tutorId': tutorId}, hypothesisId: 'TUTOR-DETAIL-1');
+        // #endregion
         _setLoading(false);
         notifyListeners();
         return;
@@ -102,6 +118,9 @@ class TutorDetailViewModel extends ChangeNotifier {
       _setLoading(false);
       notifyListeners();
     } catch (e) {
+      // #region agent log
+      await DebugLogger.log(location: 'tutor_detail_vm.dart:107', message: 'Error loading tutor details', data: {'tutorId': tutorId, 'error': e.toString()}, hypothesisId: 'TUTOR-DETAIL-1');
+      // #endregion
       _errorMessage = 'Failed to load tutor details: ${e.toString()}';
       _setLoading(false);
       notifyListeners();
@@ -134,11 +153,20 @@ class TutorDetailViewModel extends ChangeNotifier {
     required String bookingTime,
     String? notes,
   }) async {
+    // #region agent log
+    await DebugLogger.log(location: 'tutor_detail_vm.dart:131', message: 'Request booking called', data: {'tutorId': tutorId, 'subject': subject, 'date': bookingDate.toString(), 'time': bookingTime}, hypothesisId: 'BOOKING-CREATE-1');
+    // #endregion
     try {
       // TODO: Implement booking request creation
       // This will call BookingService to create a booking request
+      // #region agent log
+      await DebugLogger.log(location: 'tutor_detail_vm.dart:140', message: 'Booking request not implemented - returning true without creating booking', data: {'tutorId': tutorId}, hypothesisId: 'BOOKING-CREATE-1');
+      // #endregion
       return true;
     } catch (e) {
+      // #region agent log
+      await DebugLogger.log(location: 'tutor_detail_vm.dart:144', message: 'Booking request failed', data: {'tutorId': tutorId, 'error': e.toString()}, hypothesisId: 'BOOKING-CREATE-1');
+      // #endregion
       _errorMessage = 'Failed to request booking: ${e.toString()}';
       notifyListeners();
       return false;

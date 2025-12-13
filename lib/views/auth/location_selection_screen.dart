@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:get/get.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/app_primary_button.dart';
@@ -54,6 +55,31 @@ class _LocationSelectionView extends StatelessWidget {
     required this.buttonLabel,
   });
 
+  /// Build markers for the map
+  Set<Marker> _buildMarkers(LocationViewModel vm) {
+    if (vm.latitude.isEmpty || vm.longitude.isEmpty) {
+      return {};
+    }
+
+    final lat = double.tryParse(vm.latitude);
+    final lng = double.tryParse(vm.longitude);
+
+    if (lat == null || lng == null) {
+      return {};
+    }
+
+    return {
+      Marker(
+        markerId: const MarkerId('selected_location'),
+        position: LatLng(lat, lng),
+        draggable: true,
+        onDragEnd: (LatLng position) {
+          vm.onMapTap(position);
+        },
+      ),
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<LocationViewModel>();
@@ -99,13 +125,29 @@ class _LocationSelectionView extends StatelessWidget {
 
               // Search bar
               TextField(
-                onChanged: vm.updateSearchQuery,
+                controller: TextEditingController(text: vm.searchQuery),
+                onChanged: (value) {
+                  vm.updateSearchQuery(value);
+                },
+                onSubmitted: (value) {
+                  if (value.trim().isNotEmpty) {
+                    vm.searchAddress(value);
+                  }
+                },
                 decoration: InputDecoration(
                   hintText: 'Search for a city or address',
                   filled: true,
                   fillColor: AppColors.lightBackground,
                   prefixIcon:
                   const Icon(Icons.search, color: AppColors.iconGrey),
+                  suffixIcon: vm.searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear, color: AppColors.iconGrey),
+                          onPressed: () {
+                            vm.updateSearchQuery('');
+                          },
+                        )
+                      : null,
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 14,
@@ -127,54 +169,140 @@ class _LocationSelectionView extends StatelessWidget {
                   ),
                 ),
               ),
+              if (vm.errorMessage != null) ...[
+                const SizedBox(height: 8),
+                AppText(
+                  vm.errorMessage!,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppColors.error,
+                  ),
+                ),
+              ],
               const SizedBox(height: 16),
 
               // Use my current location
               GestureDetector(
                 onTap: () {
-                  // TODO: Geolocator se current location fetch karo
-                  // vm.startFetchingLocation();
-                  // final pos = await Geolocator.getCurrentPosition();
-                  // vm.setCurrentLocation(pos.latitude, pos.longitude);
+                  vm.getCurrentLocation();
                 },
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.my_location,
-                      color: AppColors.primary,
-                      size: 20,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: AppColors.lightBackground,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppColors.primary.withOpacity(0.3),
+                      width: 1,
                     ),
-                    const SizedBox(width: 8),
-                    AppText(
-                      vm.isLoadingLocation
-                          ? 'Detecting your location...'
-                          : 'Use My Current Location',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w600,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (vm.isLoadingLocation)
+                        const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                          ),
+                        )
+                      else
+                        Icon(
+                          Icons.my_location,
+                          color: AppColors.primary,
+                          size: 20,
+                        ),
+                      const SizedBox(width: 8),
+                      AppText(
+                        vm.isLoadingLocation
+                            ? 'Detecting your location...'
+                            : 'Use My Current Location',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
 
-              // Map preview placeholder (baad me GoogleMap laga dena)
+              // Google Map
               ClipRRect(
                 borderRadius: BorderRadius.circular(24),
                 child: Container(
                   height: 260,
-                  color: AppColors.lightBackground,
-                  alignment: Alignment.center,
-                  child: AppText(
-                    'Map preview goes here',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textGrey,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: AppColors.primary.withOpacity(0.2),
+                      width: 2,
                     ),
+                  ),
+                  child: Stack(
+                    children: [
+                      GoogleMap(
+                        initialCameraPosition: vm.cameraPosition,
+                        onMapCreated: (GoogleMapController controller) {
+                          vm.setMapController(controller);
+                        },
+                        onTap: (LatLng position) {
+                          vm.onMapTap(position);
+                        },
+                        onCameraMove: (CameraPosition position) {
+                          vm.onCameraMove(position);
+                        },
+                        onCameraIdle: () {
+                          vm.onCameraIdle();
+                        },
+                        myLocationButtonEnabled: false,
+                        myLocationEnabled: true,
+                        zoomControlsEnabled: false,
+                        mapToolbarEnabled: false,
+                        markers: _buildMarkers(vm),
+                      ),
+                      // Center indicator
+                      Center(
+                        child: Icon(
+                          Icons.location_on,
+                          color: AppColors.primary,
+                          size: 40,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
+              if (vm.selectedAddress != null) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.lightBackground,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.location_on,
+                        color: AppColors.primary,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: AppText(
+                          vm.selectedAddress!,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: AppColors.textDark,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               const SizedBox(height: 24),
 
               // ⭐ Coordinates fields (Latitude + Longitude)

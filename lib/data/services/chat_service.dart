@@ -213,9 +213,11 @@ class ChatService {
         final chatId = chatIdKey.toString();
         final chatMetadataRef = _database.child('chats/$chatId');
         
-        // Listen to entire chat metadata changes (lastMessage, lastMessageTime, unreadCount)
-        // This will trigger on new messages, unread count updates, etc.
-        final subscription = chatMetadataRef.onValue.listen((_) async {
+        // Listen to lastMessageTime changes (triggers on new messages)
+        final subscription = chatMetadataRef
+            .child('lastMessageTime')
+            .onValue
+            .listen((_) async {
           // Re-fetch all conversations when any chat updates
           final currentChatIds = await userChatsRef.once();
           if (currentChatIds.snapshot.value != null) {

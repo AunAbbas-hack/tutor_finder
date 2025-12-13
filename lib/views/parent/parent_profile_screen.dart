@@ -6,10 +6,19 @@ import '../../core/theme/app_colors.dart';
 import '../../core/widgets/app_text.dart';
 import '../../core/widgets/app_primary_button.dart';
 import '../../parent_viewmodels/parent_profile_vm.dart';
+import 'manage_children_screen.dart';
+import 'parent_edit_profile_screen.dart';
 
 
 class ParentProfileScreen extends StatefulWidget {
-  const ParentProfileScreen({super.key});
+  /// If true, shows back button (when navigated from dashboard)
+  /// If false, hides back button (when opened from bottom navigation)
+  final bool showBackButton;
+
+  const ParentProfileScreen({
+    super.key,
+    this.showBackButton = true, // Default: show back button
+  });
 
   @override
   State<ParentProfileScreen> createState() => _ParentProfileScreenState();
@@ -87,11 +96,14 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
       ),
       child: Row(
         children: [
-          // Back Button
-          IconButton(
-            icon: const Icon(Icons.arrow_back, color: AppColors.textDark),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
+          // Back Button (only show if showBackButton is true)
+          if (widget.showBackButton)
+            IconButton(
+              icon: const Icon(Icons.arrow_back, color: AppColors.textDark),
+              onPressed: () => Navigator.of(context).pop(),
+            )
+          else
+            const SizedBox(width: 48), // Spacing when back button is hidden
           // Title
           const Expanded(
             child: AppText(
@@ -209,18 +221,18 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
           width: 140,
           child: AppPrimaryButton(
             label: 'Edit Profile',
-            onPressed: () {
-              // TODO: Navigate to edit profile screen
-              Get.snackbar(
-                'Coming Soon',
-                'Edit Profile feature will be available soon',
-                snackPosition: SnackPosition.BOTTOM,
-                backgroundColor: AppColors.primary,
-                colorText: Colors.white,
-                borderRadius: 12,
-                margin: const EdgeInsets.all(16),
-                duration: const Duration(seconds: 2),
+            onPressed: () async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ParentEditProfileScreen(),
+                ),
               );
+              
+              // Refresh profile if changes were saved
+              if (result == true) {
+                vm.initialize();
+              }
             },
           ),
         ),
@@ -251,17 +263,7 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
           icon: Icons.people_outline,
           title: 'Manage Children\'s Profiles',
           onTap: () {
-            // TODO: Navigate to children profiles
-            Get.snackbar(
-              'Coming Soon',
-              'Manage Children\'s Profiles feature will be available soon',
-              snackPosition: SnackPosition.BOTTOM,
-              backgroundColor: AppColors.primary,
-              colorText: Colors.white,
-              borderRadius: 12,
-              margin: const EdgeInsets.all(16),
-              duration: const Duration(seconds: 2),
-            );
+            Get.to(() => const ManageChildrenScreen());
           },
         ),
         _buildSettingsItem(

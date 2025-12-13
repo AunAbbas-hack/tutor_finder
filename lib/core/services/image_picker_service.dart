@@ -48,5 +48,5 @@ class ImagePickerService {
     // This will be handled by UI showing a bottom sheet
     // For now, default to gallery
     return pickImageFromGallery();
-  }
+                }
 }
