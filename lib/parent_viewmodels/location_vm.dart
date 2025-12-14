@@ -11,12 +11,13 @@ class LocationViewModel extends ChangeNotifier {
   bool _isLoadingLocation = false;
   String? _errorMessage;
   String? _selectedAddress;
+  bool _hasUserSelectedLocation = false; // Track if user has selected a location
   
   // Map controller and camera position
   GoogleMapController? _mapController;
   CameraPosition _cameraPosition = const CameraPosition(
-    target: LatLng(37.7749, -122.4194), // Default: San Francisco
-    zoom: 12.0,
+    target: LatLng(0.0, 0.0), // Default: World view (no specific location)
+    zoom: 2.0, // Zoomed out to show world map
   );
 
   String get searchQuery => _searchQuery;
@@ -55,6 +56,7 @@ class LocationViewModel extends ChangeNotifier {
   Future<void> updateLocation(double lat, double lng) async {
     _latitude = lat.toStringAsFixed(6);
     _longitude = lng.toStringAsFixed(6);
+    _hasUserSelectedLocation = true; // Mark that user has selected a location
     
     // Update camera position
     _cameraPosition = CameraPosition(
@@ -206,10 +208,21 @@ class LocationViewModel extends ChangeNotifier {
   }
 
   /// Handle camera idle (when user stops dragging)
+  /// Only update if user has already selected a location (not on initial load)
   Future<void> onCameraIdle() async {
-    final lat = _cameraPosition.target.latitude;
-    final lng = _cameraPosition.target.longitude;
-    await updateLocation(lat, lng);
+    // Only update location if user has already selected one
+    // This prevents setting coordinates on initial map load
+    if (_hasUserSelectedLocation) {
+      final lat = _cameraPosition.target.latitude;
+      final lng = _cameraPosition.target.longitude;
+      _latitude = lat.toStringAsFixed(6);
+      _longitude = lng.toStringAsFixed(6);
+      
+      // Get address from coordinates
+      await _getAddressFromCoordinates(lat, lng);
+      
+      notifyListeners();
+    }
   }
 
   void setCurrentLocation(double lat, double lng) {

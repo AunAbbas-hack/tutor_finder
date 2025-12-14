@@ -9,6 +9,7 @@ import '../../core/widgets/app_text.dart';
 import '../../core/widgets/app_textfield.dart';
 import '../../core/widgets/social_login_button.dart';
 import '../../parent_viewmodels/auth_vm.dart';
+import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -109,7 +110,11 @@ class _LoginViewState extends State<_LoginView> {
                   ),
                   TextButton(
                     onPressed: () {
-                      // TODO: Forgot password flow
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const ForgotPasswordScreen(),
+                        ),
+                      );
                     },
                     child: AppText.link('Forgot Password?', context),
                   ),

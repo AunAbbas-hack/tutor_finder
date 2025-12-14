@@ -25,9 +25,9 @@ class _TutorDashboardScreenState extends State<TutorDashboardScreen> {
         });
         return vm;
       },
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        body: SafeArea(
+      child: Container(
+        color: AppColors.background,
+        child: SafeArea(
           child: Consumer<TutorDashboardViewModel>(
             builder: (context, vm, _) {
               if (vm.isLoading) {

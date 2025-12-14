@@ -1,5 +1,6 @@
 // lib/views/tutor/tutor_detail_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:get/get.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -8,6 +9,7 @@ import '../../core/widgets/app_text.dart';
 import '../../viewmodels/tutor_detail_vm.dart';
 import '../chat/individual_chat_screen.dart';
 import '../../core/utils/debug_logger.dart';
+import 'request_booking_screen.dart';
 
 class TutorDetailScreen extends StatelessWidget {
   final String tutorId;
@@ -630,9 +632,7 @@ class TutorDetailScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
             ),
             child: TextButton(
-              onPressed: vm.selectedTimeSlot != null
-                  ? () => _showBookingDialog(context, vm)
-                  : null,
+              onPressed: () => _showBookingDialog(context, vm),
               style: TextButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
@@ -712,18 +712,34 @@ class TutorDetailScreen extends StatelessWidget {
     // #region agent log
     DebugLogger.log(location: 'tutor_detail_screen.dart:710', message: 'Booking dialog called', data: {'tutorId': vm.tutorId, 'selectedDate': vm.selectedDate.toString(), 'selectedTime': vm.selectedTimeSlot}, hypothesisId: 'BOOKING-UI-1').catchError((_) {});
     // #endregion
-    // TODO: Implement booking dialog
-    // #region agent log
-    DebugLogger.log(location: 'tutor_detail_screen.dart:712', message: 'Booking dialog not implemented - showing snackbar instead', data: {'tutorId': vm.tutorId}, hypothesisId: 'BOOKING-UI-1').catchError((_) {});
-    // #endregion
-    Get.snackbar(
-      'Booking Request',
-      'Booking request functionality will be implemented',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: AppColors.primary,
-      colorText: Colors.white,
-      duration: const Duration(seconds: 2),
-    );
+    
+    // Navigate to Request Booking Screen
+    if (vm.tutor != null && vm.tutorUser != null) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => RequestBookingScreen(
+            tutorId: vm.tutorId,
+            tutorName: vm.tutorUser!.name,
+            tutorImageUrl: vm.tutorUser!.imageUrl,
+            tutorSubjects: vm.tutor!.subjects.isNotEmpty 
+                ? vm.tutor!.subjects 
+                : ['General'], // Fallback if no subjects
+          ),
+        ),
+      );
+    } else {
+      if (kDebugMode) {
+        print('Tutor or TutorUser is null. Tutor: ${vm.tutor != null}, TutorUser: ${vm.tutorUser != null}');
+      }
+      Get.snackbar(
+        'Error',
+        'Tutor information not loaded. Please wait...',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppColors.error,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 3),
+      );
+    }
   }
 
   bool _isSameDay(DateTime date1, DateTime date2) {

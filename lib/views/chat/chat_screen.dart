@@ -34,9 +34,9 @@ class _ChatScreenState extends State<ChatScreen> {
         });
         return vm;
       },
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        body: SafeArea(
+      child: Container(
+        color: AppColors.background,
+        child: SafeArea(
           child: Column(
             children: [
               // Top App Bar

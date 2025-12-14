@@ -1,6 +1,7 @@
 // lib/core/services/file_picker_service.dart
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 
 class FilePickerService {
   /// Pick a single file
@@ -38,10 +39,21 @@ class FilePickerService {
 
   /// Pick document files (PDF, DOC, DOCX, etc.)
   Future<PlatformFile?> pickDocument() async {
-    return pickFile(
-      allowedExtensions: ['pdf', 'doc', 'docx', 'txt'],
-      type: 'document',
-    );
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf', 'doc', 'docx', 'txt', 'xls', 'xlsx', 'ppt', 'pptx'],
+        allowMultiple: false,
+      );
+
+      if (result != null && result.files.single.path != null) {
+        return result.files.single;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Error picking document: $e');
+      return null;
+    }
   }
 
   /// Pick multiple files

@@ -8,29 +8,48 @@ enum BookingStatus {
   cancelled,
 }
 
+enum BookingType {
+  singleSession,
+  monthlyBooking,
+}
+
 class BookingModel {
   final String bookingId;
   final String parentId; // FK -> UserModel.userId
   final String tutorId; // FK -> UserModel.userId
-  final String subject;
+  final String subject; // For backward compatibility - use subjects list for new bookings
+  final List<String> subjects; // Multiple subjects support
   final DateTime bookingDate;
   final String bookingTime; // e.g., "4:00 PM"
   final BookingStatus status;
   final String? notes;
   final DateTime createdAt;
   final DateTime? updatedAt;
+  
+  // Monthly booking fields
+  final BookingType bookingType;
+  final DateTime? startDate; // For monthly bookings
+  final List<int>? recurringDays; // 1=Monday, 2=Tuesday, etc. (1-7)
+  final double? monthlyBudget; // In rupees
+  final List<String>? childrenIds; // Selected children for this booking
 
   const BookingModel({
     required this.bookingId,
     required this.parentId,
     required this.tutorId,
     required this.subject,
+    this.subjects = const [],
     required this.bookingDate,
     required this.bookingTime,
     required this.status,
     this.notes,
     required this.createdAt,
     this.updatedAt,
+    this.bookingType = BookingType.singleSession,
+    this.startDate,
+    this.recurringDays,
+    this.monthlyBudget,
+    this.childrenIds,
   });
 
   BookingModel copyWith({
@@ -38,24 +57,36 @@ class BookingModel {
     String? parentId,
     String? tutorId,
     String? subject,
+    List<String>? subjects,
     DateTime? bookingDate,
     String? bookingTime,
     BookingStatus? status,
     String? notes,
     DateTime? createdAt,
     DateTime? updatedAt,
+    BookingType? bookingType,
+    DateTime? startDate,
+    List<int>? recurringDays,
+    double? monthlyBudget,
+    List<String>? childrenIds,
   }) {
     return BookingModel(
       bookingId: bookingId ?? this.bookingId,
       parentId: parentId ?? this.parentId,
       tutorId: tutorId ?? this.tutorId,
       subject: subject ?? this.subject,
+      subjects: subjects ?? this.subjects,
       bookingDate: bookingDate ?? this.bookingDate,
       bookingTime: bookingTime ?? this.bookingTime,
       status: status ?? this.status,
       notes: notes ?? this.notes,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      bookingType: bookingType ?? this.bookingType,
+      startDate: startDate ?? this.startDate,
+      recurringDays: recurringDays ?? this.recurringDays,
+      monthlyBudget: monthlyBudget ?? this.monthlyBudget,
+      childrenIds: childrenIds ?? this.childrenIds,
     );
   }
 
@@ -64,22 +95,32 @@ class BookingModel {
       'bookingId': bookingId,
       'parentId': parentId,
       'tutorId': tutorId,
-      'subject': subject,
+      'subject': subject, // Keep for backward compatibility
+      'subjects': subjects.isNotEmpty ? subjects : [subject], // Use subjects if available
       'bookingDate': bookingDate.toIso8601String(),
       'bookingTime': bookingTime,
       'status': statusToString(status),
       'notes': notes,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
+      'bookingType': _bookingTypeToString(bookingType),
+      'startDate': startDate?.toIso8601String(),
+      'recurringDays': recurringDays,
+      'monthlyBudget': monthlyBudget,
+      'childrenIds': childrenIds,
     };
   }
 
   factory BookingModel.fromMap(Map<String, dynamic> map) {
+    final subjectsList = (map['subjects'] as List?)?.cast<String>() ?? [];
+    final subject = map['subject'] as String? ?? '';
+    
     return BookingModel(
       bookingId: map['bookingId'] as String,
       parentId: map['parentId'] as String,
       tutorId: map['tutorId'] as String,
-      subject: map['subject'] as String,
+      subject: subjectsList.isNotEmpty ? subjectsList.first : subject,
+      subjects: subjectsList.isNotEmpty ? subjectsList : (subject.isNotEmpty ? [subject] : []),
       bookingDate: DateTime.parse(map['bookingDate'] as String),
       bookingTime: map['bookingTime'] as String,
       status: _statusFromString(map['status'] as String?),
@@ -88,6 +129,13 @@ class BookingModel {
       updatedAt: map['updatedAt'] != null
           ? DateTime.parse(map['updatedAt'] as String)
           : null,
+      bookingType: _bookingTypeFromString(map['bookingType'] as String?),
+      startDate: map['startDate'] != null
+          ? DateTime.parse(map['startDate'] as String)
+          : null,
+      recurringDays: (map['recurringDays'] as List?)?.cast<int>(),
+      monthlyBudget: (map['monthlyBudget'] as num?)?.toDouble(),
+      childrenIds: (map['childrenIds'] as List?)?.cast<String>(),
     );
   }
 
@@ -129,6 +177,25 @@ class BookingModel {
         return BookingStatus.cancelled;
       default:
         return BookingStatus.pending;
+    }
+  }
+
+  static String _bookingTypeToString(BookingType type) {
+    switch (type) {
+      case BookingType.singleSession:
+        return 'singleSession';
+      case BookingType.monthlyBooking:
+        return 'monthlyBooking';
+    }
+  }
+
+  static BookingType _bookingTypeFromString(String? value) {
+    switch (value) {
+      case 'monthlyBooking':
+        return BookingType.monthlyBooking;
+      case 'singleSession':
+      default:
+        return BookingType.singleSession;
     }
   }
 }

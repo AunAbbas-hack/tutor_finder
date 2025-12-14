@@ -22,122 +22,136 @@ class TutorProfileScreen extends StatelessWidget {
         return vm;
       },
       child: Builder(
-        builder: (context) => Scaffold(
-          backgroundColor: AppColors.background,
-          appBar: _buildAppBar(context),
-          body: Consumer<TutorProfileViewModel>(
-          builder: (context, vm, _) {
-            if (vm.isLoading) {
-              return const Center(
-                child: CircularProgressIndicator(
-                  color: AppColors.primary,
-                ),
-              );
-            }
+        builder: (context) => Container(
+          color: AppColors.background,
+          child: Column(
+            children: [
+              // App Bar
+              _buildAppBar(context),
+              // Body Content
+              Expanded(
+                child: Consumer<TutorProfileViewModel>(
+                  builder: (context, vm, _) {
+                    if (vm.isLoading) {
+                      return const Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.primary,
+                        ),
+                      );
+                    }
 
-            if (vm.errorMessage != null) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    AppText(
-                      vm.errorMessage!,
-                      style: const TextStyle(
-                        color: AppColors.error,
-                        fontSize: 16,
+                    if (vm.errorMessage != null) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            AppText(
+                              vm.errorMessage!,
+                              style: const TextStyle(
+                                color: AppColors.error,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: () => vm.refresh(),
+                              child: const AppText('Retry'),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    return RefreshIndicator(
+                      onRefresh: () => vm.refresh(),
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Profile Summary
+                            _buildProfileSummary(vm),
+                            const SizedBox(height: 32),
+
+                            // About Me Section
+                            _buildAboutMeSection(vm),
+                            const SizedBox(height: 24),
+
+                            // Areas of Expertise Section
+                            _buildAreasOfExpertiseSection(vm),
+                            const SizedBox(height: 24),
+
+                            // Education Section
+                            _buildEducationSection(vm),
+                            const SizedBox(height: 24),
+
+                            // Certifications Section
+                            _buildCertificationsSection(vm),
+                            const SizedBox(height: 24),
+
+                            // Portfolio & Documents Section
+                            _buildPortfolioSection(vm),
+                            const SizedBox(height: 24),
+                          ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () => vm.refresh(),
-                      child: const AppText('Retry'),
-                    ),
-                  ],
-                ),
-              );
-            }
-
-            return RefreshIndicator(
-              onRefresh: () => vm.refresh(),
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Profile Summary
-                    _buildProfileSummary(vm),
-                    const SizedBox(height: 32),
-
-                    // About Me Section
-                    _buildAboutMeSection(vm),
-                    const SizedBox(height: 24),
-
-                    // Areas of Expertise Section
-                    _buildAreasOfExpertiseSection(vm),
-                    const SizedBox(height: 24),
-
-                    // Education Section
-                    _buildEducationSection(vm),
-                    const SizedBox(height: 24),
-
-                    // Certifications Section
-                    _buildCertificationsSection(vm),
-                    const SizedBox(height: 24),
-
-                    // Portfolio & Documents Section
-                    _buildPortfolioSection(vm),
-                    const SizedBox(height: 24),
-                  ],
+                    );
+                  },
                 ),
               ),
-            );
-          },
-        ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  PreferredSizeWidget _buildAppBar(BuildContext context) {
-    final canPop = Navigator.of(context).canPop();
-    return AppBar(
-      backgroundColor: AppColors.background,
-      elevation: 0,
-      leading: canPop
-          ? IconButton(
-              icon: const Icon(
-                Icons.arrow_back,
-                color: AppColors.textDark,
-              ),
-              onPressed: () => Get.back(),
-            )
-          : null,
-      title: const AppText(
-        'My Profile',
-        style: TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.w700,
-          color: AppColors.textDark,
+  Widget _buildAppBar(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.only(
+        top: MediaQuery.of(context).padding.top,
+        left: 16,
+        right: 16,
+        bottom: 12,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        border: Border(
+          bottom: BorderSide(
+            color: AppColors.border,
+            width: 1,
+          ),
         ),
       ),
-      centerTitle: false,
-      actions: [
-        IconButton(
-          icon: const Icon(
-            Icons.edit,
-            color: AppColors.primary,
+      child: Row(
+        children: [
+          const Expanded(
+            child: AppText(
+              'My Profile',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textDark,
+              ),
+            ),
           ),
-          onPressed: () async {
-            final result = await Get.to(() => const TutorProfileScreenEdit());
-            // Refresh profile if save was successful
-            if (result == true) {
-              final vm = Provider.of<TutorProfileViewModel>(context, listen: false);
-              vm.refresh();
-            }
-          },
-        ),
-      ],
+          IconButton(
+            icon: const Icon(
+              Icons.edit,
+              color: AppColors.primary,
+            ),
+            onPressed: () async {
+              final result = await Get.to(() => const TutorProfileScreenEdit());
+              // Refresh profile if save was successful
+              if (result == true) {
+                final vm = Provider.of<TutorProfileViewModel>(context, listen: false);
+                vm.refresh();
+              }
+            },
+          ),
+        ],
+      ),
     );
   }
 

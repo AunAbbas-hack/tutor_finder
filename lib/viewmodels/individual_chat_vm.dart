@@ -181,12 +181,21 @@ class IndividualChatViewModel extends ChangeNotifier {
   Future<bool> sendImageMessage(File imageFile, String? caption) async {
     try {
       _setLoading(true);
+      _errorMessage = null;
+      
+      if (_auth.currentUser == null) {
+        _errorMessage = 'User not authenticated';
+        _setLoading(false);
+        notifyListeners();
+        return false;
+      }
+      
       final chatId = _chatService.getChatId(_auth.currentUser!.uid, otherUserId);
       
       // Upload image to Firebase Storage
       final imageUrl = await _storageService.uploadImage(imageFile, chatId);
       if (imageUrl == null) {
-        _errorMessage = 'Failed to upload image';
+        _errorMessage = 'Failed to upload image. Please check Firebase Storage configuration.';
         _setLoading(false);
         notifyListeners();
         return false;
@@ -203,7 +212,9 @@ class IndividualChatViewModel extends ChangeNotifier {
       _setLoading(false);
       return true;
     } catch (e) {
-      _errorMessage = 'Failed to send image: ${e.toString()}';
+      _errorMessage = e.toString().contains('Storage is not configured')
+          ? 'Firebase Storage is not enabled. Please enable it in Firebase Console.'
+          : 'Failed to send image: ${e.toString()}';
       _setLoading(false);
       notifyListeners();
       return false;
@@ -214,12 +225,21 @@ class IndividualChatViewModel extends ChangeNotifier {
   Future<bool> sendFileMessage(File file, String fileName) async {
     try {
       _setLoading(true);
+      _errorMessage = null;
+      
+      if (_auth.currentUser == null) {
+        _errorMessage = 'User not authenticated';
+        _setLoading(false);
+        notifyListeners();
+        return false;
+      }
+      
       final chatId = _chatService.getChatId(_auth.currentUser!.uid, otherUserId);
       
       // Upload file to Firebase Storage
       final fileUrl = await _storageService.uploadFile(file, chatId, fileName);
       if (fileUrl == null) {
-        _errorMessage = 'Failed to upload file';
+        _errorMessage = 'Failed to upload file. Please check Firebase Storage configuration.';
         _setLoading(false);
         notifyListeners();
         return false;
@@ -239,7 +259,9 @@ class IndividualChatViewModel extends ChangeNotifier {
       _setLoading(false);
       return true;
     } catch (e) {
-      _errorMessage = 'Failed to send file: ${e.toString()}';
+      _errorMessage = e.toString().contains('Storage is not configured')
+          ? 'Firebase Storage is not enabled. Please enable it in Firebase Console.'
+          : 'Failed to send file: ${e.toString()}';
       _setLoading(false);
       notifyListeners();
       return false;

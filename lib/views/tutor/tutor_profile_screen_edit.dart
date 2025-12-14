@@ -6,7 +6,6 @@ import '../../core/theme/app_colors.dart';
 import '../../core/widgets/app_text.dart';
 import '../../core/widgets/app_textfield.dart';
 import '../../tutor_viewmodels/tutor_profile_edit_vm.dart';
-import '../../core/utils/debug_logger.dart';
 
 class TutorProfileScreenEdit extends StatelessWidget {
   const TutorProfileScreenEdit({super.key});
