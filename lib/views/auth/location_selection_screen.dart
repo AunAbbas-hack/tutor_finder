@@ -10,6 +10,7 @@ import '../../core/widgets/app_textfield.dart';
 import '../../parent_viewmodels/auth_vm.dart';
 import '../../parent_viewmodels/location_vm.dart';
 import '../../parent_viewmodels/parent_signup_vm.dart';
+import 'login_screen.dart';
 
 
 class LocationSelectionScreen extends StatelessWidget {
@@ -24,21 +25,38 @@ class LocationSelectionScreen extends StatelessWidget {
   /// Button text (default: "Save")
   final String buttonLabel;
 
+  /// If true, returns location data via Navigator.pop instead of navigating
+  final bool returnLocation;
+
+  /// Initial location to display (for editing existing location)
+  final double? initialLatitude;
+  final double? initialLongitude;
+  final String? initialAddress;
+
   const LocationSelectionScreen({
     super.key,
     this.showStepIndicator = false,
     this.stepIndex,
     this.buttonLabel = 'Save',
+    this.returnLocation = false,
+    this.initialLatitude,
+    this.initialLongitude,
+    this.initialAddress,
   });
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => LocationViewModel(),
+      create: (_) => LocationViewModel(
+        initialLatitude: initialLatitude,
+        initialLongitude: initialLongitude,
+        initialAddress: initialAddress,
+      ),
       child: _LocationSelectionView(
         showStepIndicator: showStepIndicator,
         stepIndex: stepIndex,
         buttonLabel: buttonLabel,
+        returnLocation: returnLocation,
       ),
     );
   }
@@ -48,11 +66,13 @@ class _LocationSelectionView extends StatelessWidget {
   final bool showStepIndicator;
   final int? stepIndex;
   final String buttonLabel;
+  final bool returnLocation;
 
   const _LocationSelectionView({
     required this.showStepIndicator,
     required this.stepIndex,
     required this.buttonLabel,
+    required this.returnLocation,
   });
 
   /// Build markers for the map
@@ -89,7 +109,7 @@ class _LocationSelectionView extends StatelessWidget {
         showStepIndicator ? context.watch<ParentSignupViewModel>() : null;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.lightBackground,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.textDark),
@@ -195,9 +215,9 @@ class _LocationSelectionView extends StatelessWidget {
                       width: 1,
                     ),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
                       if (vm.isLoadingLocation)
                         const SizedBox(
                           width: 20,
@@ -208,22 +228,22 @@ class _LocationSelectionView extends StatelessWidget {
                           ),
                         )
                       else
-                        Icon(
-                          Icons.my_location,
-                          color: AppColors.primary,
-                          size: 20,
-                        ),
-                      const SizedBox(width: 8),
-                      AppText(
-                        vm.isLoadingLocation
-                            ? 'Detecting your location...'
-                            : 'Use My Current Location',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w600,
-                        ),
+                    Icon(
+                      Icons.my_location,
+                      color: AppColors.primary,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    AppText(
+                      vm.isLoadingLocation
+                          ? 'Detecting your location...'
+                          : 'Use My Current Location',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w600,
                       ),
-                    ],
+                    ),
+                  ],
                   ),
                 ),
               ),
@@ -280,7 +300,7 @@ class _LocationSelectionView extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.lightBackground,
+                  color: AppColors.lightBackground,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -292,15 +312,15 @@ class _LocationSelectionView extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       Expanded(
-                        child: AppText(
+                  child: AppText(
                           vm.selectedAddress!,
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: AppColors.textDark,
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
+                ),
+                    ],
+              ),
                 ),
               ],
               const SizedBox(height: 24),
@@ -350,10 +370,10 @@ class _LocationSelectionView extends StatelessWidget {
                 label: buttonLabel,
                 isLoading: showStepIndicator
                     ? (pvm?.isLoading ?? false)
-                    : vm1.isLoading,
+                    : (returnLocation ? false : vm1.isLoading),
                 isDisabled: showStepIndicator
                     ? !(vm.canSave && (pvm?.isStep3Valid ?? false))
-                    : !vm1.canSubmitParentSignup,
+                    : (returnLocation ? !vm.canSave : !vm1.canSubmitParentSignup),
                 onPressed: () async {
                   if (showStepIndicator && pvm != null) {
                     // Parent 4-step flow: Use ParentSignupViewModel
@@ -383,9 +403,10 @@ class _LocationSelectionView extends StatelessWidget {
                     if (!context.mounted) return;
 
                     if (ok) {
-                      // Success - navigate to home/dashboard
-                      Navigator.of(context).pushNamedAndRemoveUntil(
-                        '/parent-home',
+                      // Success - navigate to login screen (parent needs to login)
+                      if (!context.mounted) return;
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(builder: (context) => const LoginScreen()),
                         (route) => false,
                       );
                     } else if (pvm.errorMessage != null) {
@@ -401,6 +422,33 @@ class _LocationSelectionView extends StatelessWidget {
                         icon: const Icon(Icons.error, color: Colors.white),
                       );
                     }
+                  } else if (returnLocation) {
+                    // Return location data for editing (e.g., tutor profile edit)
+                    final lat = double.tryParse(vm.latitude);
+                    final lng = double.tryParse(vm.longitude);
+
+                    if (lat == null || lng == null) {
+                      Get.snackbar(
+                        'Invalid Input',
+                        'Please enter valid coordinates.',
+                        snackPosition: SnackPosition.BOTTOM,
+                        backgroundColor: AppColors.error,
+                        colorText: Colors.white,
+                        borderRadius: 12,
+                        margin: const EdgeInsets.all(16),
+                        duration: const Duration(seconds: 3),
+                        icon: const Icon(Icons.error, color: Colors.white),
+                      );
+                      return;
+                    }
+
+                    // Return location data
+                    if (!context.mounted) return;
+                    Navigator.of(context).pop({
+                      'latitude': lat,
+                      'longitude': lng,
+                      'address': vm.selectedAddress,
+                    });
                   } else {
                     // Simple parent signup (not from 4-step flow)
                     vm1.updateParentFullName(vm1.parentFullName);
@@ -422,9 +470,10 @@ class _LocationSelectionView extends StatelessWidget {
                     if (!context.mounted) return;
 
                     if (ok) {
-                      // Success - navigate to home
-                      Navigator.of(context).pushNamedAndRemoveUntil(
-                        '/parent-home',
+                      // Success - navigate to login screen (parent needs to login)
+                      if (!context.mounted) return;
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(builder: (context) => const LoginScreen()),
                         (route) => false,
                       );
                     } else if (vm1.errorMessage != null) {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:get/get.dart';
-import 'package:tutor_finder/views/tutor/tutor_dashboard_screen.dart';
+import 'package:tutor_finder/views/tutor/tutor_main_screen.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_primary_button.dart';
@@ -65,7 +65,7 @@ class _TutorSignupViewState extends State<_TutorSignupView> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.lightBackground,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.textDark),
@@ -275,7 +275,12 @@ class _TutorSignupViewState extends State<_TutorSignupView> {
                   if (!context.mounted) return;
 
                   if (ok) {
-                    Navigator.push(context, MaterialPageRoute(builder: (context)=>TutorDashboardScreen()));
+                    // Navigate to tutor main screen and clear navigation stack
+                    // This ensures bottom navigation bar shows immediately
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (context) => const TutorMainScreen()),
+                      (route) => false,
+                    );
                   } else if (vm.errorMessage != null) {
                     Get.snackbar(
                       'Error',

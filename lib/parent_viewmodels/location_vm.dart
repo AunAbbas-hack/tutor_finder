@@ -20,6 +20,23 @@ class LocationViewModel extends ChangeNotifier {
     zoom: 2.0, // Zoomed out to show world map
   );
 
+  LocationViewModel({double? initialLatitude, double? initialLongitude, String? initialAddress}) {
+    if (initialLatitude != null && initialLongitude != null) {
+      _latitude = initialLatitude.toStringAsFixed(6);
+      _longitude = initialLongitude.toStringAsFixed(6);
+      _selectedAddress = initialAddress;
+      _hasUserSelectedLocation = true;
+      _cameraPosition = CameraPosition(
+        target: LatLng(initialLatitude, initialLongitude),
+        zoom: 14.0,
+      );
+      // Fetch address if not provided
+      if (initialAddress == null) {
+        _getAddressFromCoordinates(initialLatitude, initialLongitude);
+      }
+    }
+  }
+
   String get searchQuery => _searchQuery;
   String get latitude => _latitude;
   String get longitude => _longitude;

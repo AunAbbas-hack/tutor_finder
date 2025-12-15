@@ -26,7 +26,7 @@ class _TutorSessionScreenState extends State<TutorSessionScreen> {
         return vm;
       },
       child: Container(
-        color: AppColors.background,
+        color: AppColors.lightBackground,
         child: SafeArea(
           child: Consumer<TutorSessionViewModel>(
             builder: (context, vm, _) {

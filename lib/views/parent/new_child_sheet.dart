@@ -428,7 +428,7 @@ class _NewChildSheetState extends State<NewChildSheet> {
   void _showSubjectPicker(BuildContext context, NewChildSheetViewModel vm) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.lightBackground,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),

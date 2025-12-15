@@ -48,28 +48,48 @@ class TutorProfileViewModel extends ChangeNotifier {
   String _professionalHeadline = '';
   String _aboutMe = '';
   List<String> _areasOfExpertise = [];
-  String _education = '';
+  List<EducationEntry> _education = [];
   List<CertificationEntry> _certifications = [];
   List<PortfolioDocument> _portfolioDocuments = [];
+
+  // Location fields
+  double? _latitude;
+  double? _longitude;
+  String? _selectedAddress;
 
   // Certification input fields
   String _certificationTitle = '';
   String _certificationIssuer = '';
   String _certificationYear = '';
 
+  // Education input fields
+  String _educationDegree = '';
+  String _educationInstitution = '';
+  String _educationPeriod = '';
+
   // Getters
   String get fullName => _fullName;
   String get professionalHeadline => _professionalHeadline;
   String get aboutMe => _aboutMe;
   List<String> get areasOfExpertise => _areasOfExpertise;
-  String get education => _education;
+  List<EducationEntry> get education => _education;
   List<CertificationEntry> get certifications => _certifications;
   List<PortfolioDocument> get portfolioDocuments => _portfolioDocuments;
+  
+  // Location getters
+  double? get latitude => _latitude;
+  double? get longitude => _longitude;
+  String? get selectedAddress => _selectedAddress;
   
   // Certification input getters
   String get certificationTitle => _certificationTitle;
   String get certificationIssuer => _certificationIssuer;
   String get certificationYear => _certificationYear;
+
+  // Education input getters
+  String get educationDegree => _educationDegree;
+  String get educationInstitution => _educationInstitution;
+  String get educationPeriod => _educationPeriod;
 
   // Expandable sections state
   bool _isExpertiseExpanded = true;
@@ -117,7 +137,10 @@ class TutorProfileViewModel extends ChangeNotifier {
       _professionalHeadline = _tutor!.qualification ?? '';
       _aboutMe = _tutor!.bio ?? '';
       _areasOfExpertise = List<String>.from(_tutor!.subjects);
-      _education = _tutor!.qualification ?? '';
+      _education = List<EducationEntry>.from(_tutor!.education);
+      // Location
+      _latitude = _user!.latitude;
+      _longitude = _user!.longitude;
       // Certifications and portfolio
       _certifications = List<CertificationEntry>.from(_tutor!.certifications);
       _portfolioDocuments = List<PortfolioDocument>.from(_tutor!.portfolioDocuments);
@@ -145,8 +168,57 @@ class TutorProfileViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void updateEducation(String value) {
-    _education = value;
+  // Education input methods
+  void updateEducationDegree(String value) {
+    _educationDegree = value;
+    notifyListeners();
+  }
+
+  void updateEducationInstitution(String value) {
+    _educationInstitution = value;
+    notifyListeners();
+  }
+
+  void updateEducationPeriod(String value) {
+    _educationPeriod = value;
+    notifyListeners();
+  }
+
+  void addEducation() {
+    if (_educationDegree.trim().isNotEmpty && _educationInstitution.trim().isNotEmpty) {
+      final education = EducationEntry(
+        degree: _educationDegree.trim(),
+        institution: _educationInstitution.trim(),
+        period: _educationPeriod.trim().isNotEmpty 
+            ? _educationPeriod.trim() 
+            : 'N/A',
+      );
+      _education.add(education);
+      // Clear input fields
+      _educationDegree = '';
+      _educationInstitution = '';
+      _educationPeriod = '';
+      notifyListeners();
+    }
+  }
+
+  void removeEducation(EducationEntry education) {
+    _education.remove(education);
+    notifyListeners();
+  }
+
+  // Location update methods
+  void updateLocation(double lat, double lng, String? address) {
+    _latitude = lat;
+    _longitude = lng;
+    _selectedAddress = address;
+    notifyListeners();
+  }
+
+  void clearLocation() {
+    _latitude = null;
+    _longitude = null;
+    _selectedAddress = null;
     notifyListeners();
   }
 
@@ -293,21 +365,34 @@ class TutorProfileViewModel extends ChangeNotifier {
     _errorMessage = null;
 
     try {
-      // Update user name
-      final updatedUser = _user!.copyWith(name: _fullName);
+      // Update user name and location
+      final updatedUser = _user!.copyWith(
+        name: _fullName,
+        latitude: _latitude,
+        longitude: _longitude,
+      );
       await _userService.updateUser(updatedUser);
       _user = updatedUser;
 
       // Certifications are already CertificationEntry objects
 
       // Update tutor data
+      // Ensure education list is properly set (even if empty, it should be an empty list, not null)
       final updatedTutor = _tutor!.copyWith(
         subjects: _areasOfExpertise,
         qualification: _professionalHeadline.isNotEmpty ? _professionalHeadline : null,
         bio: _aboutMe.isNotEmpty ? _aboutMe : null,
+        education: _education, // This should be a list (empty or with items)
         certifications: certifications,
         portfolioDocuments: _portfolioDocuments,
       );
+      
+      // Debug: Print education list before saving
+      print('DEBUG: Saving education list with ${_education.length} items');
+      for (var edu in _education) {
+        print('DEBUG: Education - ${edu.degree} from ${edu.institution}');
+      }
+      
       await _tutorService.updateTutor(updatedTutor);
       _tutor = updatedTutor;
 

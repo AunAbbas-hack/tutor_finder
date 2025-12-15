@@ -6,6 +6,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/widgets/app_text.dart';
 import '../../core/widgets/app_textfield.dart';
 import '../../tutor_viewmodels/tutor_profile_edit_vm.dart';
+import '../auth/location_selection_screen.dart';
 
 class TutorProfileScreenEdit extends StatelessWidget {
   const TutorProfileScreenEdit({super.key});
@@ -36,17 +37,20 @@ class _TutorProfileScreenState extends State<_TutorProfileView> {
   late TextEditingController _fullNameController;
   late TextEditingController _headlineController;
   late TextEditingController _aboutMeController;
-  late TextEditingController _educationController;
+  late TextEditingController _educationDegreeController;
+  late TextEditingController _educationInstitutionController;
+  late TextEditingController _educationPeriodController;
   late TextEditingController _expertiseController;
   late TextEditingController _certificationTitleController;
   late TextEditingController _certificationIssuerController;
   late TextEditingController _certificationYearController;
-  late TextEditingController _portfolioFileNameController;
 
   late FocusNode _fullNameFocusNode;
   late FocusNode _headlineFocusNode;
   late FocusNode _aboutMeFocusNode;
-  late FocusNode _educationFocusNode;
+  late FocusNode _educationDegreeFocusNode;
+  late FocusNode _educationInstitutionFocusNode;
+  late FocusNode _educationPeriodFocusNode;
   late FocusNode _expertiseFocusNode;
   late FocusNode _certificationTitleFocusNode;
   late FocusNode _certificationIssuerFocusNode;
@@ -58,17 +62,20 @@ class _TutorProfileScreenState extends State<_TutorProfileView> {
     _fullNameController = TextEditingController();
     _headlineController = TextEditingController();
     _aboutMeController = TextEditingController();
-    _educationController = TextEditingController();
+    _educationDegreeController = TextEditingController();
+    _educationInstitutionController = TextEditingController();
+    _educationPeriodController = TextEditingController();
     _expertiseController = TextEditingController();
     _certificationTitleController = TextEditingController();
     _certificationIssuerController = TextEditingController();
     _certificationYearController = TextEditingController();
-    _portfolioFileNameController = TextEditingController();
 
     _fullNameFocusNode = FocusNode();
     _headlineFocusNode = FocusNode();
     _aboutMeFocusNode = FocusNode();
-    _educationFocusNode = FocusNode();
+    _educationDegreeFocusNode = FocusNode();
+    _educationInstitutionFocusNode = FocusNode();
+    _educationPeriodFocusNode = FocusNode();
     _expertiseFocusNode = FocusNode();
     _certificationTitleFocusNode = FocusNode();
     _certificationIssuerFocusNode = FocusNode();
@@ -86,9 +93,6 @@ class _TutorProfileScreenState extends State<_TutorProfileView> {
       if (_aboutMeController.text != vm.aboutMe) {
         _aboutMeController.text = vm.aboutMe;
       }
-      if (_educationController.text != vm.education) {
-        _educationController.text = vm.education;
-      }
     }
   }
 
@@ -97,17 +101,20 @@ class _TutorProfileScreenState extends State<_TutorProfileView> {
     _fullNameController.dispose();
     _headlineController.dispose();
     _aboutMeController.dispose();
-    _educationController.dispose();
+    _educationDegreeController.dispose();
+    _educationInstitutionController.dispose();
+    _educationPeriodController.dispose();
     _expertiseController.dispose();
     _certificationTitleController.dispose();
     _certificationIssuerController.dispose();
     _certificationYearController.dispose();
-    _portfolioFileNameController.dispose();
 
     _fullNameFocusNode.dispose();
     _headlineFocusNode.dispose();
     _aboutMeFocusNode.dispose();
-    _educationFocusNode.dispose();
+    _educationDegreeFocusNode.dispose();
+    _educationInstitutionFocusNode.dispose();
+    _educationPeriodFocusNode.dispose();
     _expertiseFocusNode.dispose();
     _certificationTitleFocusNode.dispose();
     _certificationIssuerFocusNode.dispose();
@@ -119,9 +126,9 @@ class _TutorProfileScreenState extends State<_TutorProfileView> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.lightBackground,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.lightBackground,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.textDark),
@@ -209,6 +216,10 @@ class _TutorProfileScreenState extends State<_TutorProfileView> {
                   _buildAboutMeField(vm),
                   const SizedBox(height: 24),
 
+                  // Location
+                  _buildLocationSection(vm, context),
+                  const SizedBox(height: 24),
+
                   // Areas of Expertise
                   _buildExpertiseSection(vm),
                   const SizedBox(height: 24),
@@ -290,6 +301,124 @@ class _TutorProfileScreenState extends State<_TutorProfileView> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildLocationSection(TutorProfileViewModel vm, BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AppText(
+          'Location',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+        ),
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: () async {
+            // Navigate to location selection screen with current location
+            final result = await Navigator.of(context).push<Map<String, dynamic>>(
+              MaterialPageRoute(
+                builder: (context) => LocationSelectionScreen(
+                  showStepIndicator: false,
+                  buttonLabel: 'Update Location',
+                  returnLocation: true,
+                  initialLatitude: vm.latitude,
+                  initialLongitude: vm.longitude,
+                  initialAddress: vm.selectedAddress,
+                ),
+              ),
+            );
+
+            // If location was selected, update the viewmodel
+            if (result != null) {
+              final lat = result['latitude'] as double?;
+              final lng = result['longitude'] as double?;
+              final address = result['address'] as String?;
+              
+              if (lat != null && lng != null) {
+                vm.updateLocation(lat, lng, address);
+              }
+            }
+          },
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.lightBackground,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.location_on,
+                  color: AppColors.primary,
+                  size: 24,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AppText(
+                        vm.selectedAddress ?? 
+                        (vm.latitude != null && vm.longitude != null
+                            ? 'Location set (${vm.latitude!.toStringAsFixed(4)}, ${vm.longitude!.toStringAsFixed(4)})'
+                            : 'Tap to select location'),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textDark,
+                        ),
+                      ),
+                      if (vm.selectedAddress == null && vm.latitude != null && vm.longitude != null)
+                        const AppText(
+                          'Primary Teaching Area',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textGrey,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  size: 16,
+                  color: AppColors.iconGrey,
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (vm.latitude != null && vm.longitude != null) ...[
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: AppText(
+                  'Lat: ${vm.latitude!.toStringAsFixed(6)}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textGrey,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: AppText(
+                  'Lng: ${vm.longitude!.toStringAsFixed(6)}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textGrey,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
     );
   }
 
@@ -494,14 +623,127 @@ class _TutorProfileScreenState extends State<_TutorProfileView> {
         ),
         if (vm.isEducationExpanded) ...[
           const SizedBox(height: 12),
+          // Existing education entries
+          if (vm.education.isNotEmpty)
+            Column(
+              children: vm.education.map((education) {
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.lightBackground,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            AppText(
+                              education.degree,
+                              style: const TextStyle(
+                                color: AppColors.textDark,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            ),
+                            if (education.institution.isNotEmpty) ...[
+                              const SizedBox(height: 2),
+                              AppText(
+                                education.institution,
+                                style: const TextStyle(
+                                  color: AppColors.textDark,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                            if (education.period.isNotEmpty) ...[
+                              const SizedBox(height: 2),
+                              AppText(
+                                education.period,
+                                style: const TextStyle(
+                                  color: AppColors.textGrey,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.close,
+                          size: 20,
+                          color: AppColors.error,
+                        ),
+                        onPressed: () => vm.removeEducation(education),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+          const SizedBox(height: 12),
+          // Education input fields
           AppTextField(
-            label: '',
-            hintText: 'Enter your education details',
-            controller: _educationController,
-            focusNode: _educationFocusNode,
-            onChanged: (value) {
-              vm.updateEducation(value);
-            },
+            label: 'Degree',
+            hintText: 'e.g., BSCS, PhD',
+            controller: _educationDegreeController,
+            focusNode: _educationDegreeFocusNode,
+            onChanged: vm.updateEducationDegree,
+            textInputAction: TextInputAction.next,
+          ),
+          const SizedBox(height: 8),
+          AppTextField(
+            label: 'Institution',
+            hintText: 'e.g., MIT, Stanford University',
+            controller: _educationInstitutionController,
+            focusNode: _educationInstitutionFocusNode,
+            onChanged: vm.updateEducationInstitution,
+            textInputAction: TextInputAction.next,
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: AppTextField(
+                  label: 'Period',
+                  hintText: 'e.g., 2015 - 2019',
+                  controller: _educationPeriodController,
+                  focusNode: _educationPeriodFocusNode,
+                  onChanged: vm.updateEducationPeriod,
+                  textInputAction: TextInputAction.done,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppColors.border,
+                    width: 1,
+                  ),
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.add, color: AppColors.primary),
+                  onPressed: () {
+                    if (_educationDegreeController.text.trim().isNotEmpty &&
+                        _educationInstitutionController.text.trim().isNotEmpty) {
+                      vm.addEducation();
+                      _educationDegreeController.clear();
+                      _educationInstitutionController.clear();
+                      _educationPeriodController.clear();
+                      _educationDegreeFocusNode.unfocus();
+                    }
+                  },
+                ),
+              ),
+            ],
           ),
         ],
       ],
@@ -801,81 +1043,51 @@ class _TutorProfileScreenState extends State<_TutorProfileView> {
               }).toList(),
             ),
           const SizedBox(height: 12),
-          // Portfolio input field and upload button
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _portfolioFileNameController,
-                  textInputAction: TextInputAction.done,
-                  decoration: InputDecoration(
-                    hintText: 'Add document',
-                    hintStyle: TextStyle(color: Colors.grey[600]),
-                    filled: true,
-                    fillColor: const Color(0xFFF5F6FA),
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(
-                        color: AppColors.primary,
-                        width: 2,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
+          // Portfolio upload button
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: vm.isLoading
+                  ? null
+                  : () async {
+                      // Upload file
+                      final success = await vm.uploadPortfolioDocument();
+                      if (success) {
+                        Get.snackbar(
+                          'Success',
+                          'Document uploaded successfully',
+                          snackPosition: SnackPosition.BOTTOM,
+                          backgroundColor: AppColors.success,
+                          colorText: Colors.white,
+                          duration: const Duration(seconds: 2),
+                        );
+                      } else if (vm.errorMessage != null) {
+                        Get.snackbar(
+                          'Error',
+                          vm.errorMessage!,
+                          snackPosition: SnackPosition.BOTTOM,
+                          backgroundColor: AppColors.error,
+                          colorText: Colors.white,
+                          duration: const Duration(seconds: 3),
+                        );
+                      }
+                    },
+              icon: const Icon(Icons.add, color: Colors.white),
+              label: const AppText(
+                'Add Document',
+                style: TextStyle(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: AppColors.border,
-                    width: 1,
-                  ),
-                ),
-                child: IconButton(
-                  icon: const Icon(Icons.add, color: AppColors.primary),
-                  onPressed: vm.isLoading
-                      ? null
-                      : () async {
-                          // Upload file
-                          final success = await vm.uploadPortfolioDocument();
-                          if (success) {
-                            _portfolioFileNameController.clear();
-                            Get.snackbar(
-                              'Success',
-                              'Document uploaded successfully',
-                              snackPosition: SnackPosition.BOTTOM,
-                              backgroundColor: AppColors.success,
-                              colorText: Colors.white,
-                              duration: const Duration(seconds: 2),
-                            );
-                          } else if (vm.errorMessage != null) {
-                            Get.snackbar(
-                              'Error',
-                              vm.errorMessage!,
-                              snackPosition: SnackPosition.BOTTOM,
-                              backgroundColor: AppColors.error,
-                              colorText: Colors.white,
-                              duration: const Duration(seconds: 3),
-                            );
-                          }
-                        },
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-            ],
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
           ),
         ],
       ],

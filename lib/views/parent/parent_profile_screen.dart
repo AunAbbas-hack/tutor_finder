@@ -36,7 +36,7 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
         return vm;
       },
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.lightBackground,
         body: SafeArea(
           child: Consumer<ParentProfileViewModel>(
             builder: (context, vm, _) {

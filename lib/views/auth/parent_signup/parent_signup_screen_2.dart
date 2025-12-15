@@ -19,7 +19,7 @@ class ParentChildDetailsStepScreen extends StatelessWidget {
         final theme = Theme.of(context);
 
         return Scaffold(
-          backgroundColor: AppColors.background,
+          backgroundColor: AppColors.lightBackground,
           appBar: AppBar(
             leading: IconButton(
               icon: const Icon(Icons.arrow_back, color: AppColors.textDark),

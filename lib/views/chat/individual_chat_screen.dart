@@ -94,7 +94,7 @@ class _IndividualChatScreenState extends State<IndividualChatScreen> {
       child: Consumer<IndividualChatViewModel>(
         builder: (context, vm, child) {
     return Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.lightBackground,
             appBar: _buildAppBar(vm),
             body: Column(
               children: [
@@ -117,7 +117,7 @@ class _IndividualChatScreenState extends State<IndividualChatScreen> {
     final isOnline = vm.isOtherUserOnline;
 
     return AppBar(
-          backgroundColor: AppColors.background,
+          backgroundColor: AppColors.lightBackground,
           elevation: 0,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: AppColors.textDark),

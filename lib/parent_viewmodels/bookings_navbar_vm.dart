@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../data/models/booking_model.dart';
@@ -43,6 +44,10 @@ class BookingsNavbarViewModel extends ChangeNotifier {
   List<BookingDisplayModel> _approvedBookings = [];
   List<BookingDisplayModel> _rejectedBookings = [];
 
+  // Timer management for cancellations
+  final Map<String, Timer> _cancellationTimers = {};
+  final Map<String, bool> _pendingCancellations = {};
+
   // Getters
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
@@ -67,12 +72,27 @@ class BookingsNavbarViewModel extends ChangeNotifier {
   Future<void> initialize() async {
     _setLoading(true);
     try {
+      // Apply any pending cancellations before loading
+      await _applyPendingCancellations();
       await loadBookings();
     } catch (e) {
       _errorMessage = 'Failed to load bookings: ${e.toString()}';
     } finally {
       _setLoading(false);
     }
+  }
+
+  // ---------- Apply Pending Cancellations ----------
+  Future<void> _applyPendingCancellations() async {
+    // Cancel all timers and apply cancellations
+    for (final entry in _pendingCancellations.entries) {
+      if (entry.value == true) {
+        _cancellationTimers[entry.key]?.cancel();
+        await cancelBooking(entry.key);
+      }
+    }
+    _pendingCancellations.clear();
+    _cancellationTimers.clear();
   }
 
   // ---------- Load Bookings ----------
@@ -176,6 +196,55 @@ class BookingsNavbarViewModel extends ChangeNotifier {
     }
   }
 
+  // ---------- Cancel Booking with Timer ----------
+  Future<void> cancelBookingWithTimer(String bookingId) async {
+    // Cancel any existing timer for this booking
+    _cancellationTimers[bookingId]?.cancel();
+    
+    // Mark as pending cancellation
+    _pendingCancellations[bookingId] = true;
+    notifyListeners();
+
+    // Start 5 second timer
+    _cancellationTimers[bookingId] = Timer(const Duration(seconds: 5), () async {
+      // Check if still pending cancellation (not restored)
+      if (_pendingCancellations[bookingId] == true) {
+        // Actually cancel the booking
+        await cancelBooking(bookingId);
+        _pendingCancellations.remove(bookingId);
+      }
+      _cancellationTimers.remove(bookingId);
+      notifyListeners();
+    });
+  }
+
+  // ---------- Restore Booking to Pending ----------
+  Future<bool> restoreBookingToPending(String bookingId) async {
+    try {
+      // Cancel any pending cancellation timer
+      _cancellationTimers[bookingId]?.cancel();
+      _cancellationTimers.remove(bookingId);
+      _pendingCancellations.remove(bookingId);
+      
+      _setLoading(true);
+      await _bookingService.updateBookingStatus(bookingId, BookingStatus.pending);
+      await loadBookings(); // Reload bookings
+      _setLoading(false);
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _setLoading(false);
+      _errorMessage = 'Failed to restore booking: ${e.toString()}';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // Check if booking is pending cancellation
+  bool isPendingCancellation(String bookingId) {
+    return _pendingCancellations[bookingId] == true;
+  }
+
   // ---------- Helpers ----------
   void _setLoading(bool value) {
     _isLoading = value;
@@ -185,6 +254,17 @@ class BookingsNavbarViewModel extends ChangeNotifier {
   void clearError() {
     _errorMessage = null;
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    // Cancel all timers on dispose
+    for (final timer in _cancellationTimers.values) {
+      timer.cancel();
+    }
+    _cancellationTimers.clear();
+    _pendingCancellations.clear();
+    super.dispose();
   }
 }
 

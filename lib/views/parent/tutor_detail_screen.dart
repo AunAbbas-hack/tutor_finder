@@ -30,7 +30,7 @@ class TutorDetailScreen extends StatelessWidget {
         return vm;
       },
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.lightBackground,
         body: Consumer<TutorDetailViewModel>(
           builder: (context, vm, child) {
             if (vm.isLoading && vm.tutor == null) {
@@ -62,7 +62,7 @@ class TutorDetailScreen extends StatelessWidget {
               slivers: [
                 // App Bar
                 SliverAppBar(
-                  backgroundColor: AppColors.background,
+                  backgroundColor: AppColors.lightBackground,
                   elevation: 0,
                   leading: IconButton(
                     icon: const Icon(Icons.arrow_back, color: AppColors.textDark),
@@ -731,14 +731,14 @@ class TutorDetailScreen extends StatelessWidget {
       if (kDebugMode) {
         print('Tutor or TutorUser is null. Tutor: ${vm.tutor != null}, TutorUser: ${vm.tutorUser != null}');
       }
-      Get.snackbar(
+    Get.snackbar(
         'Error',
         'Tutor information not loaded. Please wait...',
-        snackPosition: SnackPosition.BOTTOM,
+      snackPosition: SnackPosition.BOTTOM,
         backgroundColor: AppColors.error,
-        colorText: Colors.white,
+      colorText: Colors.white,
         duration: const Duration(seconds: 3),
-      );
+    );
     }
   }
 

@@ -17,7 +17,7 @@ class TutorBookingRequestsScreen extends StatelessWidget {
         return vm;
       },
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.lightBackground,
         appBar: AppBar(
           leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: AppColors.textDark),
@@ -33,7 +33,7 @@ class TutorBookingRequestsScreen extends StatelessWidget {
           ),
           centerTitle: true,
           elevation: 0,
-          backgroundColor: AppColors.background,
+          backgroundColor: AppColors.lightBackground,
         ),
         body: Consumer<TutorBookingRequestsViewModel>(
           builder: (context, vm, _) {

@@ -23,7 +23,7 @@ class TutorProfileScreen extends StatelessWidget {
       },
       child: Builder(
         builder: (context) => Container(
-          color: AppColors.background,
+          color: AppColors.lightBackground,
           child: Column(
             children: [
               // App Bar
@@ -68,7 +68,7 @@ class TutorProfileScreen extends StatelessWidget {
                         physics: const AlwaysScrollableScrollPhysics(),
                         padding: const EdgeInsets.all(20),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          // crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             // Profile Summary
                             _buildProfileSummary(vm),
@@ -78,20 +78,34 @@ class TutorProfileScreen extends StatelessWidget {
                             _buildAboutMeSection(vm),
                             const SizedBox(height: 24),
 
+                            // Location Section
+                            if (vm.hasLocation) ...[
+                              _buildLocationSection(vm),
+                              const SizedBox(height: 24),
+                            ],
+
                             // Areas of Expertise Section
-                            _buildAreasOfExpertiseSection(vm),
+                            Align(
+                                alignment: Alignment.topLeft
+                               , child: _buildAreasOfExpertiseSection(vm)),
                             const SizedBox(height: 24),
 
                             // Education Section
-                            _buildEducationSection(vm),
+                            Align(
+                                alignment: Alignment.topLeft,
+                                child: _buildEducationSection(vm)),
                             const SizedBox(height: 24),
 
                             // Certifications Section
-                            _buildCertificationsSection(vm),
+                            Align(
+                                alignment: Alignment.topLeft,
+                                child: _buildCertificationsSection(vm)),
                             const SizedBox(height: 24),
 
                             // Portfolio & Documents Section
-                            _buildPortfolioSection(vm),
+                            Align(
+                                alignment: Alignment.topLeft,
+                                child: _buildPortfolioSection(vm)),
                             const SizedBox(height: 24),
                           ],
                         ),
@@ -148,6 +162,11 @@ class TutorProfileScreen extends StatelessWidget {
                 final vm = Provider.of<TutorProfileViewModel>(context, listen: false);
                 vm.refresh();
               }
+              // Refresh profile if save was successful
+              if (result == true) {
+                final vm = Provider.of<TutorProfileViewModel>(context, listen: false);
+                vm.refresh();
+              }
             },
           ),
         ],
@@ -158,6 +177,7 @@ class TutorProfileScreen extends StatelessWidget {
   Widget _buildProfileSummary(TutorProfileViewModel vm) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         // Profile Picture
         Container(
@@ -251,12 +271,12 @@ class TutorProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAreasOfExpertiseSection(TutorProfileViewModel vm) {
+  Widget _buildLocationSection(TutorProfileViewModel vm) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const AppText(
-          'Areas of Expertise',
+          'Location',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
@@ -264,43 +284,127 @@ class TutorProfileScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        if (vm.areasOfExpertise.isEmpty)
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.lightBackground,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: AppText(
-              'No areas of expertise added.',
-              style: TextStyle(
-                fontSize: 14,
-                color: AppColors.textGrey,
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.background,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.shadow,
+                blurRadius: 8,
+                offset: const Offset(0, 2),
               ),
-            ),
-          )
-        else
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: vm.areasOfExpertise.map((subject) {
-              return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: AppText(
-                  subject,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              );
-            }).toList(),
+            ],
           ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.location_on,
+                color: AppColors.primary,
+                size: 24,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AppText(
+                      vm.locationAddress ?? 
+                      (vm.latitude != null && vm.longitude != null
+                          ? '${vm.latitude!.toStringAsFixed(6)}, ${vm.longitude!.toStringAsFixed(6)}'
+                          : 'Location not set'),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textDark,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const AppText(
+                      'Primary Teaching Area',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textGrey,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAreasOfExpertiseSection(TutorProfileViewModel vm) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InkWell(
+          onTap: vm.toggleExpertise,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const AppText(
+                'Areas of Expertise',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textDark,
+                ),
+              ),
+              Icon(
+                vm.isExpertiseExpanded
+                    ? Icons.keyboard_arrow_up
+                    : Icons.keyboard_arrow_down,
+                color: AppColors.iconGrey,
+              ),
+            ],
+          ),
+        ),
+        if (vm.isExpertiseExpanded) ...[
+          const SizedBox(height: 12),
+          if (vm.areasOfExpertise.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.lightBackground,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: AppText(
+                'No areas of expertise added.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textGrey,
+                ),
+              ),
+            )
+          else
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: vm.areasOfExpertise.map((subject) {
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: AppText(
+                    subject,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+        ],
       ],
     );
   }
@@ -309,62 +413,78 @@ class TutorProfileScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const AppText(
-          'Education',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textDark,
+        InkWell(
+          onTap: vm.toggleEducation,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const AppText(
+                'Education',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textDark,
+                ),
+              ),
+              Icon(
+                vm.isEducationExpanded
+                    ? Icons.keyboard_arrow_up
+                    : Icons.keyboard_arrow_down,
+                color: AppColors.iconGrey,
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 12),
-        if (vm.education.isEmpty)
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.lightBackground,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: AppText(
-              'No education information added.',
-              style: TextStyle(
-                fontSize: 14,
-                color: AppColors.textGrey,
+        if (vm.isEducationExpanded) ...[
+          const SizedBox(height: 12),
+          if (vm.education.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.lightBackground,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: AppText(
+                'No education information added.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textGrey,
+                ),
+              ),
+            )
+          else
+            Container(
+              decoration: BoxDecoration(
+                color: AppColors.background,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.shadow,
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: vm.education.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final education = entry.value;
+                  return Column(
+                    children: [
+                      _buildEducationItem(education),
+                      if (index < vm.education.length - 1)
+                        Divider(
+                          height: 1,
+                          color: AppColors.border,
+                          indent: 16,
+                          endIndent: 16,
+                        ),
+                    ],
+                  );
+                }).toList(),
               ),
             ),
-          )
-        else
-          Container(
-            decoration: BoxDecoration(
-              color: AppColors.background,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.shadow,
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Column(
-              children: vm.education.asMap().entries.map((entry) {
-                final index = entry.key;
-                final education = entry.value;
-                return Column(
-                  children: [
-                    _buildEducationItem(education),
-                    if (index < vm.education.length - 1)
-                      Divider(
-                        height: 1,
-                        color: AppColors.border,
-                        indent: 16,
-                        endIndent: 16,
-                      ),
-                  ],
-                );
-              }).toList(),
-            ),
-          ),
+        ],
       ],
     );
   }
@@ -421,62 +541,78 @@ class TutorProfileScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const AppText(
-          'Certifications',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textDark,
+        InkWell(
+          onTap: vm.toggleCertifications,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const AppText(
+                'Certifications',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textDark,
+                ),
+              ),
+              Icon(
+                vm.isCertificationsExpanded
+                    ? Icons.keyboard_arrow_up
+                    : Icons.keyboard_arrow_down,
+                color: AppColors.iconGrey,
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 12),
-        if (vm.certifications.isEmpty)
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.lightBackground,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: AppText(
-              'No certifications added.',
-              style: TextStyle(
-                fontSize: 14,
-                color: AppColors.textGrey,
+        if (vm.isCertificationsExpanded) ...[
+          const SizedBox(height: 12),
+          if (vm.certifications.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.lightBackground,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: AppText(
+                'No certifications added.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textGrey,
+                ),
+              ),
+            )
+          else
+            Container(
+              decoration: BoxDecoration(
+                color: AppColors.background,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.shadow,
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: vm.certifications.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final certification = entry.value;
+                  return Column(
+                    children: [
+                      _buildCertificationItem(certification),
+                      if (index < vm.certifications.length - 1)
+                        Divider(
+                          height: 1,
+                          color: AppColors.border,
+                          indent: 16,
+                          endIndent: 16,
+                        ),
+                    ],
+                  );
+                }).toList(),
               ),
             ),
-          )
-        else
-          Container(
-            decoration: BoxDecoration(
-              color: AppColors.background,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.shadow,
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Column(
-              children: vm.certifications.asMap().entries.map((entry) {
-                final index = entry.key;
-                final certification = entry.value;
-                return Column(
-                  children: [
-                    _buildCertificationItem(certification),
-                    if (index < vm.certifications.length - 1)
-                      Divider(
-                        height: 1,
-                        color: AppColors.border,
-                        indent: 16,
-                        endIndent: 16,
-                      ),
-                  ],
-                );
-              }).toList(),
-            ),
-          ),
+        ],
       ],
     );
   }
@@ -533,62 +669,78 @@ class TutorProfileScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const AppText(
-          'Portfolio & Documents',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textDark,
+        InkWell(
+          onTap: vm.togglePortfolio,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const AppText(
+                'Portfolio & Documents',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textDark,
+                ),
+              ),
+              Icon(
+                vm.isPortfolioExpanded
+                    ? Icons.keyboard_arrow_up
+                    : Icons.keyboard_arrow_down,
+                color: AppColors.iconGrey,
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 12),
-        if (vm.portfolioDocuments.isEmpty)
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.lightBackground,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: AppText(
-              'No portfolio documents added.',
-              style: TextStyle(
-                fontSize: 14,
-                color: AppColors.textGrey,
+        if (vm.isPortfolioExpanded) ...[
+          const SizedBox(height: 12),
+          if (vm.portfolioDocuments.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.lightBackground,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: AppText(
+                'No portfolio documents added.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textGrey,
+                ),
+              ),
+            )
+          else
+            Container(
+              decoration: BoxDecoration(
+                color: AppColors.background,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.shadow,
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: vm.portfolioDocuments.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final document = entry.value;
+                  return Column(
+                    children: [
+                      _buildPortfolioItem(document),
+                      if (index < vm.portfolioDocuments.length - 1)
+                        Divider(
+                          height: 1,
+                          color: AppColors.border,
+                          indent: 16,
+                          endIndent: 16,
+                        ),
+                    ],
+                  );
+                }).toList(),
               ),
             ),
-          )
-        else
-          Container(
-            decoration: BoxDecoration(
-              color: AppColors.background,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.shadow,
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Column(
-              children: vm.portfolioDocuments.asMap().entries.map((entry) {
-                final index = entry.key;
-                final document = entry.value;
-                return Column(
-                  children: [
-                    _buildPortfolioItem(document),
-                    if (index < vm.portfolioDocuments.length - 1)
-                      Divider(
-                        height: 1,
-                        color: AppColors.border,
-                        indent: 16,
-                        endIndent: 16,
-                      ),
-                  ],
-                );
-              }).toList(),
-            ),
-          ),
+        ],
       ],
     );
   }

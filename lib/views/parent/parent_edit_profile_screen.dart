@@ -49,7 +49,7 @@ class _ParentEditProfileScreenState extends State<ParentEditProfileScreen> {
         return vm;
       },
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.lightBackground,
         appBar: _buildAppBar(context),
         body: Consumer<ParentEditProfileViewModel>(
           builder: (context, vm, _) {

@@ -26,7 +26,7 @@ class _TutorDashboardScreenState extends State<TutorDashboardScreen> {
         return vm;
       },
       child: Container(
-        color: AppColors.background,
+        color: AppColors.lightBackground,
         child: SafeArea(
           child: Consumer<TutorDashboardViewModel>(
             builder: (context, vm, _) {

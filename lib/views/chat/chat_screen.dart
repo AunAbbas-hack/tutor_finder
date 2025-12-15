@@ -35,7 +35,7 @@ class _ChatScreenState extends State<ChatScreen> {
         return vm;
       },
       child: Container(
-        color: AppColors.background,
+        color: AppColors.lightBackground,
         child: SafeArea(
           child: Column(
             children: [
@@ -59,7 +59,7 @@ class _ChatScreenState extends State<ChatScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.background,
+        color: AppColors.lightBackground,
         border: Border(
           bottom: BorderSide(
             color: AppColors.border,
@@ -91,7 +91,7 @@ class _ChatScreenState extends State<ChatScreen> {
       builder: (context, vm, _) {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          color: AppColors.background,
+          color: AppColors.lightBackground,
           child: TextField(
             controller: _searchController,
             decoration: InputDecoration(
@@ -277,7 +277,7 @@ class _ChatScreenState extends State<ChatScreen> {
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        color: AppColors.background,
+        color: AppColors.lightBackground,
         child: Row(
           children: [
             // Profile Picture with Online Status
@@ -320,7 +320,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         shape: BoxShape.circle,
                         color: AppColors.success,
                         border: Border.all(
-                          color: AppColors.background,
+                          color: AppColors.lightBackground,
                           width: 2,
                         ),
                       ),

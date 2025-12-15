@@ -55,7 +55,7 @@ class _ManageChildrenContentState extends State<_ManageChildrenContent> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.lightBackground,
         appBar: _buildAppBar(),
         body: Consumer<ManageChildrenViewModel>(
           builder: (context, vm, _) {

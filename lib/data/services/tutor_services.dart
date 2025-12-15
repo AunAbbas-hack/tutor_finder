@@ -25,7 +25,25 @@ class TutorService {
   }
 
   Future<void> updateTutor(TutorModel tutor) async {
-    await _tutorsCol.doc(tutor.tutorId).update(tutor.toMap());
+    final data = tutor.toMap();
+    
+    // For arrays, we need to explicitly set them using update() to ensure they replace existing arrays
+    // First, update all non-array fields using set with merge
+    final nonArrayData = Map<String, dynamic>.from(data);
+    nonArrayData.remove('education');
+    nonArrayData.remove('certifications');
+    nonArrayData.remove('portfolioDocuments');
+    
+    if (nonArrayData.isNotEmpty) {
+      await _tutorsCol.doc(tutor.tutorId).set(nonArrayData, SetOptions(merge: true));
+    }
+    
+    // Then explicitly update array fields to ensure they replace existing arrays
+    await _tutorsCol.doc(tutor.tutorId).update({
+      'education': tutor.education.map((e) => e.toMap()).toList(),
+      'certifications': tutor.certifications.map((c) => c.toMap()).toList(),
+      'portfolioDocuments': tutor.portfolioDocuments.map((p) => p.toMap()).toList(),
+    });
   }
 
   /// Get all tutors from Firestore

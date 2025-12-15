@@ -18,7 +18,7 @@ class BookingsScreenNavbar extends StatelessWidget {
         return vm;
       },
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.lightBackground,
         appBar: AppBar(
           leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: AppColors.textDark),
@@ -34,7 +34,7 @@ class BookingsScreenNavbar extends StatelessWidget {
           ),
           centerTitle: true,
           elevation: 0,
-          backgroundColor: AppColors.background,
+          backgroundColor: AppColors.lightBackground,
         ),
         body: Consumer<BookingsNavbarViewModel>(
           builder: (context, vm, _) {
@@ -148,9 +148,17 @@ class BookingsScreenNavbar extends StatelessWidget {
     final tutor = bookingDisplay.tutor;
     final status = booking.status;
 
+    // Check if booking is pending cancellation
+    final isPendingCancel = vm.isPendingCancellation(booking.bookingId);
+
     // Status color and text
     Color statusColor;
     String statusText;
+    if (isPendingCancel) {
+      // Show "Cancelling..." if timer is active
+      statusColor = AppColors.warning;
+      statusText = 'CANCELLING...';
+    } else {
     switch (status) {
       case BookingStatus.approved:
         statusColor = AppColors.success;
@@ -164,9 +172,14 @@ class BookingsScreenNavbar extends StatelessWidget {
         statusColor = AppColors.error;
         statusText = 'REJECTED';
         break;
+        case BookingStatus.cancelled:
+          statusColor = AppColors.textGrey;
+          statusText = 'CANCELLED';
+          break;
       default:
         statusColor = AppColors.textGrey;
         statusText = status.toString().toUpperCase();
+      }
     }
 
     // Action button based on status
@@ -234,17 +247,28 @@ class BookingsScreenNavbar extends StatelessWidget {
             );
 
             if (confirmed == true) {
-              await vm.cancelBooking(booking.bookingId);
+              // Start timer for cancellation (5 seconds)
+              await vm.cancelBookingWithTimer(booking.bookingId);
               Get.snackbar(
-                'Success',
-                'Booking cancelled successfully',
+                'Cancelling...',
+                'Booking will be cancelled in 5 seconds. Click to restore.',
                 snackPosition: SnackPosition.BOTTOM,
-                backgroundColor: AppColors.success,
+                backgroundColor: AppColors.warning,
                 colorText: Colors.white,
                 borderRadius: 12,
                 margin: const EdgeInsets.all(16),
-                duration: const Duration(seconds: 2),
-                icon: const Icon(Icons.check_circle, color: Colors.white),
+                duration: const Duration(seconds: 5),
+                icon: const Icon(Icons.timer, color: Colors.white),
+                mainButton: TextButton(
+                  onPressed: () {
+                    Get.closeCurrentSnackbar();
+                    vm.restoreBookingToPending(booking.bookingId);
+                  },
+                  child: const Text(
+                    'RESTORE',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                ),
               );
             }
           },
@@ -256,6 +280,77 @@ class BookingsScreenNavbar extends StatelessWidget {
           AppColors.primary,
           () {
             // TODO: Navigate to tutor search
+            
+          },
+        );
+        break;
+      case BookingStatus.cancelled:
+        // Show "Restore to Pending" button for cancelled bookings
+        actionButton = _buildActionButton(
+          'Restore to Pending',
+          AppColors.primary,
+          () async {
+            final confirmed = await Get.dialog<bool>(
+              AlertDialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                title: const AppText(
+                  'Restore Booking',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textDark,
+                  ),
+                ),
+                content: const AppText(
+                  'Do you want to restore this booking to pending status?',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: AppColors.textGrey,
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Get.back(result: false),
+                    child: const AppText(
+                      'No',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: AppColors.textGrey,
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => Get.back(result: true),
+                    child: const AppText(
+                      'Yes, Restore',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              barrierDismissible: false,
+            );
+
+            if (confirmed == true) {
+              await vm.restoreBookingToPending(booking.bookingId);
+              Get.snackbar(
+                'Success',
+                'Booking restored to pending',
+                snackPosition: SnackPosition.BOTTOM,
+                backgroundColor: AppColors.success,
+                colorText: Colors.white,
+                borderRadius: 12,
+                margin: const EdgeInsets.all(16),
+                duration: const Duration(seconds: 2),
+                icon: const Icon(Icons.check_circle, color: Colors.white),
+              );
+            }
           },
         );
         break;

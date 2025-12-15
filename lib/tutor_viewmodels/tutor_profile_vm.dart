@@ -1,6 +1,7 @@
 // lib/tutor_viewmodels/tutor_profile_vm.dart
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:geocoding/geocoding.dart';
 import '../data/models/user_model.dart';
 import '../data/models/tutor_model.dart';
 import '../data/services/user_services.dart';
@@ -24,6 +25,13 @@ class TutorProfileViewModel extends ChangeNotifier {
   String? _errorMessage;
   UserModel? _user;
   TutorModel? _tutor;
+  String? _locationAddress;
+
+  // Expandable sections state
+  bool _isExpertiseExpanded = true;
+  bool _isEducationExpanded = false;
+  bool _isCertificationsExpanded = false;
+  bool _isPortfolioExpanded = false;
 
   // Getters
   bool get isLoading => _isLoading;
@@ -39,6 +47,16 @@ class TutorProfileViewModel extends ChangeNotifier {
   String get aboutMe => _tutor?.bio ?? '';
   String get imageUrl => _user?.imageUrl ?? '';
   List<String> get areasOfExpertise => _tutor?.subjects ?? [];
+  double? get latitude => _user?.latitude;
+  double? get longitude => _user?.longitude;
+  bool get hasLocation => _user?.latitude != null && _user?.longitude != null;
+  String? get locationAddress => _locationAddress;
+
+  // Expandable sections getters
+  bool get isExpertiseExpanded => _isExpertiseExpanded;
+  bool get isEducationExpanded => _isEducationExpanded;
+  bool get isCertificationsExpanded => _isCertificationsExpanded;
+  bool get isPortfolioExpanded => _isPortfolioExpanded;
 
   // ---------- Initialize ----------
   Future<void> initialize() async {
@@ -69,19 +87,99 @@ class TutorProfileViewModel extends ChangeNotifier {
         return;
       }
 
+      // Fetch address from coordinates if location is available
+      if (_user?.latitude != null && _user?.longitude != null) {
+        await _fetchAddressFromCoordinates(_user!.latitude!, _user!.longitude!);
+      }
+
+      // Auto-expand sections if they have data
+      if (_tutor!.education.isNotEmpty) {
+        _isEducationExpanded = true;
+      }
+      if (_tutor!.certifications.isNotEmpty) {
+        _isCertificationsExpanded = true;
+      }
+      if (_tutor!.portfolioDocuments.isNotEmpty) {
+        _isPortfolioExpanded = true;
+      }
+
       // Education, certifications, and portfolio are now loaded from TutorModel
       // No need for mock data
     } catch (e) {
       _errorMessage = 'Failed to load profile: ${e.toString()}';
     } finally {
       _setLoading(false);
+      notifyListeners();
     }
+  }
+
+  /// Fetch address from coordinates using geocoding
+  Future<void> _fetchAddressFromCoordinates(double lat, double lng) async {
+    try {
+      List<Placemark> placemarks = await placemarkFromCoordinates(lat, lng);
+      if (placemarks.isNotEmpty) {
+        final place = placemarks.first;
+        _locationAddress = _formatAddress(place);
+        notifyListeners();
+      }
+    } catch (e) {
+      // Silently fail - address is optional
+      _locationAddress = null;
+    }
+  }
+
+  /// Format address from Placemark
+  String _formatAddress(Placemark place) {
+    List<String> parts = [];
+    
+    if (place.street != null && place.street!.isNotEmpty) {
+      parts.add(place.street!);
+    }
+    if (place.subLocality != null && place.subLocality!.isNotEmpty) {
+      parts.add(place.subLocality!);
+    }
+    if (place.locality != null && place.locality!.isNotEmpty) {
+      parts.add(place.locality!);
+    }
+    if (place.administrativeArea != null && place.administrativeArea!.isNotEmpty) {
+      parts.add(place.administrativeArea!);
+    }
+    if (place.country != null && place.country!.isNotEmpty) {
+      parts.add(place.country!);
+    }
+    
+    return parts.isNotEmpty ? parts.join(', ') : 'Unknown location';
   }
 
 
   // ---------- Refresh ----------
   Future<void> refresh() async {
+    // Reset expansion states before reloading
+    _isEducationExpanded = false;
+    _isCertificationsExpanded = false;
+    _isPortfolioExpanded = false;
     await initialize();
+  }
+
+  // ---------- Toggle Expandable Sections ----------
+  void toggleExpertise() {
+    _isExpertiseExpanded = !_isExpertiseExpanded;
+    notifyListeners();
+  }
+
+  void toggleEducation() {
+    _isEducationExpanded = !_isEducationExpanded;
+    notifyListeners();
+  }
+
+  void toggleCertifications() {
+    _isCertificationsExpanded = !_isCertificationsExpanded;
+    notifyListeners();
+  }
+
+  void togglePortfolio() {
+    _isPortfolioExpanded = !_isPortfolioExpanded;
+    notifyListeners();
   }
 
   // ---------- Helpers ----------
