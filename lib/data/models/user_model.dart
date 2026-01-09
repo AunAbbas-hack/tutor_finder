@@ -1,5 +1,6 @@
 // lib/data/models/user_model.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 
 enum UserRole {
   parent,
@@ -69,7 +70,7 @@ class UserModel {
   // ---------- JSON / Firestore mapping ----------
 
   Map<String, dynamic> toMap({bool includePassword = false}) {
-    return {
+    final map = <String, dynamic>{
       'userId': userId,
       'name': name,
       'email': email,
@@ -81,21 +82,56 @@ class UserModel {
       'longitude': longitude,
       'imageUrl': imageUrl,
     };
+    
+    if (kDebugMode) {
+      print('📍 UserModel.toMap:');
+      print('   Latitude: $latitude');
+      print('   Longitude: $longitude');
+      print('   Map: $map');
+    }
+    
+    return map;
   }
 
   factory UserModel.fromMap(Map<String, dynamic> map) {
-    return UserModel(
-      userId: map['userId'] as String,
-      name: map['name'] as String? ?? '',
-      email: map['email'] as String? ?? '',
-      password: map['password'] as String?,
-      phone: map['phone'] as String?,
-      role: _roleFromString(map['role'] as String?),
-      status: _statusFromString(map['status'] as String?),
-      latitude: (map['latitude'] as num?)?.toDouble(),
-      longitude: (map['longitude'] as num?)?.toDouble(),
-      imageUrl: map['imageUrl'] as String?,
-    );
+    try {
+      final roleString = map['role'] as String?;
+      final statusString = map['status'] as String?;
+      
+      if (kDebugMode) {
+        print('📋 UserModel.fromMap:');
+        print('   Raw role from map: $roleString');
+        print('   Raw status from map: $statusString');
+      }
+      
+      final parsedRole = _roleFromString(roleString);
+      final parsedStatus = _statusFromString(statusString);
+      
+      if (kDebugMode) {
+        print('   Parsed role: $parsedRole');
+        print('   Parsed status: $parsedStatus');
+      }
+      
+      return UserModel(
+        userId: map['userId'] as String? ?? '',
+        name: map['name'] as String? ?? '',
+        email: map['email'] as String? ?? '',
+        password: map['password'] as String?,
+        phone: map['phone'] as String?,
+        role: parsedRole,
+        status: parsedStatus,
+        latitude: (map['latitude'] as num?)?.toDouble(),
+        longitude: (map['longitude'] as num?)?.toDouble(),
+        imageUrl: map['imageUrl'] as String?,
+      );
+    } catch (e, stackTrace) {
+      if (kDebugMode) {
+        print('❌ UserModel.fromMap Error: $e');
+        print('   Map data: $map');
+        print('   StackTrace: $stackTrace');
+      }
+      rethrow;
+    }
   }
 
   factory UserModel.fromFirestore(

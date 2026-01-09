@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -377,8 +378,19 @@ class _LocationSelectionView extends StatelessWidget {
                 onPressed: () async {
                   if (showStepIndicator && pvm != null) {
                     // Parent 4-step flow: Use ParentSignupViewModel
+                    if (kDebugMode) {
+                      print('📍 LocationSelectionScreen: Submitting parent signup');
+                      print('   vm.latitude (String): "${vm.latitude}"');
+                      print('   vm.longitude (String): "${vm.longitude}"');
+                    }
+                    
                     final lat = double.tryParse(vm.latitude);
                     final lng = double.tryParse(vm.longitude);
+
+                    if (kDebugMode) {
+                      print('   Parsed lat: $lat');
+                      print('   Parsed lng: $lng');
+                    }
 
                     if (lat == null || lng == null) {
                       Get.snackbar(
@@ -393,6 +405,10 @@ class _LocationSelectionView extends StatelessWidget {
                         icon: const Icon(Icons.error, color: Colors.white),
                       );
                       return;
+                    }
+
+                    if (kDebugMode) {
+                      print('   Calling submitParentSignup with lat: $lat, lng: $lng');
                     }
 
                     final ok = await pvm.submitParentSignup(

@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 
 import '../models/user_model.dart';
 import '../models/tutor_model.dart';
@@ -105,7 +106,14 @@ class AuthRepository {
     final uid = cred.user!.uid;
 
     // 2) users collection
+    if (kDebugMode) {
+      print('📍 AuthRepository.registerParentWithStudent:');
+      print('   Before copyWith - latitude: ${baseUser.latitude}, longitude: ${baseUser.longitude}');
+    }
     final userWithId = baseUser.copyWith(userId: uid);
+    if (kDebugMode) {
+      print('   After copyWith - latitude: ${userWithId.latitude}, longitude: ${userWithId.longitude}');
+    }
     await _userService.createUser(userWithId);
 
     // 3) parents collection

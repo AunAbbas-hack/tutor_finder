@@ -13,6 +13,7 @@ import '../../core/widgets/bottom_nav_bar.dart';
 import '../../parent_viewmodels/auth_vm.dart';
 import '../../parent_viewmodels/parent_dashboard_vm.dart';
 import 'parent_profile_screen.dart';
+import 'tutor_search_screen.dart';
 
 class ParentDashboardHome extends StatefulWidget {
   const ParentDashboardHome({super.key});
@@ -75,13 +76,32 @@ class _DashboardContent extends StatelessWidget {
                       _buildHeader(context, vm),
                       const SizedBox(height: 24),
                       // Search and Filter Section
-                      SearchBarWidget(
-                        controller: searchController,
-                        hintText: 'Search for subjects, tutors...',
-                        onChanged: (value) => vm.searchTutors(value),
-                        onFilterTap: () {
-                          // TODO: Open filter dialog
+                      GestureDetector(
+                        onTap: () {
+                          // Navigate to Tutor Search Screen when search bar is tapped
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const TutorSearchScreen(),
+                            ),
+                          );
                         },
+                        child: AbsorbPointer(
+                          absorbing: true, // Make it non-interactive to TextField
+                          child: SearchBarWidget(
+                            controller: searchController,
+                            hintText: 'Search for subjects, tutors...',
+                            onFilterTap: () {
+                              // Navigate to Tutor Search Screen
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const TutorSearchScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
                       ),
                       const SizedBox(height: 32),
                       // Nearby Tutors Section

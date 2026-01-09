@@ -265,6 +265,12 @@ class ParentSignupViewModel extends ChangeNotifier {
       return false;
     }
 
+    if (kDebugMode) {
+      print('📍 ParentSignupViewModel.submitParentSignup:');
+      print('   Received latitude: $latitude');
+      print('   Received longitude: $longitude');
+    }
+
     try {
       _setLoading(true);
       _errorMessage = null;
@@ -273,6 +279,13 @@ class ParentSignupViewModel extends ChangeNotifier {
         latitude: latitude,
         longitude: longitude,
       );
+      
+      if (kDebugMode) {
+        print('📍 Built baseUser:');
+        print('   UserModel latitude: ${baseUser.latitude}');
+        print('   UserModel longitude: ${baseUser.longitude}');
+      }
+      
       final parent = buildParentModel('');
       final student = buildStudentModel('');
 

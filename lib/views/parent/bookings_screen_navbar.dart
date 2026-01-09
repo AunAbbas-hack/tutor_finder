@@ -5,6 +5,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/widgets/app_text.dart';
 import '../../data/models/booking_model.dart';
 import '../../parent_viewmodels/bookings_navbar_vm.dart';
+import 'booking_view_detail_screen.dart';
 
 class BookingsScreenNavbar extends StatelessWidget {
   const BookingsScreenNavbar({super.key});
@@ -20,10 +21,6 @@ class BookingsScreenNavbar extends StatelessWidget {
       child: Scaffold(
         backgroundColor: AppColors.lightBackground,
         appBar: AppBar(
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: AppColors.textDark),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
           title: const AppText(
             'My Bookings',
             style: TextStyle(
@@ -190,7 +187,9 @@ class BookingsScreenNavbar extends StatelessWidget {
           'View Details',
           AppColors.primary,
           () {
-            // TODO: Navigate to booking details
+            Get.to(() => BookingViewDetailScreen(
+                  bookingId: booking.bookingId,
+                ));
           },
         );
         break;

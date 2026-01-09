@@ -49,6 +49,15 @@ class ChatViewModel extends ChangeNotifier {
   List<ConversationItem> _conversations = [];
   List<ConversationItem> get conversations => _conversations;
 
+  // Total unread messages count
+  int get totalUnreadCount {
+    if (currentUserId == null) return 0;
+    return _conversations.fold<int>(
+      0,
+      (sum, conv) => sum + conv.unreadCount,
+    );
+  }
+
   // Loading state
   bool _isLoading = false;
   bool _hasInitialized = false; // Track if we've received first data

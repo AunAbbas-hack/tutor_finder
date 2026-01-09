@@ -46,6 +46,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '749153763094',
     projectId: 'tutor-finder-0468',
     authDomain: 'tutor-finder-0468.firebaseapp.com',
+    databaseURL: 'https://tutor-finder-0468-default-rtdb.asia-southeast1.firebasedatabase.app',
     storageBucket: 'tutor-finder-0468.firebasestorage.app',
     measurementId: 'G-9J9X3F0J91',
   );
@@ -55,6 +56,7 @@ class DefaultFirebaseOptions {
     appId: '1:749153763094:android:46d5fb4a61466eb0e25a37',
     messagingSenderId: '749153763094',
     projectId: 'tutor-finder-0468',
+    databaseURL: 'https://tutor-finder-0468-default-rtdb.asia-southeast1.firebasedatabase.app',
     storageBucket: 'tutor-finder-0468.firebasestorage.app',
   );
 
@@ -63,7 +65,9 @@ class DefaultFirebaseOptions {
     appId: '1:749153763094:ios:7ebce93adc3f0e39e25a37',
     messagingSenderId: '749153763094',
     projectId: 'tutor-finder-0468',
+    databaseURL: 'https://tutor-finder-0468-default-rtdb.asia-southeast1.firebasedatabase.app',
     storageBucket: 'tutor-finder-0468.firebasestorage.app',
+    iosClientId: '749153763094-5ui0ms49komlv9tvsen0pr3aenodechg.apps.googleusercontent.com',
     iosBundleId: 'com.aunxbscs.tutorFinder',
   );
 
@@ -72,7 +76,9 @@ class DefaultFirebaseOptions {
     appId: '1:749153763094:ios:7ebce93adc3f0e39e25a37',
     messagingSenderId: '749153763094',
     projectId: 'tutor-finder-0468',
+    databaseURL: 'https://tutor-finder-0468-default-rtdb.asia-southeast1.firebasedatabase.app',
     storageBucket: 'tutor-finder-0468.firebasestorage.app',
+    iosClientId: '749153763094-5ui0ms49komlv9tvsen0pr3aenodechg.apps.googleusercontent.com',
     iosBundleId: 'com.aunxbscs.tutorFinder',
   );
 
@@ -82,7 +88,9 @@ class DefaultFirebaseOptions {
     messagingSenderId: '749153763094',
     projectId: 'tutor-finder-0468',
     authDomain: 'tutor-finder-0468.firebaseapp.com',
+    databaseURL: 'https://tutor-finder-0468-default-rtdb.asia-southeast1.firebasedatabase.app',
     storageBucket: 'tutor-finder-0468.firebasestorage.app',
     measurementId: 'G-G4JF1QT7CS',
   );
+
 }

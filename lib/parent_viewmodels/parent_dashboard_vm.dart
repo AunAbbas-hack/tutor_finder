@@ -6,7 +6,6 @@ import '../data/services/tutor_services.dart';
 import '../data/services/user_services.dart';
 import '../core/utils/distance_calculator.dart';
 import '../core/services/preferences_service.dart';
-import '../core/utils/debug_logger.dart';
 
 /// Model for nearby tutor display
 class NearbyTutor {
@@ -130,36 +129,21 @@ class ParentDashboardViewModel extends ChangeNotifier {
 
   // ---------- Load Tutors ----------
   Future<void> loadTutors() async {
-    // #region agent log
-    await DebugLogger.log(location: 'parent_dashboard_vm.dart:131', message: 'Loading tutors for parent', data: {'userId': _auth.currentUser?.uid}, hypothesisId: 'SEARCH-1');
-    // #endregion
     try {
       // Get current user location
       final currentUser = _auth.currentUser;
       if (currentUser == null) return;
 
       final currentUserModel = await _userService.getUserById(currentUser.uid);
-      // #region agent log
-      await DebugLogger.log(location: 'parent_dashboard_vm.dart:141', message: 'Current user model loaded', data: {'userId': currentUser.uid, 'found': currentUserModel != null, 'hasLocation': currentUserModel?.latitude != null && currentUserModel?.longitude != null}, hypothesisId: 'SEARCH-1');
-      // #endregion
       if (currentUserModel == null) {
-        // #region agent log
-        await DebugLogger.log(location: 'parent_dashboard_vm.dart:142', message: 'Current user model not found - returning early', data: {'userId': currentUser.uid}, hypothesisId: 'SEARCH-1');
-        // #endregion
         return;
       }
 
       final parentLat = currentUserModel.latitude;
       final parentLng = currentUserModel.longitude;
-      // #region agent log
-      await DebugLogger.log(location: 'parent_dashboard_vm.dart:145', message: 'Parent location extracted', data: {'lat': parentLat, 'lng': parentLng, 'hasLocation': parentLat != null && parentLng != null}, hypothesisId: 'SEARCH-1');
-      // #endregion
 
       // Get all tutors from Firestore
       final tutors = await _tutorService.getAllTutors();
-      // #region agent log
-      await DebugLogger.log(location: 'parent_dashboard_vm.dart:144', message: 'Tutors loaded from Firestore', data: {'tutorCount': tutors.length, 'parentLat': parentLat, 'parentLng': parentLng}, hypothesisId: 'SEARCH-1');
-      // #endregion
       if (_isDisposed) return;
       
       if (tutors.isEmpty) {
@@ -171,8 +155,6 @@ class ParentDashboardViewModel extends ChangeNotifier {
 
       // Get user data for each tutor
       final tutorsWithUserData = <Map<String, dynamic>>[];
-      int activeCount = 0;
-      int inactiveCount = 0;
       for (final tutor in tutors) {
         if (_isDisposed) return;
         
@@ -182,15 +164,8 @@ class ParentDashboardViewModel extends ChangeNotifier {
             'tutor': tutor,
             'user': tutorUser,
           });
-          activeCount++;
-        } else {
-          inactiveCount++;
         }
       }
-      // #region agent log
-      await DebugLogger.log(location: 'parent_dashboard_vm.dart:173', message: 'Tutor user data loaded', data: {'totalTutors': tutors.length, 'activeTutors': activeCount, 'inactiveTutors': inactiveCount, 'tutorsWithUserData': tutorsWithUserData.length}, hypothesisId: 'SEARCH-1');
-      // #endregion
-      
       if (_isDisposed) return;
 
       // Calculate distances and create nearby tutors list
@@ -259,9 +234,6 @@ class ParentDashboardViewModel extends ChangeNotifier {
 
       // Take top 10 for nearby
       _nearbyTutors = nearbyTutorsList.take(10).toList();
-      // #region agent log
-      await DebugLogger.log(location: 'parent_dashboard_vm.dart:215', message: 'Nearby tutors calculated', data: {'nearbyCount': _nearbyTutors.length, 'totalTutors': tutorsWithUserData.length}, hypothesisId: 'SEARCH-1');
-      // #endregion
 
       // Create recommended tutors (all tutors for now, can add recommendation logic later)
       _recommendedTutors = tutorsWithUserData.map((data) {
@@ -329,20 +301,6 @@ class ParentDashboardViewModel extends ChangeNotifier {
       if (kDebugMode) {
         print('Error loading notifications: $e');
       }
-    }
-  }
-
-  // ---------- Search ----------
-  void searchTutors(String query) {
-    // #region agent log
-    DebugLogger.log(location: 'parent_dashboard_vm.dart:281', message: 'Search tutors called', data: {'query': query, 'queryLength': query.length}, hypothesisId: 'SEARCH-2').catchError((_) {});
-    // #endregion
-    // TODO: Implement search functionality
-    // #region agent log
-    DebugLogger.log(location: 'parent_dashboard_vm.dart:283', message: 'Search functionality not implemented - only prints to console', data: {'query': query}, hypothesisId: 'SEARCH-2').catchError((_) {});
-    // #endregion
-    if (kDebugMode) {
-      print('Searching for: $query');
     }
   }
 

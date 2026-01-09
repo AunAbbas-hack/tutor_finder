@@ -1,62 +1,48 @@
 // lib/data/services/storage_service.dart
+// This service is used for chat images and files
+// Now uses Cloudinary instead of Firebase Storage
 import 'dart:io';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:path/path.dart' as path;
 import 'package:flutter/foundation.dart';
+import '../../core/services/cloudinary_service.dart';
 
 class StorageService {
-  final FirebaseStorage _storage = FirebaseStorage.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final CloudinaryService _cloudinaryService = CloudinaryService();
 
-  /// Upload image file to Firebase Storage
+  /// Upload image file to Cloudinary (for chat)
   Future<String?> uploadImage(File imageFile, String chatId) async {
     try {
-      final userId = _auth.currentUser?.uid;
-      if (userId == null) {
-        debugPrint('StorageService: User not authenticated');
-        throw Exception('User not authenticated');
-      }
-
       // Check if file exists
       if (!await imageFile.exists()) {
         debugPrint('StorageService: Image file does not exist');
         throw Exception('Image file does not exist');
       }
 
-      final fileName = '${DateTime.now().millisecondsSinceEpoch}_${path.basename(imageFile.path)}';
-      final storagePath = 'chat_images/$chatId/$fileName';
+      final fileName = '${DateTime.now().millisecondsSinceEpoch}_${imageFile.path.split('/').last}';
+      final folderPath = 'chat_images';
 
-      debugPrint('StorageService: Uploading image to $storagePath');
-      final ref = _storage.ref().child(storagePath);
-      final uploadTask = ref.putFile(imageFile);
+      debugPrint('StorageService: Uploading image to Cloudinary: $folderPath/$chatId');
+      
+      final downloadUrl = await _cloudinaryService.uploadImageFile(
+        imageFile: imageFile,
+        folderPath: '$folderPath/$chatId',
+        fileName: fileName,
+      );
 
-      final snapshot = await uploadTask;
-      final downloadUrl = await snapshot.ref.getDownloadURL();
-
-      debugPrint('StorageService: Image uploaded successfully: $downloadUrl');
-      return downloadUrl;
+      if (downloadUrl != null) {
+        debugPrint('StorageService: Image uploaded successfully: $downloadUrl');
+        return downloadUrl;
+      } else {
+        throw Exception('Failed to upload image to Cloudinary');
+      }
     } catch (e) {
       debugPrint('StorageService: Error uploading image: $e');
-      // Check if it's a storage permission/configuration error
-      if (e.toString().contains('permission') || 
-          e.toString().contains('unauthorized') ||
-          e.toString().contains('storage')) {
-        throw Exception('Firebase Storage is not configured. Please enable Storage in Firebase Console.');
-      }
       throw Exception('Failed to upload image: ${e.toString()}');
     }
   }
 
-  /// Upload file (PDF, DOC, etc.) to Firebase Storage
+  /// Upload file (PDF, DOC, etc.) to Cloudinary (for chat)
   Future<String?> uploadFile(File file, String chatId, String fileName) async {
     try {
-      final userId = _auth.currentUser?.uid;
-      if (userId == null) {
-        debugPrint('StorageService: User not authenticated');
-        throw Exception('User not authenticated');
-      }
-
       // Check if file exists
       if (!await file.exists()) {
         debugPrint('StorageService: File does not exist');
@@ -64,38 +50,35 @@ class StorageService {
       }
 
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final fileExtension = path.extension(fileName);
       final storageFileName = '${timestamp}_$fileName';
-      final storagePath = 'chat_files/$chatId/$storageFileName';
+      final folderPath = 'chat_files';
 
-      debugPrint('StorageService: Uploading file to $storagePath');
-      final ref = _storage.ref().child(storagePath);
-      final uploadTask = ref.putFile(file);
+      debugPrint('StorageService: Uploading file to Cloudinary: $folderPath/$chatId');
+      
+      final downloadUrl = await _cloudinaryService.uploadFile(
+        file: file,
+        folderPath: '$folderPath/$chatId',
+        fileName: storageFileName,
+      );
 
-      final snapshot = await uploadTask;
-      final downloadUrl = await snapshot.ref.getDownloadURL();
-
-      debugPrint('StorageService: File uploaded successfully: $downloadUrl');
-      return downloadUrl;
+      if (downloadUrl != null) {
+        debugPrint('StorageService: File uploaded successfully: $downloadUrl');
+        return downloadUrl;
+      } else {
+        throw Exception('Failed to upload file to Cloudinary');
+      }
     } catch (e) {
       debugPrint('StorageService: Error uploading file: $e');
-      // Check if it's a storage permission/configuration error
-      if (e.toString().contains('permission') || 
-          e.toString().contains('unauthorized') ||
-          e.toString().contains('storage')) {
-        throw Exception('Firebase Storage is not configured. Please enable Storage in Firebase Console.');
-      }
       throw Exception('Failed to upload file: ${e.toString()}');
     }
   }
 
-  /// Delete file from Firebase Storage
+  /// Delete file from Cloudinary
   Future<bool> deleteFile(String fileUrl) async {
     try {
-      final ref = _storage.refFromURL(fileUrl);
-      await ref.delete();
-      return true;
+      return await _cloudinaryService.deleteFile(fileUrl);
     } catch (e) {
+      debugPrint('StorageService: Error deleting file: $e');
       return false;
     }
   }

@@ -454,7 +454,10 @@ class _TutorProfileScreenState extends State<_TutorProfileView> {
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide.none,
+              borderSide: BorderSide(
+                color: Colors.grey,
+                width: 2
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),

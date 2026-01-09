@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:tutor_finder/views/auth/login_screen.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/app_text.dart';
 import '../../tutor_viewmodels/tutor_dashboard_vm.dart';

@@ -1,14 +1,15 @@
 // lib/core/services/storage_service.dart
 import 'dart:io';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'cloudinary_service.dart';
 
+/// StorageService - Uses Cloudinary for file uploads
+/// This service provides a unified interface for file uploads
+/// All files are now uploaded to Cloudinary instead of Firebase Storage
 class StorageService {
-  final FirebaseStorage _storage = FirebaseStorage.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final CloudinaryService _cloudinaryService = CloudinaryService();
 
-  /// Upload image file to Firebase Storage
+  /// Upload image file to Cloudinary
   /// Returns download URL
   Future<String?> uploadImageFile({
     required File imageFile,
@@ -16,29 +17,18 @@ class StorageService {
     String? fileName,
   }) async {
     try {
-      final userId = _auth.currentUser?.uid;
-      if (userId == null) {
-        throw Exception('User not authenticated');
-      }
-
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final name = fileName ?? 'image_$timestamp.jpg';
-      final path = '$folderPath/$userId/$name';
-
-      final ref = _storage.ref().child(path);
-      final uploadTask = ref.putFile(imageFile);
-
-      final snapshot = await uploadTask;
-      final downloadUrl = await snapshot.ref.getDownloadURL();
-
-      return downloadUrl;
+      return await _cloudinaryService.uploadImageFile(
+        imageFile: imageFile,
+        folderPath: folderPath,
+        fileName: fileName,
+      );
     } catch (e) {
-      debugPrint('Error uploading image: $e');
+      debugPrint('StorageService: Error uploading image: $e');
       return null;
     }
   }
 
-  /// Upload file to Firebase Storage
+  /// Upload file to Cloudinary
   /// Returns download URL
   Future<String?> uploadFile({
     required String filePath,
@@ -46,34 +36,23 @@ class StorageService {
     required String fileName,
   }) async {
     try {
-      final userId = _auth.currentUser?.uid;
-      if (userId == null) {
-        throw Exception('User not authenticated');
-      }
-
-      final path = '$folderPath/$userId/$fileName';
-      final ref = _storage.ref().child(path);
-      final file = File(filePath);
-
-      final uploadTask = ref.putFile(file);
-      final snapshot = await uploadTask;
-      final downloadUrl = await snapshot.ref.getDownloadURL();
-
-      return downloadUrl;
+      return await _cloudinaryService.uploadFileFromPath(
+        filePath: filePath,
+        folderPath: folderPath,
+        fileName: fileName,
+      );
     } catch (e) {
-      debugPrint('Error uploading file: $e');
+      debugPrint('StorageService: Error uploading file: $e');
       return null;
     }
   }
 
-  /// Delete file from Firebase Storage
+  /// Delete file from Cloudinary
   Future<bool> deleteFile(String fileUrl) async {
     try {
-      final ref = _storage.refFromURL(fileUrl);
-      await ref.delete();
-      return true;
+      return await _cloudinaryService.deleteFile(fileUrl);
     } catch (e) {
-      debugPrint('Error deleting file: $e');
+      debugPrint('StorageService: Error deleting file: $e');
       return false;
     }
   }

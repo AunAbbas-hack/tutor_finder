@@ -8,22 +8,38 @@ import '../core/utils/debug_logger.dart';
 
 class AuthViewModel extends ChangeNotifier {
   final AuthRepository _authRepository;
+  bool _isDisposed = false;
 
   AuthViewModel({AuthRepository? authRepository})
       : _authRepository = authRepository ?? AuthRepository();
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    super.dispose();
+  }
+
+  // Safe notify listeners - won't throw if disposed
+  void _safeNotifyListeners() {
+    if (!_isDisposed) {
+      notifyListeners();
+    }
+  }
 
   // ---------- Role Selection ----------
   UserRole? _selectedRole;
   UserRole? get selectedRole => _selectedRole;
 
   void selectRole(UserRole role) {
+    if (_isDisposed) return;
     _selectedRole = role;
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   void clearRole() {
+    if (_isDisposed) return;
     _selectedRole = null;
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   bool get hasSelectedRole => _selectedRole != null;
@@ -42,20 +58,23 @@ class AuthViewModel extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
 
   void updateEmailOrPhone(String value) {
+    if (_isDisposed) return;
     _emailOrPhone = value.trim();
     _errorMessage = null;
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   void updatePassword(String value) {
+    if (_isDisposed) return;
     _password = value;
     _errorMessage = null;
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   void togglePasswordVisibility() {
+    if (_isDisposed) return;
     _isPasswordVisible = !_isPasswordVisible;
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   bool get canSubmitLogin =>
@@ -68,8 +87,9 @@ class AuthViewModel extends ChangeNotifier {
     if (!canSubmitLogin) return false;
 
     if (!_emailOrPhone.contains('@')) {
+      if (_isDisposed) return false;
       _errorMessage = 'Please enter a valid email address.';
-      notifyListeners();
+      _safeNotifyListeners();
       return false;
     }
 
@@ -91,8 +111,11 @@ class AuthViewModel extends ChangeNotifier {
       // #region agent log
       await DebugLogger.log(location: 'auth_vm.dart:87', message: 'Parent login failed', data: {'email': _emailOrPhone, 'error': e.toString()}, hypothesisId: 'AUTH-1');
       // #endregion
-      _setLoading(false);
-      _errorMessage = _mapFirebaseError(e);
+      if (!_isDisposed) {
+        _setLoading(false);
+        _errorMessage = _mapFirebaseError(e);
+        _safeNotifyListeners();
+      }
       return false;
     }
   }
@@ -112,33 +135,38 @@ class AuthViewModel extends ChangeNotifier {
   String get tutorSubjectsExp => _tutorSubjectsExp;
 
   void updateTutorFullName(String value) {
+    if (_isDisposed) return;
     _tutorFullName = value.trim();
     _errorMessage = null;
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   void updateTutorEmail(String value) {
+    if (_isDisposed) return;
     _tutorEmail = value.trim();
     _errorMessage = null;
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   void updateTutorPassword(String value) {
+    if (_isDisposed) return;
     _tutorPassword = value;
     _errorMessage = null;
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   void updateTutorPhone(String value) {
+    if (_isDisposed) return;
     _tutorPhone = value.trim();
     _errorMessage = null;
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   void updateTutorSubjectsExp(String value) {
+    if (_isDisposed) return;
     _tutorSubjectsExp = value.trim();
     _errorMessage = null;
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   bool get canSubmitTutorSignup =>
@@ -196,8 +224,11 @@ class AuthViewModel extends ChangeNotifier {
       _setLoading(false);
       return true;
     } on Exception catch (e) {
-      _setLoading(false);
-      _errorMessage = _mapFirebaseError(e);
+      if (!_isDisposed) {
+        _setLoading(false);
+        _errorMessage = _mapFirebaseError(e);
+        _safeNotifyListeners();
+      }
       return false;
     }
   }
@@ -217,33 +248,38 @@ class AuthViewModel extends ChangeNotifier {
   String get parentAddress => _parentAddress;
 
   void updateParentFullName(String value) {
+    if (_isDisposed) return;
     _parentFullName = value.trim();
     _errorMessage = null;
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   void updateParentEmail(String value) {
+    if (_isDisposed) return;
     _parentEmail = value.trim();
     _errorMessage = null;
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   void updateParentPassword(String value) {
+    if (_isDisposed) return;
     _parentPassword = value;
     _errorMessage = null;
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   void updateParentPhone(String value) {
+    if (_isDisposed) return;
     _parentPhone = value.trim();
     _errorMessage = null;
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   void updateParentAddress(String value) {
+    if (_isDisposed) return;
     _parentAddress = value.trim();
     _errorMessage = null;
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   bool get canSubmitParentSignup =>
@@ -287,8 +323,11 @@ class AuthViewModel extends ChangeNotifier {
       _setLoading(false);
       return true;
     } on Exception catch (e) {
-      _setLoading(false);
-      _errorMessage = _mapFirebaseError(e);
+      if (!_isDisposed) {
+        _setLoading(false);
+        _errorMessage = _mapFirebaseError(e);
+        _safeNotifyListeners();
+      }
       return false;
     }
   }
@@ -298,12 +337,16 @@ class AuthViewModel extends ChangeNotifier {
     try {
       _setLoading(true);
       await _authRepository.logout();
-      _setLoading(false);
+      if (!_isDisposed) {
+        _setLoading(false);
+      }
       return true;
     } catch (e) {
-      _setLoading(false);
-      _errorMessage = 'Failed to logout: ${e.toString()}';
-      notifyListeners();
+      if (!_isDisposed) {
+        _setLoading(false);
+        _errorMessage = 'Failed to logout: ${e.toString()}';
+        _safeNotifyListeners();
+      }
       return false;
     }
   }
@@ -311,8 +354,9 @@ class AuthViewModel extends ChangeNotifier {
   // ---------- Helpers ----------
 
   void _setLoading(bool value) {
+    if (_isDisposed) return;
     _isLoading = value;
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   String _mapFirebaseError(Exception e) {
