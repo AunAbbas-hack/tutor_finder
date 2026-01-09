@@ -4,6 +4,7 @@ import '../data/models/user_model.dart';
 import '../data/models/student_model.dart';
 import '../data/models/parent_model.dart';
 import '../data/repositories/auth_repository.dart';
+import '../data/services/notification_service.dart';
 
 enum ParentSignupStep {
   account,      // Step 1: parent account (already made)
@@ -289,12 +290,27 @@ class ParentSignupViewModel extends ChangeNotifier {
       final parent = buildParentModel('');
       final student = buildStudentModel('');
 
-      await _authRepository.registerParentWithStudent(
+      final user = await _authRepository.registerParentWithStudent(
         baseUser: baseUser,
         parent: parent,
         student: student,
         password: _password,
       );
+
+      // Send welcome notification
+      if (user != null) {
+        try {
+          final notificationService = NotificationService();
+          await notificationService.sendWelcomeNotificationToParent(
+            parentId: user.uid,
+          );
+        } catch (e) {
+          // Don't fail signup if notification fails
+          if (kDebugMode) {
+            print('⚠️ Failed to send welcome notification: $e');
+          }
+        }
+      }
 
       _setLoading(false);
       return true;

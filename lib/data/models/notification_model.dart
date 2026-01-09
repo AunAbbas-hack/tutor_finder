@@ -12,6 +12,9 @@ class NotificationModel {
   final String message;
   final DateTime dateTime;
   final NotificationStatus status;
+  final String? type; // e.g., 'booking_request', 'message', 'booking_approved', etc.
+  final String? relatedId; // e.g., bookingId, tutorId, parentId, chatId, etc.
+  final Map<String, dynamic>? actionData; // Additional data for navigation
 
   const NotificationModel({
     required this.notificationId,
@@ -19,6 +22,9 @@ class NotificationModel {
     required this.message,
     required this.dateTime,
     required this.status,
+    this.type,
+    this.relatedId,
+    this.actionData,
   });
 
   NotificationModel copyWith({
@@ -27,6 +33,9 @@ class NotificationModel {
     String? message,
     DateTime? dateTime,
     NotificationStatus? status,
+    String? type,
+    String? relatedId,
+    Map<String, dynamic>? actionData,
   }) {
     return NotificationModel(
       notificationId: notificationId ?? this.notificationId,
@@ -34,6 +43,9 @@ class NotificationModel {
       message: message ?? this.message,
       dateTime: dateTime ?? this.dateTime,
       status: status ?? this.status,
+      type: type ?? this.type,
+      relatedId: relatedId ?? this.relatedId,
+      actionData: actionData ?? this.actionData,
     );
   }
 
@@ -44,6 +56,9 @@ class NotificationModel {
       'message': message,
       'dateTime': Timestamp.fromDate(dateTime),
       'status': _statusToString(status),
+      if (type != null) 'type': type,
+      if (relatedId != null) 'relatedId': relatedId,
+      if (actionData != null && actionData!.isNotEmpty) 'actionData': actionData,
     };
   }
 
@@ -54,6 +69,11 @@ class NotificationModel {
       message: map['message'] as String? ?? '',
       dateTime: _dateTimeFromDynamic(map['dateTime']),
       status: _statusFromString(map['status'] as String?),
+      type: map['type'] as String?,
+      relatedId: map['relatedId'] as String?,
+      actionData: map['actionData'] != null
+          ? Map<String, dynamic>.from(map['actionData'] as Map)
+          : null,
     );
   }
 

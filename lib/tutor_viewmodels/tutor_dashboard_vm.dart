@@ -5,6 +5,7 @@ import '../data/models/user_model.dart';
 import '../data/services/booking_services.dart';
 import '../data/services/user_services.dart';
 import '../data/services/chat_service.dart';
+import '../data/services/notification_service.dart';
 import 'package:firebase_database/firebase_database.dart';
 
 /// Model for student feedback display
@@ -127,6 +128,18 @@ class TutorDashboardViewModel extends ChangeNotifier {
         loadEarnings(),
         loadFeedback(),
       ]);
+      
+      // Check and send reminders for upcoming sessions
+      if (_isDisposed) return;
+      try {
+        final notificationService = NotificationService();
+        await notificationService.checkAndSendReminders();
+      } catch (e) {
+        // Don't fail dashboard load if reminder check fails
+        if (kDebugMode) {
+          print('⚠️ Failed to check reminders: $e');
+        }
+      }
     } catch (e) {
       if (!_isDisposed) {
         _errorMessage = 'Failed to load dashboard: ${e.toString()}';

@@ -4,6 +4,7 @@ import '../data/models/tutor_model.dart';
 import '../data/models/user_model.dart';
 import '../data/services/tutor_services.dart';
 import '../data/services/user_services.dart';
+import '../data/services/notification_service.dart';
 import '../core/utils/distance_calculator.dart';
 import '../core/services/preferences_service.dart';
 
@@ -116,6 +117,18 @@ class ParentDashboardViewModel extends ChangeNotifier {
       if (_isDisposed) return;
       
       await loadNotifications();
+      
+      // Check and send reminders for upcoming sessions
+      if (_isDisposed) return;
+      try {
+        final notificationService = NotificationService();
+        await notificationService.checkAndSendReminders();
+      } catch (e) {
+        // Don't fail dashboard load if reminder check fails
+        if (kDebugMode) {
+          print('⚠️ Failed to check reminders: $e');
+        }
+      }
     } catch (e) {
       if (!_isDisposed) {
         _errorMessage = 'Failed to load dashboard: ${e.toString()}';
@@ -292,14 +305,29 @@ class ParentDashboardViewModel extends ChangeNotifier {
   // ---------- Notifications ----------
   Future<void> loadNotifications() async {
     try {
-      // TODO: Implement notification count from Firestore
+      final currentUserId = _auth.currentUser?.uid;
+      if (currentUserId == null) {
+        if (!_isDisposed) {
+          _notificationCount = 0;
+          _safeNotifyListeners();
+        }
+        return;
+      }
+
+      final notificationService = NotificationService();
+      final count = await notificationService.getUnreadCount(currentUserId);
+      
       if (!_isDisposed) {
-        _notificationCount = 3; // Mock data
+        _notificationCount = count;
         _safeNotifyListeners();
       }
     } catch (e) {
       if (kDebugMode) {
         print('Error loading notifications: $e');
+      }
+      if (!_isDisposed) {
+        _notificationCount = 0;
+        _safeNotifyListeners();
       }
     }
   }

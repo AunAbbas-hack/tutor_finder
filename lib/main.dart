@@ -1,5 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:get/get.dart';
@@ -7,6 +9,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:tutor_finder/core/theme/app_theme.dart';
 import 'package:tutor_finder/core/widgets/auth_wrapper.dart';
 import 'package:tutor_finder/parent_viewmodels/auth_vm.dart';
+import 'package:tutor_finder/core/services/firebase_messaging_handler.dart';
 
 import 'firebase_options.dart';
 
@@ -80,6 +83,9 @@ void main() async {
     throw Exception('Firebase initialization failed - cannot proceed');
   }
 
+  // Initialize Firebase Cloud Messaging (FCM)
+  await _initializeFCM();
+
   runApp(
     MultiProvider(
       providers: [
@@ -88,6 +94,87 @@ void main() async {
       child: const MyApp(),
     ),
   );
+}
+
+/// Initialize Firebase Cloud Messaging
+Future<void> _initializeFCM() async {
+  try {
+    final messaging = FirebaseMessaging.instance;
+
+    // Request notification permissions
+    NotificationSettings settings = await messaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+      provisional: false,
+    );
+
+    if (kDebugMode) {
+      print('📱 FCM Permission status: ${settings.authorizationStatus}');
+    }
+
+    // Register background message handler
+    // This must be called before runApp()
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+    // Handle foreground messages
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      if (kDebugMode) {
+        print('📱 Foreground message received:');
+        print('   Title: ${message.notification?.title}');
+        print('   Body: ${message.notification?.body}');
+        print('   Data: ${message.data}');
+      }
+      // You can show local notification here if needed
+      // For now, system will handle it automatically
+    });
+
+    // Handle notification taps (when app is opened from notification)
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      if (kDebugMode) {
+        print('📱 Notification tapped - App opened from notification');
+        print('   Data: ${message.data}');
+      }
+      // Navigate to specific screen based on notification data
+      // This will be handled in AuthWrapper or specific screens
+    });
+
+    // Check if app was opened from a notification (when app was terminated)
+    RemoteMessage? initialMessage = await messaging.getInitialMessage();
+    if (initialMessage != null) {
+      if (kDebugMode) {
+        print('📱 App opened from terminated state via notification');
+        print('   Data: ${initialMessage.data}');
+      }
+      // Handle navigation here if needed
+    }
+
+    // Get FCM token
+    String? token = await messaging.getToken();
+    if (token != null) {
+      if (kDebugMode) {
+        print('📱 FCM Token: $token');
+      }
+      // Token will be saved to Firestore in FCM Service (Phase 2)
+    }
+
+    // Listen for token refresh
+    messaging.onTokenRefresh.listen((newToken) {
+      if (kDebugMode) {
+        print('📱 FCM Token refreshed: $newToken');
+      }
+      // Update token in Firestore (will be handled in FCM Service)
+    });
+
+    if (kDebugMode) {
+      print('✅ FCM initialized successfully');
+    }
+  } catch (e) {
+    if (kDebugMode) {
+      print('❌ FCM initialization error: $e');
+    }
+    // Don't throw error - app should still work without FCM
+  }
 }
 
 class MyApp extends StatelessWidget {

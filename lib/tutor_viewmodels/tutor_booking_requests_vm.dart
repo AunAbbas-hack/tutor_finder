@@ -4,6 +4,7 @@ import '../data/models/booking_model.dart';
 import '../data/models/user_model.dart';
 import '../data/services/booking_services.dart';
 import '../data/services/user_services.dart';
+import '../data/services/notification_service.dart';
 
 /// Model for displaying booking request with parent info
 class BookingRequestDisplay {
@@ -138,6 +139,38 @@ class TutorBookingRequestsViewModel extends ChangeNotifier {
         BookingStatus.approved,
       );
 
+      // Send notification to parent
+      try {
+        final booking = await _bookingService.getBookingById(bookingId);
+        if (booking != null) {
+          final notificationService = NotificationService();
+          final tutor = await _userService.getUserById(_auth.currentUser?.uid ?? '');
+          final parent = await _userService.getUserById(booking.parentId);
+          
+          if (tutor != null) {
+            // Send approval notification to parent
+            await notificationService.sendBookingApprovalToParent(
+              parentId: booking.parentId,
+              tutorName: tutor.name,
+              bookingId: bookingId,
+            );
+            
+            // Send self-confirmation notification to tutor
+            if (parent != null) {
+              await notificationService.sendBookingAcceptedConfirmationToTutor(
+                tutorId: _auth.currentUser!.uid,
+                parentName: parent.name,
+              );
+            }
+          }
+        }
+      } catch (e) {
+        // Don't fail booking if notification fails
+        if (kDebugMode) {
+          print('⚠️ Failed to send approval notification: $e');
+        }
+      }
+
       // Reload pending bookings
       await loadPendingBookings();
 
@@ -171,6 +204,38 @@ class TutorBookingRequestsViewModel extends ChangeNotifier {
         bookingId,
         BookingStatus.rejected,
       );
+
+      // Send notification to parent
+      try {
+        final booking = await _bookingService.getBookingById(bookingId);
+        if (booking != null) {
+          final notificationService = NotificationService();
+          final tutor = await _userService.getUserById(_auth.currentUser?.uid ?? '');
+          final parent = await _userService.getUserById(booking.parentId);
+          
+          if (tutor != null) {
+            // Send rejection notification to parent
+            await notificationService.sendBookingRejectionToParent(
+              parentId: booking.parentId,
+              tutorName: tutor.name,
+              bookingId: bookingId,
+            );
+            
+            // Send self-confirmation notification to tutor
+            if (parent != null) {
+              await notificationService.sendBookingRejectedConfirmationToTutor(
+                tutorId: _auth.currentUser!.uid,
+                parentName: parent.name,
+              );
+            }
+          }
+        }
+      } catch (e) {
+        // Don't fail booking if notification fails
+        if (kDebugMode) {
+          print('⚠️ Failed to send rejection notification: $e');
+        }
+      }
 
       // Reload pending bookings
       await loadPendingBookings();

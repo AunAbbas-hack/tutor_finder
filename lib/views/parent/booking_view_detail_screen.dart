@@ -182,6 +182,12 @@ class BookingViewDetailScreen extends StatelessWidget {
         statusText = 'COMPLETED';
         statusMessage = 'This session has been completed.';
         break;
+      default:
+        statusColor = AppColors.textGrey;
+        statusIcon = Icons.help_outline;
+        statusText = status.toString().split('.').last.toUpperCase();
+        statusMessage = 'Booking status: ${status.toString().split('.').last}';
+        break;
     }
 
     return Container(

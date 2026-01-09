@@ -8,6 +8,8 @@ import '../data/models/user_model.dart';
 import '../data/services/booking_services.dart';
 import '../data/services/user_services.dart';
 import '../data/services/student_services.dart';
+import '../data/services/tutor_services.dart';
+import '../data/services/notification_service.dart';
 
 class RequestBookingViewModel extends ChangeNotifier {
   final BookingService _bookingService;
@@ -298,6 +300,29 @@ class RequestBookingViewModel extends ChangeNotifier {
       );
 
       await _bookingService.createBooking(booking);
+
+      // Send notification to tutor
+      try {
+        final notificationService = NotificationService();
+        final tutorService = TutorService();
+        final tutor = await tutorService.getTutorById(tutorId);
+        final parent = await _userService.getUserById(currentUser.uid);
+        
+        if (tutor != null && parent != null) {
+          final subjectsText = _selectedSubjects.join(', ');
+          await notificationService.sendBookingNotificationToTutor(
+            tutorId: tutorId,
+            parentName: parent.name,
+            subject: subjectsText,
+            bookingId: bookingId,
+          );
+        }
+      } catch (e) {
+        // Don't fail booking if notification fails
+        if (kDebugMode) {
+          print('⚠️ Failed to send booking notification: $e');
+        }
+      }
 
       _setLoading(false);
       return true;

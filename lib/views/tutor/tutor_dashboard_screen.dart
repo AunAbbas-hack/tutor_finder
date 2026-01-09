@@ -1,11 +1,13 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:get/get.dart';
 import 'package:tutor_finder/views/auth/login_screen.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/app_text.dart';
 import '../../tutor_viewmodels/tutor_dashboard_vm.dart';
 import 'tutor_booking_requests_screen.dart';
+import 'notifications_screen.dart';
 
 class TutorDashboardScreen extends StatefulWidget {
   const TutorDashboardScreen({super.key});
@@ -121,8 +123,7 @@ class _TutorDashboardScreenState extends State<TutorDashboardScreen> {
                 size: 28,
               ),
               onPressed: () {
-                // TODO: Navigate to notifications
-                FirebaseAuth.instance.signOut();
+                Get.to(() => const TutorNotificationsScreen());
               },
             ),
             // Notification badge could be added here if needed

@@ -5,6 +5,7 @@ import '../data/models/booking_model.dart';
 import '../data/models/user_model.dart';
 import '../data/services/booking_services.dart';
 import '../data/services/user_services.dart';
+import '../data/services/notification_service.dart';
 import '../core/utils/debug_logger.dart';
 
 /// Model for displaying booking with tutor info
@@ -181,7 +182,32 @@ class BookingsNavbarViewModel extends ChangeNotifier {
     // #endregion
     try {
       _setLoading(true);
+      
+      // Get booking details before cancelling
+      final booking = await _bookingService.getBookingById(bookingId);
+      
       await _bookingService.cancelBooking(bookingId);
+      
+      // Send notification to tutor
+      if (booking != null) {
+        try {
+          final notificationService = NotificationService();
+          final parent = await _userService.getUserById(_auth.currentUser?.uid ?? '');
+          
+          if (parent != null) {
+            await notificationService.sendBookingCancellationToTutor(
+              tutorId: booking.tutorId,
+              parentName: parent.name,
+            );
+          }
+        } catch (e) {
+          // Don't fail booking cancellation if notification fails
+          if (kDebugMode) {
+            print('⚠️ Failed to send cancellation notification: $e');
+          }
+        }
+      }
+      
       // #region agent log
       await DebugLogger.log(location: 'bookings_navbar_vm.dart:151', message: 'Booking cancelled successfully', data: {'bookingId': bookingId}, hypothesisId: 'BOOKING-2');
       // #endregion

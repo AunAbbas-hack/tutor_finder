@@ -350,6 +350,78 @@ class IndividualChatViewModel extends ChangeNotifier {
     }
   }
 
+  // Download file
+  Future<bool> downloadFile({
+    required String fileUrl,
+    required String fileName,
+  }) async {
+    try {
+      _errorMessage = null;
+      _setLoading(true);
+      notifyListeners();
+
+      final filePath = await _storageService.downloadFile(
+        fileUrl: fileUrl,
+        fileName: fileName,
+      );
+
+      _setLoading(false);
+      
+      if (filePath != null) {
+        if (kDebugMode) {
+          print('File downloaded successfully: $filePath');
+        }
+        return true;
+      } else {
+        _errorMessage = 'Failed to download file';
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _setLoading(false);
+      _errorMessage = 'Failed to download file: ${e.toString()}';
+      notifyListeners();
+      if (kDebugMode) {
+        print('Error downloading file: $e');
+      }
+      return false;
+    }
+  }
+
+  // Open file (downloads if not exists, then opens)
+  Future<bool> openFile({
+    required String fileUrl,
+    required String fileName,
+  }) async {
+    try {
+      _errorMessage = null;
+      _setLoading(true);
+      notifyListeners();
+
+      final success = await _storageService.downloadAndOpenFile(
+        fileUrl: fileUrl,
+        fileName: fileName,
+      );
+
+      _setLoading(false);
+      
+      if (!success) {
+        _errorMessage = 'Failed to open file. Please check if you have an app installed to open this file type.';
+        notifyListeners();
+      }
+      
+      return success;
+    } catch (e) {
+      _setLoading(false);
+      _errorMessage = 'Failed to open file: ${e.toString()}';
+      notifyListeners();
+      if (kDebugMode) {
+        print('Error opening file: $e');
+      }
+      return false;
+    }
+  }
+
   void _setLoading(bool value) {
     _isLoading = value;
     notifyListeners();

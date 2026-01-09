@@ -4,6 +4,7 @@ import '../data/models/booking_model.dart';
 import '../data/models/user_model.dart';
 import '../data/services/booking_services.dart';
 import '../data/services/user_services.dart';
+import '../data/services/notification_service.dart';
 
 /// Model for displaying session with parent/student info
 class SessionDisplayModel {
@@ -303,6 +304,66 @@ class TutorSessionViewModel extends ChangeNotifier {
     if (_isDisposed) return;
     _showUpcoming = isUpcoming;
     _safeNotifyListeners();
+  }
+
+  // ---------- Mark Session as Completed ----------
+  Future<bool> markSessionAsCompleted(String bookingId) async {
+    if (_isDisposed) return false;
+
+    _setLoading(true);
+    _errorMessage = null;
+
+    try {
+      // Get booking details before updating
+      final booking = await _bookingService.getBookingById(bookingId);
+      if (booking == null) {
+        _setLoading(false);
+        _errorMessage = 'Booking not found';
+        _safeNotifyListeners();
+        return false;
+      }
+
+      // Update booking status to completed
+      await _bookingService.completeSession(bookingId);
+
+      // Send notification to parent
+      try {
+        final notificationService = NotificationService();
+        final tutor = await _userService.getUserById(_auth.currentUser?.uid ?? '');
+        
+        if (tutor != null) {
+          await notificationService.sendSessionCompletedToParent(
+            parentId: booking.parentId,
+            tutorName: tutor.name,
+          );
+        }
+      } catch (e) {
+        // Don't fail session completion if notification fails
+        if (kDebugMode) {
+          print('⚠️ Failed to send session completed notification: $e');
+        }
+      }
+
+      // Reload sessions
+      await loadSessions();
+
+      if (!_isDisposed) {
+        _setLoading(false);
+        _safeNotifyListeners();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error marking session as completed: $e');
+      }
+      if (!_isDisposed) {
+        _errorMessage = 'Failed to mark session as completed: ${e.toString()}';
+        _setLoading(false);
+        _safeNotifyListeners();
+      }
+      return false;
+    }
   }
 
   // ---------- Helpers ----------

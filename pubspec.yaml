@@ -55,6 +55,11 @@ dependencies:
   cloudinary_public: ^0.23.1
   flutter_dotenv: ^5.1.0
   cached_network_image: ^3.3.1
+  http: ^1.2.2
+  googleapis_auth: ^1.4.1  # For OAuth 2.0 token generation (FCM V1 API)
+  path_provider: ^2.1.1
+  permission_handler: ^11.3.0
+  open_filex: ^4.3.2
 
 dev_dependencies:
   flutter_test:
@@ -77,6 +82,7 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/service_account.json  # Service Account JSON for FCM V1 API (OAuth 2.0)
     - .env
 
   # To add assets to your application, add an assets section, like this:

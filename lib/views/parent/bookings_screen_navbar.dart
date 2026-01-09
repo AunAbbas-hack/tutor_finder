@@ -121,7 +121,10 @@ class BookingsScreenNavbar extends StatelessWidget {
 
   // ---------- Bookings List ----------
   Widget _buildBookingsList(
+      // BookingDisplayModel bookingDisplay,
+
       BuildContext context, BookingsNavbarViewModel vm) {
+    // final booking =bookingDisplay.booking;
     return RefreshIndicator(
       onRefresh: () => vm.initialize(),
       child: ListView.builder(
@@ -129,7 +132,14 @@ class BookingsScreenNavbar extends StatelessWidget {
         itemCount: vm.displayedBookings.length,
         itemBuilder: (context, index) {
           final bookingDisplay = vm.displayedBookings[index];
-          return _buildBookingCard(context, vm, bookingDisplay);
+          return GestureDetector(
+            onTap: () {
+              Get.to(() => BookingViewDetailScreen(
+                    bookingId: bookingDisplay.booking.bookingId,
+                  ));
+            },
+            child: _buildBookingCard(context, vm, bookingDisplay),
+          );
         },
       ),
     );

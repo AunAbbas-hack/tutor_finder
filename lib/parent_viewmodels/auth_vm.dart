@@ -4,6 +4,8 @@ import '../data/models/user_model.dart';
 import '../data/models/tutor_model.dart';
 import '../data/models/parent_model.dart';
 import '../data/repositories/auth_repository.dart';
+import '../data/services/fcm_service.dart';
+import '../data/services/notification_service.dart';
 import '../core/utils/debug_logger.dart';
 
 class AuthViewModel extends ChangeNotifier {
@@ -105,6 +107,18 @@ class AuthViewModel extends ChangeNotifier {
       // #region agent log
       await DebugLogger.log(location: 'auth_vm.dart:82', message: 'Parent login success', data: {'email': _emailOrPhone}, hypothesisId: 'AUTH-1');
       // #endregion
+
+      // Initialize FCM token after successful login
+      try {
+        final fcmService = FCMService();
+        await fcmService.initializeToken();
+      } catch (e) {
+        // Don't fail login if FCM initialization fails
+        if (kDebugMode) {
+          print('⚠️ Failed to initialize FCM token: $e');
+        }
+      }
+
       _setLoading(false);
       return true;
     } on Exception catch (e) {
@@ -215,11 +229,26 @@ class AuthViewModel extends ChangeNotifier {
         bio: _tutorSubjectsExp, // TODO: Add separate bio field in UI
       );
 
-      await _authRepository.registerTutor(
+      final user = await _authRepository.registerTutor(
         baseUser: baseUser,
         tutor: tutor,
         password: _tutorPassword,
       );
+
+      // Send profile under review notification
+      if (user != null) {
+        try {
+          final notificationService = NotificationService();
+          await notificationService.sendProfileUnderReviewToTutor(
+            tutorId: user.uid,
+          );
+        } catch (e) {
+          // Don't fail signup if notification fails
+          if (kDebugMode) {
+            print('⚠️ Failed to send profile under review notification: $e');
+          }
+        }
+      }
 
       _setLoading(false);
       return true;
@@ -314,11 +343,26 @@ class AuthViewModel extends ChangeNotifier {
         address: _parentAddress,
       );
 
-      await _authRepository.registerParent(
+      final user = await _authRepository.registerParent(
         baseUser: baseUser,
         parent: parent,
         password: _parentPassword,
       );
+
+      // Send welcome notification
+      if (user != null) {
+        try {
+          final notificationService = NotificationService();
+          await notificationService.sendWelcomeNotificationToParent(
+            parentId: user.uid,
+          );
+        } catch (e) {
+          // Don't fail signup if notification fails
+          if (kDebugMode) {
+            print('⚠️ Failed to send welcome notification: $e');
+          }
+        }
+      }
 
       _setLoading(false);
       return true;

@@ -414,41 +414,44 @@ class _IndividualChatScreenState extends State<IndividualChatScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (message.imageUrl != null)
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.network(
-              message.imageUrl!,
-              width: 200,
-              height: 200,
-              fit: BoxFit.cover,
-              loadingBuilder: (context, child, loadingProgress) {
-                if (loadingProgress == null) return child;
-                return Container(
-                  width: 200,
-                  height: 200,
-                  color: AppColors.lightBackground,
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      value: loadingProgress.expectedTotalBytes != null
-                          ? loadingProgress.cumulativeBytesLoaded /
-                              loadingProgress.expectedTotalBytes!
-                          : null,
-                      color: AppColors.primary,
+          GestureDetector(
+            onTap: () => _showFullScreenImage(message.imageUrl!),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                message.imageUrl!,
+                width: 200,
+                height: 200,
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Container(
+                    width: 200,
+                    height: 200,
+                    color: AppColors.lightBackground,
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        value: loadingProgress.expectedTotalBytes != null
+                            ? loadingProgress.cumulativeBytesLoaded /
+                                loadingProgress.expectedTotalBytes!
+                            : null,
+                        color: AppColors.primary,
+                      ),
                     ),
-                  ),
-                );
-              },
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  width: 200,
-                  height: 200,
-                  color: AppColors.lightBackground,
-                  child: const Icon(
-                    Icons.broken_image,
-                    color: AppColors.iconGrey,
-                  ),
-                );
-              },
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    width: 200,
+                    height: 200,
+                    color: AppColors.lightBackground,
+                    child: const Icon(
+                      Icons.broken_image,
+                      color: AppColors.iconGrey,
+                    ),
+                  );
+                },
+              ),
             ),
           ),
         if (message.text.isNotEmpty && message.text != 'Image')
@@ -467,70 +470,91 @@ class _IndividualChatScreenState extends State<IndividualChatScreen> {
   }
 
   Widget _buildFileAttachment(MessageModel message, bool isSent) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: isSent
-            ? Colors.white.withOpacity(0.2)
-            : AppColors.lightBackground,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.insert_drive_file,
-            color: isSent ? Colors.white : AppColors.primary,
-            size: 24,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return Consumer<IndividualChatViewModel>(
+      builder: (context, vm, _) {
+        final isDownloading = vm.isLoading;
+        
+        return GestureDetector(
+          onTap: () {
+            // Open file when user taps on document (not on download button)
+            if (message.imageUrl != null && message.fileName != null) {
+              _openFile(vm, message);
+            }
+          },
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: isSent
+                  ? Colors.white.withOpacity(0.2)
+                  : AppColors.lightBackground,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
               children: [
-                AppText(
-                  message.fileName ?? 'File',
-                  style: TextStyle(
-                    color: isSent ? Colors.white : AppColors.textDark,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                Icon(
+                  Icons.insert_drive_file,
+                  color: isSent ? Colors.white : AppColors.primary,
+                  size: 24,
                 ),
-                if (message.text.isNotEmpty)
-                  AppText(
-                    message.text,
-                    style: TextStyle(
-                      color: isSent ? Colors.white70 : AppColors.textGrey,
-                      fontSize: 12,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AppText(
+                        message.fileName ?? 'File',
+                        style: TextStyle(
+                          color: isSent ? Colors.white : AppColors.textDark,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (message.text.isNotEmpty)
+                        AppText(
+                          message.text,
+                          style: TextStyle(
+                            color: isSent ? Colors.white70 : AppColors.textGrey,
+                            fontSize: 12,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                    ],
+                  ),
+                ),
+                if (message.imageUrl != null)
+                  GestureDetector(
+                    // Stop tap from propagating to parent
+                    onTap: () {
+                      if (!isDownloading) {
+                        _downloadFile(vm, message);
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      child: isDownloading
+                          ? SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: isSent ? Colors.white : AppColors.primary,
+                              ),
+                            )
+                          : Icon(
+                              Icons.download,
+                              color: isSent ? Colors.white : AppColors.primary,
+                              size: 20,
+                            ),
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
               ],
             ),
           ),
-          if (message.imageUrl != null)
-            IconButton(
-              icon: Icon(
-                Icons.download,
-                color: isSent ? Colors.white : AppColors.primary,
-                size: 20,
-              ),
-              onPressed: () {
-                // TODO: Implement file download
-                Get.snackbar(
-                  'Download',
-                  'File download will be implemented',
-                  snackPosition: SnackPosition.BOTTOM,
-                  backgroundColor: AppColors.primary,
-                  colorText: Colors.white,
-                  duration: const Duration(seconds: 2),
-                );
-              },
-            ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -903,5 +927,167 @@ class _IndividualChatScreenState extends State<IndividualChatScreen> {
         duration: const Duration(seconds: 2),
       );
     }
+  }
+
+  // ---------- Download File ----------
+  Future<void> _downloadFile(
+    IndividualChatViewModel vm,
+    MessageModel message,
+  ) async {
+    if (message.imageUrl == null || message.fileName == null) {
+      Get.snackbar(
+        'Error',
+        'File URL or filename not available',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppColors.error,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 2),
+      );
+      return;
+    }
+
+    try {
+      final success = await vm.downloadFile(
+        fileUrl: message.imageUrl!,
+        fileName: message.fileName!,
+      );
+
+      if (success) {
+        Get.snackbar(
+          'Success',
+          'File downloaded successfully',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: AppColors.success,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 2),
+        );
+      } else {
+        Get.snackbar(
+          'Error',
+          vm.errorMessage ?? 'Failed to download file',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: AppColors.error,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 2),
+        );
+      }
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to download file: ${e.toString()}',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppColors.error,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 2),
+      );
+    }
+  }
+
+  // ---------- Open File ----------
+  Future<void> _openFile(
+    IndividualChatViewModel vm,
+    MessageModel message,
+  ) async {
+    if (message.imageUrl == null || message.fileName == null) {
+      Get.snackbar(
+        'Error',
+        'File URL or filename not available',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppColors.error,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 2),
+      );
+      return;
+    }
+
+    try {
+      final success = await vm.openFile(
+        fileUrl: message.imageUrl!,
+        fileName: message.fileName!,
+      );
+
+      if (!success) {
+        Get.snackbar(
+          'Error',
+          vm.errorMessage ?? 'Failed to open file. Please make sure you have an app installed to open this file type.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: AppColors.error,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 3),
+        );
+      }
+      // If success, file opens automatically, no need to show snackbar
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to open file: ${e.toString()}',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppColors.error,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 2),
+      );
+    }
+  }
+
+  // ---------- Full Screen Image Viewer ----------
+  void _showFullScreenImage(String imageUrl) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => _FullScreenImageViewer(imageUrl: imageUrl),
+        fullscreenDialog: true,
+      ),
+    );
+  }
+}
+
+// Full Screen Image Viewer Widget
+class _FullScreenImageViewer extends StatelessWidget {
+  final String imageUrl;
+
+  const _FullScreenImageViewer({required this.imageUrl});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        leading: IconButton(
+          icon: const Icon(Icons.close, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
+      body: Center(
+        child: InteractiveViewer(
+          minScale: 0.5,
+          maxScale: 4.0,
+          child: Image.network(
+            imageUrl,
+            fit: BoxFit.contain,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return Center(
+                child: CircularProgressIndicator(
+                  value: loadingProgress.expectedTotalBytes != null
+                      ? loadingProgress.cumulativeBytesLoaded /
+                          loadingProgress.expectedTotalBytes!
+                      : null,
+                  color: Colors.white,
+                ),
+              );
+            },
+            errorBuilder: (context, error, stackTrace) {
+              return const Center(
+                child: Icon(
+                  Icons.broken_image,
+                  color: Colors.white,
+                  size: 64,
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
   }
 }

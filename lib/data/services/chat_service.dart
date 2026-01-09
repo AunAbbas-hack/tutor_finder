@@ -2,8 +2,11 @@
 import 'dart:async';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import '../models/message_model.dart';
 import '../models/chat_model.dart';
+import 'notification_service.dart';
+import 'user_services.dart';
 
 class ChatService {
   final DatabaseReference _database;
@@ -79,6 +82,32 @@ class ChatService {
     // Update userChats for both users (quick lookup)
     await _database.child('userChats/$_currentUserId/$chatId').set(true);
     await _database.child('userChats/$receiverId/$chatId').set(true);
+
+    // Send notification to receiver (only if app is in background/killed)
+    try {
+      final notificationService = NotificationService();
+      final userService = UserService();
+      final sender = await userService.getUserById(_currentUserId!);
+      
+      if (sender != null) {
+        // Truncate message preview if too long
+        final messagePreview = text.length > 50 
+            ? '${text.substring(0, 50)}...' 
+            : text;
+        
+        await notificationService.sendMessageNotification(
+          receiverId: receiverId,
+          senderName: sender.name,
+          messagePreview: messagePreview,
+          senderId: _currentUserId,
+        );
+      }
+    } catch (e) {
+      // Don't fail message if notification fails
+      if (kDebugMode) {
+        print('⚠️ Failed to send message notification: $e');
+      }
+    }
   }
 
   /// Get messages stream (real-time updates)

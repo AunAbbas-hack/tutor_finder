@@ -74,6 +74,14 @@ class BookingService {
     await updateBookingStatus(bookingId, BookingStatus.cancelled);
   }
 
+  /// Mark session as completed (with notification support)
+  /// This method should be used instead of updateBookingStatus for completing sessions
+  Future<void> completeSession(String bookingId) async {
+    await updateBookingStatus(bookingId, BookingStatus.completed);
+    // Note: Notifications will be sent from the calling ViewModel
+    // to have access to user names
+  }
+
   /// Delete booking
   Future<void> deleteBooking(String bookingId) async {
     await _bookingsCol.doc(bookingId).delete();

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../data/models/user_model.dart';
 import '../../data/services/user_services.dart';
+import '../../data/services/fcm_service.dart';
 import '../../views/auth/login_screen.dart';
 import '../../views/parent/parent_main_screen.dart';
 import '../../views/tutor/tutor_main_screen.dart';
@@ -187,6 +188,18 @@ class _AuthWrapperState extends State<AuthWrapper> {
             debugPrint('   Email: ${userModel.email}');
             debugPrint('   Role: ${userModel.role}');
             debugPrint('   Status: ${userModel.status}');
+            
+            // Initialize FCM token for notifications (for all users)
+            // This ensures token is saved even if user restarts app
+            WidgetsBinding.instance.addPostFrameCallback((_) async {
+              try {
+                final fcmService = FCMService();
+                await fcmService.initializeToken();
+                debugPrint('✅ FCM token initialized in AuthWrapper');
+              } catch (e) {
+                debugPrint('⚠️ Failed to initialize FCM token in AuthWrapper: $e');
+              }
+            });
             
             // Navigate based on role
             switch (userModel.role) {

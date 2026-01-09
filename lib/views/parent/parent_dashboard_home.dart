@@ -14,6 +14,7 @@ import '../../parent_viewmodels/auth_vm.dart';
 import '../../parent_viewmodels/parent_dashboard_vm.dart';
 import 'parent_profile_screen.dart';
 import 'tutor_search_screen.dart';
+import 'notifications_screen.dart';
 
 class ParentDashboardHome extends StatefulWidget {
   const ParentDashboardHome({super.key});
@@ -193,7 +194,7 @@ class _DashboardContent extends StatelessWidget {
                     size: 28,
                   ),
                   onPressed: () {
-                    // TODO: Navigate to notifications
+                    Get.to(() => const NotificationsScreen());
                   },
                 ),
             if (vm.notificationCount > 0)
