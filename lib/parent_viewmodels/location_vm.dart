@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
@@ -12,6 +13,7 @@ class LocationViewModel extends ChangeNotifier {
   String? _errorMessage;
   String? _selectedAddress;
   bool _hasUserSelectedLocation = false; // Track if user has selected a location
+  bool _isUpdatingCamera = false; // Prevent updates during programmatic camera moves
   
   // Map controller and camera position
   GoogleMapController? _mapController;
@@ -19,6 +21,9 @@ class LocationViewModel extends ChangeNotifier {
     target: LatLng(0.0, 0.0), // Default: World view (no specific location)
     zoom: 2.0, // Zoomed out to show world map
   );
+  
+  // Debounce timer for camera idle
+  Timer? _cameraIdleTimer;
 
   LocationViewModel({double? initialLatitude, double? initialLongitude, String? initialAddress}) {
     if (initialLatitude != null && initialLongitude != null) {
@@ -83,9 +88,13 @@ class LocationViewModel extends ChangeNotifier {
     
     // Move map camera
     if (_mapController != null) {
+      _isUpdatingCamera = true; // Prevent onCameraIdle from triggering during programmatic move
       await _mapController!.animateCamera(
         CameraUpdate.newCameraPosition(_cameraPosition),
       );
+      // Wait a bit after animation completes before allowing camera idle updates
+      await Future.delayed(const Duration(milliseconds: 500));
+      _isUpdatingCamera = false;
     }
     
     // Get address from coordinates
@@ -220,26 +229,41 @@ class LocationViewModel extends ChangeNotifier {
   }
 
   /// Handle camera move (when user drags map)
+  /// Don't call notifyListeners here to prevent excessive rebuilds
   void onCameraMove(CameraPosition position) {
+    // Only update internal state, don't notify listeners
+    // This prevents continuous rebuilds during map dragging
     _cameraPosition = position;
   }
 
   /// Handle camera idle (when user stops dragging)
   /// Only update if user has already selected a location (not on initial load)
-  Future<void> onCameraIdle() async {
-    // Only update location if user has already selected one
+  /// Uses debouncing to prevent rapid successive calls
+  void onCameraIdle() {
+    // Cancel any pending timer
+    _cameraIdleTimer?.cancel();
+    
+    // Only update location if user has already selected one and not during programmatic moves
     // This prevents setting coordinates on initial map load
-    if (_hasUserSelectedLocation) {
-      final lat = _cameraPosition.target.latitude;
-      final lng = _cameraPosition.target.longitude;
-      _latitude = lat.toStringAsFixed(6);
-      _longitude = lng.toStringAsFixed(6);
-      
-      // Get address from coordinates
-      await _getAddressFromCoordinates(lat, lng);
-      
-      notifyListeners();
+    if (!_hasUserSelectedLocation || _isUpdatingCamera) {
+      return;
     }
+    
+    // Debounce: Wait 300ms after camera stops moving before updating
+    // This prevents rapid successive calls that cause frame issues
+    _cameraIdleTimer = Timer(const Duration(milliseconds: 300), () async {
+      if (!_isUpdatingCamera && _hasUserSelectedLocation) {
+        final lat = _cameraPosition.target.latitude;
+        final lng = _cameraPosition.target.longitude;
+        _latitude = lat.toStringAsFixed(6);
+        _longitude = lng.toStringAsFixed(6);
+        
+        // Get address from coordinates (async, but don't await to prevent blocking)
+        _getAddressFromCoordinates(lat, lng).then((_) {
+          notifyListeners();
+        });
+      }
+    });
   }
 
   void setCurrentLocation(double lat, double lng) {
@@ -260,6 +284,7 @@ class LocationViewModel extends ChangeNotifier {
 
   @override
   void dispose() {
+    _cameraIdleTimer?.cancel();
     _mapController?.dispose();
     super.dispose();
   }

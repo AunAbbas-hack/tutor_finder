@@ -9,6 +9,7 @@ import '../data/services/user_services.dart';
 import '../data/services/tutor_services.dart';
 import '../../core/services/file_picker_service.dart';
 import '../../core/services/storage_service.dart';
+import '../../core/services/image_picker_service.dart';
 
 class TutorProfileViewModel extends ChangeNotifier {
   final UserService _userService;
@@ -16,6 +17,7 @@ class TutorProfileViewModel extends ChangeNotifier {
   final FirebaseAuth _auth;
   final FilePickerService _filePickerService;
   final StorageService _storageService;
+  final ImagePickerService _imagePickerService;
 
   TutorProfileViewModel({
     UserService? userService,
@@ -23,11 +25,13 @@ class TutorProfileViewModel extends ChangeNotifier {
     FirebaseAuth? auth,
     FilePickerService? filePickerService,
     StorageService? storageService,
+    ImagePickerService? imagePickerService,
   })  : _userService = userService ?? UserService(),
         _tutorService = tutorService ?? TutorService(),
         _auth = auth ?? FirebaseAuth.instance,
         _filePickerService = filePickerService ?? FilePickerService(),
-        _storageService = storageService ?? StorageService();
+        _storageService = storageService ?? StorageService(),
+        _imagePickerService = imagePickerService ?? ImagePickerService();
 
   // Loading state
   bool _isLoading = false;
@@ -56,6 +60,10 @@ class TutorProfileViewModel extends ChangeNotifier {
   double? _latitude;
   double? _longitude;
   String? _selectedAddress;
+  
+  // Profile picture
+  File? _selectedImageFile;
+  File? get selectedImageFile => _selectedImageFile;
 
   // Certification input fields
   String _certificationTitle = '';
@@ -353,6 +361,25 @@ class TutorProfileViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ---------- Image Picker ----------
+  Future<void> pickImage() async {
+    try {
+      final imageFile = await _imagePickerService.pickImage();
+      if (imageFile != null) {
+        _selectedImageFile = imageFile;
+        notifyListeners();
+      }
+    } catch (e) {
+      _errorMessage = 'Failed to pick image: ${e.toString()}';
+      notifyListeners();
+    }
+  }
+
+  void updateSelectedImage(File imageFile) {
+    _selectedImageFile = imageFile;
+    notifyListeners();
+  }
+
   // Save profile
   Future<bool> saveProfile() async {
     if (_user == null || _tutor == null) {
@@ -365,14 +392,36 @@ class TutorProfileViewModel extends ChangeNotifier {
     _errorMessage = null;
 
     try {
-      // Update user name and location
+      String? newImageUrl = _user!.imageUrl;
+
+      // Upload image if selected
+      if (_selectedImageFile != null) {
+        final uploadedUrl = await _storageService.uploadImageFile(
+          imageFile: _selectedImageFile!,
+          folderPath: 'profile_pictures',
+        );
+        if (uploadedUrl != null) {
+          newImageUrl = uploadedUrl;
+        } else {
+          _errorMessage = 'Failed to upload image';
+          _setLoading(false);
+          notifyListeners();
+          return false;
+        }
+      }
+
+      // Update user name, location, and image
       final updatedUser = _user!.copyWith(
         name: _fullName,
         latitude: _latitude,
         longitude: _longitude,
+        imageUrl: newImageUrl,
       );
       await _userService.updateUser(updatedUser);
       _user = updatedUser;
+      
+      // Clear selected image after successful upload
+      _selectedImageFile = null;
 
       // Certifications are already CertificationEntry objects
 

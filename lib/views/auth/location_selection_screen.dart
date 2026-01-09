@@ -77,16 +77,17 @@ class _LocationSelectionView extends StatelessWidget {
   });
 
   /// Build markers for the map
+  /// Use const constructor where possible to prevent unnecessary rebuilds
   Set<Marker> _buildMarkers(LocationViewModel vm) {
     if (vm.latitude.isEmpty || vm.longitude.isEmpty) {
-      return {};
+      return const {};
     }
 
     final lat = double.tryParse(vm.latitude);
     final lng = double.tryParse(vm.longitude);
 
     if (lat == null || lng == null) {
-      return {};
+      return const {};
     }
 
     return {
@@ -273,9 +274,11 @@ class _LocationSelectionView extends StatelessWidget {
                           vm.onMapTap(position);
                         },
                         onCameraMove: (CameraPosition position) {
+                          // Only update internal state, no rebuilds during drag
                           vm.onCameraMove(position);
                         },
                         onCameraIdle: () {
+                          // Debounced update when camera stops moving
                           vm.onCameraIdle();
                         },
                         myLocationButtonEnabled: false,
@@ -283,6 +286,13 @@ class _LocationSelectionView extends StatelessWidget {
                         zoomControlsEnabled: false,
                         mapToolbarEnabled: false,
                         markers: _buildMarkers(vm),
+                        // Optimize rendering
+                        mapType: MapType.normal,
+                        compassEnabled: false,
+                        rotateGesturesEnabled: true,
+                        scrollGesturesEnabled: true,
+                        tiltGesturesEnabled: false,
+                        zoomGesturesEnabled: true,
                       ),
                       // Center indicator
                       Center(

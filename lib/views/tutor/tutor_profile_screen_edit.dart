@@ -1,11 +1,14 @@
 // lib/views/tutor/tutor_profile_screen_edit.dart
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:get/get.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/app_text.dart';
 import '../../core/widgets/app_textfield.dart';
+import '../../core/widgets/image_picker_bottom_sheet.dart';
 import '../../tutor_viewmodels/tutor_profile_edit_vm.dart';
+import '../../core/services/image_picker_service.dart';
 import '../auth/location_selection_screen.dart';
 
 class TutorProfileScreenEdit extends StatelessWidget {
@@ -250,6 +253,16 @@ class _TutorProfileScreenState extends State<_TutorProfileView> {
 
   Widget _buildProfilePicture(TutorProfileViewModel vm) {
     final imageUrl = vm.user?.imageUrl ?? '';
+    final selectedImage = vm.selectedImageFile;
+    
+    // Determine which image to show
+    ImageProvider? imageProvider;
+    if (selectedImage != null) {
+      imageProvider = FileImage(selectedImage);
+    } else if (imageUrl.isNotEmpty) {
+      imageProvider = NetworkImage(imageUrl);
+    }
+    
     return Center(
       child: Stack(
         children: [
@@ -263,14 +276,14 @@ class _TutorProfileScreenState extends State<_TutorProfileView> {
                 color: AppColors.border,
                 width: 2,
               ),
-              image: imageUrl.isNotEmpty
+              image: imageProvider != null
                   ? DecorationImage(
-                      image: NetworkImage(imageUrl),
+                      image: imageProvider,
                       fit: BoxFit.cover,
                     )
                   : null,
             ),
-            child: imageUrl.isEmpty
+            child: imageProvider == null
                 ? const Icon(
                     Icons.person,
                     size: 60,
@@ -281,26 +294,46 @@ class _TutorProfileScreenState extends State<_TutorProfileView> {
           Positioned(
             right: 0,
             bottom: 0,
-            child: Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.primary,
-                border: Border.all(
-                  color: AppColors.background,
-                  width: 2,
+            child: GestureDetector(
+              onTap: () => _showImagePickerOptions(context, vm),
+              child: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.primary,
+                  border: Border.all(
+                    color: AppColors.background,
+                    width: 2,
+                  ),
                 ),
-              ),
-              child: const Icon(
-                Icons.edit,
-                color: Colors.white,
-                size: 18,
+                child: const Icon(
+                  Icons.camera_alt_outlined,
+                  color: Colors.white,
+                  size: 18,
+                ),
               ),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  // ---------- Image Picker Options Bottom Sheet ----------
+  void _showImagePickerOptions(BuildContext context, TutorProfileViewModel vm) {
+    ImagePickerBottomSheet.show(
+      context: context,
+      onGalleryTap: () {
+        vm.pickImage();
+      },
+      onCameraTap: () async {
+        final imagePicker = ImagePickerService();
+        final imageFile = await imagePicker.pickImageFromCamera();
+        if (imageFile != null && context.mounted) {
+          vm.updateSelectedImage(imageFile);
+        }
+      },
     );
   }
 

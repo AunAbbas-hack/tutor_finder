@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/app_text.dart';
 import '../../core/widgets/app_textfield.dart';
+import '../../core/widgets/image_picker_bottom_sheet.dart';
 import '../../parent_viewmodels/parent_edit_profile_vm.dart';
 import '../../core/services/image_picker_service.dart';
 
@@ -326,57 +327,18 @@ class _ParentEditProfileScreenState extends State<ParentEditProfileScreen> {
 
   // ---------- Image Picker Options ----------
   void _showImagePickerOptions(BuildContext context, ParentEditProfileViewModel vm) {
-    showModalBottomSheet(
+    ImagePickerBottomSheet.show(
       context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        padding: const EdgeInsets.symmetric(vertical: 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.photo_library, color: AppColors.primary),
-              title: const AppText(
-                'Choose from Gallery',
-                style: TextStyle(fontSize: 16),
-              ),
-              onTap: () {
-                Navigator.pop(context);
-                vm.pickImage();
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.camera_alt, color: AppColors.primary),
-              title: const AppText(
-                'Take Photo',
-                style: TextStyle(fontSize: 16),
-              ),
-              onTap: () async {
-                Navigator.pop(context);
-                // Pick from camera
-                final imagePicker = ImagePickerService();
-                final imageFile = await imagePicker.pickImageFromCamera();
-                if (imageFile != null && context.mounted) {
-                  vm.updateSelectedImage(imageFile);
-                }
-              },
-            ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.cancel, color: AppColors.error),
-              title: const AppText(
-                'Cancel',
-                style: TextStyle(fontSize: 16, color: AppColors.error),
-              ),
-              onTap: () => Navigator.pop(context),
-            ),
-          ],
-        ),
-      ),
+      onGalleryTap: () {
+        vm.pickImage();
+      },
+      onCameraTap: () async {
+        final imagePicker = ImagePickerService();
+        final imageFile = await imagePicker.pickImageFromCamera();
+        if (imageFile != null && context.mounted) {
+          vm.updateSelectedImage(imageFile);
+        }
+      },
     );
   }
 }

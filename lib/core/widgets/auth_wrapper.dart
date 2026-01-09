@@ -20,21 +20,62 @@ class AuthWrapper extends StatefulWidget {
 
 class _AuthWrapperState extends State<AuthWrapper> {
   FirebaseAuth? _auth;
-  final UserService _userService = UserService();
+  UserService? _userService;
 
   @override
   void initState() {
     super.initState();
-    // Ensure Firebase is initialized before accessing FirebaseAuth
+    // Ensure Firebase is initialized before accessing Firebase services
+    _initializeServices();
+  }
+
+  void _initializeServices() {
+    // Ensure Firebase is initialized before accessing Firebase services
     if (Firebase.apps.isNotEmpty) {
-      _auth = FirebaseAuth.instance;
+      try {
+        _auth = FirebaseAuth.instance;
+        _userService = UserService();
+        debugPrint('✅ AuthWrapper: Services initialized successfully');
+      } catch (e) {
+        debugPrint('❌ AuthWrapper: Error initializing services: $e');
+        // Retry after a short delay
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (mounted && Firebase.apps.isNotEmpty) {
+            try {
+              setState(() {
+                _auth = FirebaseAuth.instance;
+                _userService = UserService();
+              });
+              debugPrint('✅ AuthWrapper: Services initialized on retry');
+            } catch (e2) {
+              debugPrint('❌ AuthWrapper: Error on retry: $e2');
+            }
+          }
+        });
+      }
+    } else {
+      debugPrint('⚠️ AuthWrapper: Firebase not initialized, waiting...');
+      // Wait for Firebase to be initialized (should be done in main.dart)
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted && Firebase.apps.isNotEmpty) {
+          try {
+            setState(() {
+              _auth = FirebaseAuth.instance;
+              _userService = UserService();
+            });
+            debugPrint('✅ AuthWrapper: Services initialized after wait');
+          } catch (e) {
+            debugPrint('❌ AuthWrapper: Error after wait: $e');
+          }
+        }
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Check if Firebase is initialized
-    if (Firebase.apps.isEmpty || _auth == null) {
+    // Check if Firebase is initialized and services are ready
+    if (Firebase.apps.isEmpty || _auth == null || _userService == null) {
       return const Scaffold(
         body: Center(
           child: CircularProgressIndicator(),
@@ -62,7 +103,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
         // Logged in - get user role and show appropriate dashboard
         final userId = snapshot.data!.uid;
         return FutureBuilder<UserModel?>(
-          future: _userService.getUserById(userId),
+          future: _userService!.getUserById(userId),
           builder: (context, userSnapshot) {
             if (userSnapshot.connectionState == ConnectionState.waiting) {
               return const Scaffold(

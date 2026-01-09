@@ -1,4 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:get/get.dart';
@@ -24,7 +25,7 @@ void main() async {
   // Initialize Firebase with retry logic
   bool firebaseInitialized = false;
   int retryCount = 0;
-  const maxRetries = 3;
+  const maxRetries = 5; // Increased retries
   
   while (!firebaseInitialized && retryCount < maxRetries) {
     try {
@@ -34,8 +35,27 @@ void main() async {
           options: DefaultFirebaseOptions.currentPlatform,
         );
         debugPrint('✅ Firebase initialized successfully');
+        
+        // Verify initialization by checking if we can access Firebase services
+        try {
+          final test = FirebaseFirestore.instance;
+          debugPrint('✅ Firebase Firestore verified');
+        } catch (e) {
+          debugPrint('⚠️ Firebase initialized but Firestore not accessible: $e');
+          throw Exception('Firestore not accessible after initialization');
+        }
       } else {
         debugPrint('✅ Firebase already initialized');
+        // Verify it's working
+        try {
+          final test = FirebaseFirestore.instance;
+          debugPrint('✅ Firebase Firestore verified');
+        } catch (e) {
+          debugPrint('⚠️ Firebase apps exist but Firestore not accessible: $e');
+          // Clear and reinitialize
+          await Firebase.app().delete();
+          continue;
+        }
       }
       firebaseInitialized = true;
     } catch (e, stackTrace) {
@@ -45,15 +65,19 @@ void main() async {
       if (retryCount >= maxRetries) {
         debugPrint('❌ Failed to initialize Firebase after $maxRetries attempts');
         debugPrint('Stack trace: $stackTrace');
-        // For development, we'll continue anyway but show an error
-        // In production, you might want to show an error screen
-        debugPrint('⚠️ Continuing without Firebase - some features may not work');
+        // Don't continue without Firebase - throw error
+        throw Exception('Failed to initialize Firebase: $e');
       } else {
-        // Wait a bit before retrying
+        // Wait a bit before retrying (exponential backoff)
         await Future.delayed(Duration(milliseconds: 500 * retryCount));
         debugPrint('🔄 Retrying Firebase initialization...');
       }
     }
+  }
+  
+  // Final check - ensure Firebase is initialized before proceeding
+  if (!firebaseInitialized || Firebase.apps.isEmpty) {
+    throw Exception('Firebase initialization failed - cannot proceed');
   }
 
   runApp(
