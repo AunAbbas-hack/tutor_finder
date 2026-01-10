@@ -6,7 +6,7 @@ import '../data/models/user_model.dart';
 import '../data/models/parent_model.dart';
 import '../data/services/user_services.dart';
 import '../data/services/parent_services.dart';
-import '../core/services/storage_service.dart';
+import '../core/services/storage_service_cloudinary.dart';
 import '../core/services/image_picker_service.dart';
 import '../core/utils/debug_logger.dart';
 

@@ -90,6 +90,13 @@ class TutorProfileScreen extends StatelessWidget {
                                , child: _buildAreasOfExpertiseSection(vm)),
                             const SizedBox(height: 24),
 
+                            // Fee Structure Section - Always show
+                            Align(
+                              alignment: Alignment.topLeft,
+                              child: _buildTuitionFeesSection(vm),
+                            ),
+                            const SizedBox(height: 24),
+
                             // Education Section
                             Align(
                                 alignment: Alignment.topLeft,
@@ -157,11 +164,6 @@ class TutorProfileScreen extends StatelessWidget {
             ),
             onPressed: () async {
               final result = await Get.to(() => const TutorProfileScreenEdit());
-              // Refresh profile if save was successful
-              if (result == true) {
-                final vm = Provider.of<TutorProfileViewModel>(context, listen: false);
-                vm.refresh();
-              }
               // Refresh profile if save was successful
               if (result == true) {
                 final vm = Provider.of<TutorProfileViewModel>(context, listen: false);
@@ -336,6 +338,170 @@ class TutorProfileScreen extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildTuitionFeesSection(TutorProfileViewModel vm) {
+    final hourlyFee = vm.hourlyFee;
+    final monthlyFee = vm.monthlyFee;
+    final savingsPercentage = vm.monthlySavingsPercentage;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.lightBackground,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header with "Fee Structure" and "per hour"
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const AppText(
+                'Fee Structure',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textDark,
+                ),
+              ),
+              if (hourlyFee != null)
+                const AppText(
+                  'per hour',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textGrey,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          
+          // Hourly and Monthly Rates in a row
+          if (hourlyFee != null || monthlyFee != null) ...[
+            Row(
+              children: [
+                // Hourly Rate
+                if (hourlyFee != null && hourlyFee > 0) ...[
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const AppText(
+                          'Hourly Rate',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.textDark,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        AppText(
+                          '₹${hourlyFee.toStringAsFixed(0)} /hr',
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                
+                // Divider if both rates exist
+                if (hourlyFee != null && monthlyFee != null) ...[
+                  Container(
+                    width: 1,
+                    height: 50,
+                    color: AppColors.border,
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                  ),
+                ],
+                
+                // Monthly Rate
+                if (monthlyFee != null && monthlyFee > 0) ...[
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const AppText(
+                          'Monthly Rate',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.textDark,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        AppText(
+                          '₹${monthlyFee.toStringAsFixed(0)} /mo',
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ] else ...[
+            const AppText(
+              'Fee structure not available',
+              style: TextStyle(
+                fontSize: 14,
+                color: AppColors.textGrey,
+              ),
+            ),
+          ],
+          
+          // Savings Note
+          if (savingsPercentage != null && savingsPercentage > 0) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    size: 16,
+                    color: AppColors.primary,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: AppText(
+                      'Save over ${savingsPercentage.toStringAsFixed(0)}% with monthly plans. Package deals available for 10+ hours.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ] else if (hourlyFee != null || monthlyFee != null) ...[
+            const SizedBox(height: 12),
+            const AppText(
+              'Package deals available for 10+ hours.',
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.textGrey,
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 

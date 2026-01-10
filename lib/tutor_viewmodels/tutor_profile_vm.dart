@@ -32,6 +32,7 @@ class TutorProfileViewModel extends ChangeNotifier {
   bool _isEducationExpanded = false;
   bool _isCertificationsExpanded = false;
   bool _isPortfolioExpanded = false;
+  bool _isFeesExpanded = false;
 
   // Getters
   bool get isLoading => _isLoading;
@@ -51,12 +52,36 @@ class TutorProfileViewModel extends ChangeNotifier {
   double? get longitude => _user?.longitude;
   bool get hasLocation => _user?.latitude != null && _user?.longitude != null;
   String? get locationAddress => _locationAddress;
+  double? get hourlyFee => _tutor?.hourlyFee;
+  double? get monthlyFee => _tutor?.monthlyFee;
+  bool get hasFees => _tutor?.hourlyFee != null || _tutor?.monthlyFee != null;
+  
+  // Calculate savings percentage when monthly fee is available
+  // Uses standard assumption of 4 sessions per week (16 sessions per month)
+  double? get monthlySavingsPercentage {
+    final hourly = hourlyFee;
+    final monthly = monthlyFee;
+    
+    if (hourly == null || hourly == 0 || monthly == null) {
+      return null;
+    }
+    
+    // Standard assumption: 4 sessions per week, 4 weeks per month = 16 sessions
+    const hoursPerMonth = 16; // 4 weeks * 4 sessions
+    
+    final hourlyTotal = hourly * hoursPerMonth;
+    if (hourlyTotal == 0) return null;
+    
+    final savings = ((hourlyTotal - monthly) / hourlyTotal) * 100;
+    return savings > 0 ? savings : 0;
+  }
 
   // Expandable sections getters
   bool get isExpertiseExpanded => _isExpertiseExpanded;
   bool get isEducationExpanded => _isEducationExpanded;
   bool get isCertificationsExpanded => _isCertificationsExpanded;
   bool get isPortfolioExpanded => _isPortfolioExpanded;
+  bool get isFeesExpanded => _isFeesExpanded;
 
   // ---------- Initialize ----------
   Future<void> initialize() async {
@@ -101,6 +126,9 @@ class TutorProfileViewModel extends ChangeNotifier {
       }
       if (_tutor!.portfolioDocuments.isNotEmpty) {
         _isPortfolioExpanded = true;
+      }
+      if (_tutor!.hourlyFee != null || _tutor!.monthlyFee != null) {
+        _isFeesExpanded = true;
       }
 
       // Education, certifications, and portfolio are now loaded from TutorModel
@@ -158,6 +186,7 @@ class TutorProfileViewModel extends ChangeNotifier {
     _isEducationExpanded = false;
     _isCertificationsExpanded = false;
     _isPortfolioExpanded = false;
+    _isFeesExpanded = false;
     await initialize();
   }
 
@@ -179,6 +208,11 @@ class TutorProfileViewModel extends ChangeNotifier {
 
   void togglePortfolio() {
     _isPortfolioExpanded = !_isPortfolioExpanded;
+    notifyListeners();
+  }
+
+  void toggleFees() {
+    _isFeesExpanded = !_isFeesExpanded;
     notifyListeners();
   }
 

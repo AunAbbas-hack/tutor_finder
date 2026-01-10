@@ -47,6 +47,8 @@ class _TutorProfileScreenState extends State<_TutorProfileView> {
   late TextEditingController _certificationTitleController;
   late TextEditingController _certificationIssuerController;
   late TextEditingController _certificationYearController;
+  late TextEditingController _hourlyFeeController;
+  late TextEditingController _monthlyFeeController;
 
   late FocusNode _fullNameFocusNode;
   late FocusNode _headlineFocusNode;
@@ -58,6 +60,8 @@ class _TutorProfileScreenState extends State<_TutorProfileView> {
   late FocusNode _certificationTitleFocusNode;
   late FocusNode _certificationIssuerFocusNode;
   late FocusNode _certificationYearFocusNode;
+  late FocusNode _hourlyFeeFocusNode;
+  late FocusNode _monthlyFeeFocusNode;
 
   @override
   void initState() {
@@ -72,6 +76,8 @@ class _TutorProfileScreenState extends State<_TutorProfileView> {
     _certificationTitleController = TextEditingController();
     _certificationIssuerController = TextEditingController();
     _certificationYearController = TextEditingController();
+    _hourlyFeeController = TextEditingController();
+    _monthlyFeeController = TextEditingController();
 
     _fullNameFocusNode = FocusNode();
     _headlineFocusNode = FocusNode();
@@ -83,6 +89,8 @@ class _TutorProfileScreenState extends State<_TutorProfileView> {
     _certificationTitleFocusNode = FocusNode();
     _certificationIssuerFocusNode = FocusNode();
     _certificationYearFocusNode = FocusNode();
+    _hourlyFeeFocusNode = FocusNode();
+    _monthlyFeeFocusNode = FocusNode();
   }
 
   void _updateControllersFromViewModel(TutorProfileViewModel vm) {
@@ -95,6 +103,15 @@ class _TutorProfileScreenState extends State<_TutorProfileView> {
       }
       if (_aboutMeController.text != vm.aboutMe) {
         _aboutMeController.text = vm.aboutMe;
+      }
+      // Update fee controllers
+      final hourlyFeeText = vm.hourlyFee != null ? vm.hourlyFee!.toStringAsFixed(0) : '';
+      if (_hourlyFeeController.text != hourlyFeeText) {
+        _hourlyFeeController.text = hourlyFeeText;
+      }
+      final monthlyFeeText = vm.monthlyFee != null ? vm.monthlyFee!.toStringAsFixed(0) : '';
+      if (_monthlyFeeController.text != monthlyFeeText) {
+        _monthlyFeeController.text = monthlyFeeText;
       }
     }
   }
@@ -111,6 +128,8 @@ class _TutorProfileScreenState extends State<_TutorProfileView> {
     _certificationTitleController.dispose();
     _certificationIssuerController.dispose();
     _certificationYearController.dispose();
+    _hourlyFeeController.dispose();
+    _monthlyFeeController.dispose();
 
     _fullNameFocusNode.dispose();
     _headlineFocusNode.dispose();
@@ -122,6 +141,8 @@ class _TutorProfileScreenState extends State<_TutorProfileView> {
     _certificationTitleFocusNode.dispose();
     _certificationIssuerFocusNode.dispose();
     _certificationYearFocusNode.dispose();
+    _hourlyFeeFocusNode.dispose();
+    _monthlyFeeFocusNode.dispose();
     super.dispose();
   }
 
@@ -227,6 +248,10 @@ class _TutorProfileScreenState extends State<_TutorProfileView> {
                   _buildExpertiseSection(vm),
                   const SizedBox(height: 24),
 
+                  // Tuition Fees
+                  _buildTuitionFeesSection(vm),
+                  const SizedBox(height: 24),
+
                   // Education
                   _buildEducationSection(vm),
                   const SizedBox(height: 24),
@@ -237,6 +262,10 @@ class _TutorProfileScreenState extends State<_TutorProfileView> {
 
                   // Portfolio / Documents
                   _buildPortfolioSection(vm),
+                  const SizedBox(height: 24),
+
+                  // Identity Verification (CNIC)
+                  _buildIdentityVerificationSection(vm),
                   const SizedBox(height: 32),
 
                   // Save Profile Button
@@ -501,6 +530,147 @@ class _TutorProfileScreenState extends State<_TutorProfileView> {
             ),
           ),
         ),
+      ],
+    );
+  }
+
+  Widget _buildTuitionFeesSection(TutorProfileViewModel vm) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InkWell(
+          onTap: vm.toggleFees,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              AppText(
+                'Tuition Fees',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+              ),
+              Icon(
+                vm.isFeesExpanded
+                    ? Icons.keyboard_arrow_up
+                    : Icons.keyboard_arrow_down,
+                color: AppColors.iconGrey,
+              ),
+            ],
+          ),
+        ),
+        if (vm.isFeesExpanded) ...[
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AppText(
+                      'Hourly Fee',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                          ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _hourlyFeeController,
+                      focusNode: _hourlyFeeFocusNode,
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      textInputAction: TextInputAction.next,
+                      onChanged: (value) {
+                        vm.updateHourlyFee(value);
+                      },
+                      decoration: InputDecoration(
+                        hintText: '0',
+                        prefixText: '\$ ',
+                        prefixStyle: const TextStyle(
+                          color: AppColors.textDark,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        hintStyle: TextStyle(color: Colors.grey[600]),
+                        filled: true,
+                        fillColor: const Color(0xFFF5F6FA),
+                        contentPadding:
+                            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: const BorderSide(
+                            color: AppColors.primary,
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AppText(
+                      'Monthly Fee',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                          ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _monthlyFeeController,
+                      focusNode: _monthlyFeeFocusNode,
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      textInputAction: TextInputAction.done,
+                      onChanged: (value) {
+                        vm.updateMonthlyFee(value);
+                      },
+                      decoration: InputDecoration(
+                        hintText: '0',
+                        prefixText: '\$ ',
+                        prefixStyle: const TextStyle(
+                          color: AppColors.textDark,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        hintStyle: TextStyle(color: Colors.grey[600]),
+                        filled: true,
+                        fillColor: const Color(0xFFF5F6FA),
+                        contentPadding:
+                            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: const BorderSide(
+                            color: AppColors.primary,
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
       ],
     );
   }
@@ -989,6 +1159,188 @@ class _TutorProfileScreenState extends State<_TutorProfileView> {
           ),
         ],
       ],
+    );
+  }
+
+  Widget _buildIdentityVerificationSection(TutorProfileViewModel vm) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InkWell(
+          onTap: vm.toggleIdentityVerification,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              AppText(
+                'Identity Verification (CNIC)',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+              ),
+              Icon(
+                vm.isIdentityVerificationExpanded
+                    ? Icons.keyboard_arrow_up
+                    : Icons.keyboard_arrow_down,
+                color: AppColors.iconGrey,
+              ),
+            ],
+          ),
+        ),
+        if (vm.isIdentityVerificationExpanded) ...[
+          const SizedBox(height: 12),
+          AppText(
+            'Please upload clear photos of both sides of your original CNIC for account verification.',
+            style: TextStyle(
+              fontSize: 12,
+              color: AppColors.textGrey,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _buildCnicUploadArea(
+                  label: 'Front of CNIC',
+                  imageFile: vm.selectedCnicFrontFile,
+                  imageUrl: vm.cnicFrontUrl,
+                  onTap: () => _showCnicImagePickerOptions(context, vm, isFront: true),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildCnicUploadArea(
+                  label: 'Back of CNIC',
+                  imageFile: vm.selectedCnicBackFile,
+                  imageUrl: vm.cnicBackUrl,
+                  onTap: () => _showCnicImagePickerOptions(context, vm, isFront: false),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildCnicUploadArea({
+    required String label,
+    File? imageFile,
+    String? imageUrl,
+    required VoidCallback onTap,
+  }) {
+    ImageProvider? imageProvider;
+    if (imageFile != null) {
+      imageProvider = FileImage(imageFile);
+    } else if (imageUrl != null && imageUrl.isNotEmpty) {
+      imageProvider = NetworkImage(imageUrl);
+    }
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 120,
+        decoration: BoxDecoration(
+          color: AppColors.lightBackground,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: imageProvider != null ? AppColors.primary : AppColors.border,
+            width: imageProvider != null ? 2 : 1.5,
+            style: BorderStyle.solid,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (imageProvider != null)
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(11)),
+                  child: Image(
+                    image: imageProvider,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                  ),
+                ),
+              )
+            else
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      label.contains('Front') ? Icons.camera_alt_outlined : Icons.upload,
+                      size: 32,
+                      color: AppColors.iconGrey,
+                    ),
+                    const SizedBox(height: 8),
+                    AppText(
+                      label.contains('Front') ? 'Upload Front' : 'Upload Back',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textGrey,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+              decoration: BoxDecoration(
+                color: imageProvider != null ? AppColors.primary.withOpacity(0.1) : Colors.transparent,
+                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(11)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  AppText(
+                    label,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: imageProvider != null ? AppColors.primary : AppColors.textGrey,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  if (imageProvider != null) ...[
+                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.check_circle,
+                      size: 14,
+                      color: AppColors.primary,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showCnicImagePickerOptions(BuildContext context, TutorProfileViewModel vm, {required bool isFront}) {
+    ImagePickerBottomSheet.show(
+      context: context,
+      onGalleryTap: () {
+        if (isFront) {
+          vm.pickCnicFrontImage();
+        } else {
+          vm.pickCnicBackImage();
+        }
+      },
+      onCameraTap: () async {
+        final imagePicker = ImagePickerService();
+        final imageFile = await imagePicker.pickImageFromCamera();
+        if (imageFile != null && context.mounted) {
+          if (isFront) {
+            vm.updateSelectedCnicFrontImage(imageFile);
+          } else {
+            vm.updateSelectedCnicBackImage(imageFile);
+          }
+        }
+      },
     );
   }
 

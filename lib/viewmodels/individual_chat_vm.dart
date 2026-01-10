@@ -6,8 +6,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../data/models/message_model.dart';
 import '../data/models/user_model.dart';
 import '../data/services/chat_service.dart';
-import '../data/services/user_services.dart';
 import '../data/services/storage_service.dart';
+import '../data/services/user_services.dart';
 
 /// Message with date grouping info
 class MessageWithDate {
@@ -398,15 +398,19 @@ class IndividualChatViewModel extends ChangeNotifier {
       _setLoading(true);
       notifyListeners();
 
-      final success = await _storageService.downloadAndOpenFile(
+      final result = await _storageService.downloadAndOpenFile(
         fileUrl: fileUrl,
         fileName: fileName,
       );
 
       _setLoading(false);
       
+      final success = result['success'] as bool;
+      final errorMessage = result['errorMessage'] as String?;
+      
       if (!success) {
-        _errorMessage = 'Failed to open file. Please check if you have an app installed to open this file type.';
+        // Use the specific error message from storage service (may contain app-specific info)
+        _errorMessage = errorMessage ?? 'Failed to open file. Please check if you have an app installed to open this file type.';
         notifyListeners();
       }
       

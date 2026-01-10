@@ -100,6 +100,10 @@ class TutorModel {
   final List<EducationEntry> education; // Education history
   final List<CertificationEntry> certifications; // Certifications
   final List<PortfolioDocument> portfolioDocuments; // Portfolio files
+  final double? hourlyFee; // Hourly tuition fee
+  final double? monthlyFee; // Monthly tuition fee
+  final String? cnicFrontUrl; // CNIC front side image URL
+  final String? cnicBackUrl; // CNIC back side image URL
 
   const TutorModel({
     required this.tutorId,
@@ -110,6 +114,10 @@ class TutorModel {
     this.education = const [],
     this.certifications = const [],
     this.portfolioDocuments = const [],
+    this.hourlyFee,
+    this.monthlyFee,
+    this.cnicFrontUrl,
+    this.cnicBackUrl,
   });
 
   TutorModel copyWith({
@@ -121,6 +129,10 @@ class TutorModel {
     List<EducationEntry>? education,
     List<CertificationEntry>? certifications,
     List<PortfolioDocument>? portfolioDocuments,
+    double? hourlyFee,
+    double? monthlyFee,
+    String? cnicFrontUrl,
+    String? cnicBackUrl,
   }) {
     return TutorModel(
       tutorId: tutorId ?? this.tutorId,
@@ -131,6 +143,10 @@ class TutorModel {
       education: education ?? this.education,
       certifications: certifications ?? this.certifications,
       portfolioDocuments: portfolioDocuments ?? this.portfolioDocuments,
+      hourlyFee: hourlyFee ?? this.hourlyFee,
+      monthlyFee: monthlyFee ?? this.monthlyFee,
+      cnicFrontUrl: cnicFrontUrl ?? this.cnicFrontUrl,
+      cnicBackUrl: cnicBackUrl ?? this.cnicBackUrl,
     );
   }
 
@@ -144,6 +160,10 @@ class TutorModel {
       'education': education.map((e) => e.toMap()).toList(),
       'certifications': certifications.map((c) => c.toMap()).toList(),
       'portfolioDocuments': portfolioDocuments.map((p) => p.toMap()).toList(),
+      'hourlyFee': hourlyFee,
+      'monthlyFee': monthlyFee,
+      'cnicFrontUrl': cnicFrontUrl,
+      'cnicBackUrl': cnicBackUrl,
     };
   }
 
@@ -168,6 +188,10 @@ class TutorModel {
                   PortfolioDocument.fromMap(p as Map<String, dynamic>))
               .toList() ??
           <PortfolioDocument>[],
+      hourlyFee: (map['hourlyFee'] as num?)?.toDouble(),
+      monthlyFee: (map['monthlyFee'] as num?)?.toDouble(),
+      cnicFrontUrl: map['cnicFrontUrl'] as String?,
+      cnicBackUrl: map['cnicBackUrl'] as String?,
     );
   }
 }

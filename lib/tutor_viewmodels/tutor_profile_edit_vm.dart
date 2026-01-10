@@ -8,7 +8,7 @@ import '../data/models/tutor_model.dart';
 import '../data/services/user_services.dart';
 import '../data/services/tutor_services.dart';
 import '../../core/services/file_picker_service.dart';
-import '../../core/services/storage_service.dart';
+import '../../core/services/storage_service_cloudinary.dart';
 import '../../core/services/image_picker_service.dart';
 
 class TutorProfileViewModel extends ChangeNotifier {
@@ -65,6 +65,16 @@ class TutorProfileViewModel extends ChangeNotifier {
   File? _selectedImageFile;
   File? get selectedImageFile => _selectedImageFile;
 
+  // CNIC images
+  File? _selectedCnicFrontFile;
+  File? _selectedCnicBackFile;
+  String? _cnicFrontUrl;
+  String? _cnicBackUrl;
+  File? get selectedCnicFrontFile => _selectedCnicFrontFile;
+  File? get selectedCnicBackFile => _selectedCnicBackFile;
+  String? get cnicFrontUrl => _cnicFrontUrl;
+  String? get cnicBackUrl => _cnicBackUrl;
+
   // Certification input fields
   String _certificationTitle = '';
   String _certificationIssuer = '';
@@ -74,6 +84,10 @@ class TutorProfileViewModel extends ChangeNotifier {
   String _educationDegree = '';
   String _educationInstitution = '';
   String _educationPeriod = '';
+
+  // Fee fields
+  double? _hourlyFee;
+  double? _monthlyFee;
 
   // Getters
   String get fullName => _fullName;
@@ -99,16 +113,24 @@ class TutorProfileViewModel extends ChangeNotifier {
   String get educationInstitution => _educationInstitution;
   String get educationPeriod => _educationPeriod;
 
+  // Fee getters
+  double? get hourlyFee => _hourlyFee;
+  double? get monthlyFee => _monthlyFee;
+
   // Expandable sections state
   bool _isExpertiseExpanded = true;
   bool _isEducationExpanded = false;
   bool _isCertificationsExpanded = false;
   bool _isPortfolioExpanded = false;
+  bool _isFeesExpanded = false;
+  bool _isIdentityVerificationExpanded = false;
 
   bool get isExpertiseExpanded => _isExpertiseExpanded;
   bool get isEducationExpanded => _isEducationExpanded;
   bool get isCertificationsExpanded => _isCertificationsExpanded;
   bool get isPortfolioExpanded => _isPortfolioExpanded;
+  bool get isFeesExpanded => _isFeesExpanded;
+  bool get isIdentityVerificationExpanded => _isIdentityVerificationExpanded;
 
   // Initialize and load data
   Future<void> initialize() async {
@@ -152,6 +174,12 @@ class TutorProfileViewModel extends ChangeNotifier {
       // Certifications and portfolio
       _certifications = List<CertificationEntry>.from(_tutor!.certifications);
       _portfolioDocuments = List<PortfolioDocument>.from(_tutor!.portfolioDocuments);
+      // Fees
+      _hourlyFee = _tutor!.hourlyFee;
+      _monthlyFee = _tutor!.monthlyFee;
+      // CNIC
+      _cnicFrontUrl = _tutor!.cnicFrontUrl;
+      _cnicBackUrl = _tutor!.cnicBackUrl;
 
       _setLoading(false);
     } catch (e) {
@@ -361,6 +389,37 @@ class TutorProfileViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void toggleFees() {
+    _isFeesExpanded = !_isFeesExpanded;
+    notifyListeners();
+  }
+
+  void toggleIdentityVerification() {
+    _isIdentityVerificationExpanded = !_isIdentityVerificationExpanded;
+    notifyListeners();
+  }
+
+  // Fee update methods
+  void updateHourlyFee(String value) {
+    if (value.isEmpty) {
+      _hourlyFee = null;
+    } else {
+      final fee = double.tryParse(value);
+      _hourlyFee = fee;
+    }
+    notifyListeners();
+  }
+
+  void updateMonthlyFee(String value) {
+    if (value.isEmpty) {
+      _monthlyFee = null;
+    } else {
+      final fee = double.tryParse(value);
+      _monthlyFee = fee;
+    }
+    notifyListeners();
+  }
+
   // ---------- Image Picker ----------
   Future<void> pickImage() async {
     try {
@@ -377,6 +436,43 @@ class TutorProfileViewModel extends ChangeNotifier {
 
   void updateSelectedImage(File imageFile) {
     _selectedImageFile = imageFile;
+    notifyListeners();
+  }
+
+  // ---------- CNIC Image Picker ----------
+  Future<void> pickCnicFrontImage() async {
+    try {
+      final imageFile = await _imagePickerService.pickImage();
+      if (imageFile != null) {
+        _selectedCnicFrontFile = imageFile;
+        notifyListeners();
+      }
+    } catch (e) {
+      _errorMessage = 'Failed to pick CNIC front image: ${e.toString()}';
+      notifyListeners();
+    }
+  }
+
+  Future<void> pickCnicBackImage() async {
+    try {
+      final imageFile = await _imagePickerService.pickImage();
+      if (imageFile != null) {
+        _selectedCnicBackFile = imageFile;
+        notifyListeners();
+      }
+    } catch (e) {
+      _errorMessage = 'Failed to pick CNIC back image: ${e.toString()}';
+      notifyListeners();
+    }
+  }
+
+  void updateSelectedCnicFrontImage(File imageFile) {
+    _selectedCnicFrontFile = imageFile;
+    notifyListeners();
+  }
+
+  void updateSelectedCnicBackImage(File imageFile) {
+    _selectedCnicBackFile = imageFile;
     notifyListeners();
   }
 
@@ -423,6 +519,46 @@ class TutorProfileViewModel extends ChangeNotifier {
       // Clear selected image after successful upload
       _selectedImageFile = null;
 
+      // Upload CNIC images if selected
+      String? newCnicFrontUrl = _cnicFrontUrl;
+      String? newCnicBackUrl = _cnicBackUrl;
+
+      if (_selectedCnicFrontFile != null) {
+        final uploadedUrl = await _storageService.uploadImageFile(
+          imageFile: _selectedCnicFrontFile!,
+          folderPath: 'tutor_identity_verification',
+        );
+        if (uploadedUrl != null) {
+          newCnicFrontUrl = uploadedUrl;
+          _cnicFrontUrl = uploadedUrl;
+        } else {
+          _errorMessage = 'Failed to upload CNIC front image';
+          _setLoading(false);
+          notifyListeners();
+          return false;
+        }
+      }
+
+      if (_selectedCnicBackFile != null) {
+        final uploadedUrl = await _storageService.uploadImageFile(
+          imageFile: _selectedCnicBackFile!,
+          folderPath: 'tutor_identity_verification',
+        );
+        if (uploadedUrl != null) {
+          newCnicBackUrl = uploadedUrl;
+          _cnicBackUrl = uploadedUrl;
+        } else {
+          _errorMessage = 'Failed to upload CNIC back image';
+          _setLoading(false);
+          notifyListeners();
+          return false;
+        }
+      }
+
+      // Clear selected CNIC images after successful upload
+      _selectedCnicFrontFile = null;
+      _selectedCnicBackFile = null;
+
       // Certifications are already CertificationEntry objects
 
       // Update tutor data
@@ -434,6 +570,10 @@ class TutorProfileViewModel extends ChangeNotifier {
         education: _education, // This should be a list (empty or with items)
         certifications: certifications,
         portfolioDocuments: _portfolioDocuments,
+        hourlyFee: _hourlyFee,
+        monthlyFee: _monthlyFee,
+        cnicFrontUrl: newCnicFrontUrl,
+        cnicBackUrl: newCnicBackUrl,
       );
       
       // Debug: Print education list before saving

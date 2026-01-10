@@ -96,15 +96,6 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
       ),
       child: Row(
         children: [
-          // Back Button (only show if showBackButton is true)
-          if (widget.showBackButton)
-            IconButton(
-              icon: const Icon(Icons.arrow_back, color: AppColors.textDark),
-              onPressed: () => Navigator.of(context).pop(),
-            )
-          else
-            const SizedBox(width: 48), // Spacing when back button is hidden
-          // Title
           const Expanded(
             child: AppText(
               'Profile & Settings',
