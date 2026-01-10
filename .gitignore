@@ -53,3 +53,7 @@ app.*.map.json
 **/service_account.json
 assets/service_account.json
 **/*service-account*.json
+
+# Admin Credentials Config (contains sensitive admin credentials)
+lib/data/config/admin_credentials.dart
+# Note: admin_credentials.dart.example is kept in git as template

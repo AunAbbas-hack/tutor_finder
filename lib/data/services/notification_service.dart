@@ -517,7 +517,7 @@ class NotificationService {
     await createAndSendNotification(
       userId: tutorId,
       title: 'Profile Under Review',
-      message: 'Your profile is under review. We\'ll notify you once it\'s approved.',
+      message: 'Your profile is under review. Please update your profile for verification.',
       data: {
         'type': 'profile_under_review',
       },

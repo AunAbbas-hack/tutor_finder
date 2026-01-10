@@ -87,6 +87,32 @@ class BookingService {
     await _bookingsCol.doc(bookingId).delete();
   }
 
+  /// Get all bookings (for admin dashboard)
+  /// Note: Fetches all bookings - use with caution for large datasets
+  Future<List<BookingModel>> getAllBookings() async {
+    try {
+      final snapshot = await _bookingsCol
+          .orderBy('createdAt', descending: true)
+          .get();
+
+      return snapshot.docs
+          .map((doc) => BookingModel.fromFirestore(doc))
+          .toList();
+    } catch (e) {
+      // If index doesn't exist, fetch without orderBy and sort client-side
+      try {
+        final snapshot = await _bookingsCol.get();
+        final bookings = snapshot.docs
+            .map((doc) => BookingModel.fromFirestore(doc))
+            .toList();
+        bookings.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        return bookings;
+      } catch (e2) {
+        return [];
+      }
+    }
+  }
+
   /// Get all bookings for a tutor
   /// Note: Fetches all bookings and sorts client-side to avoid index requirement
   Future<List<BookingModel>> getBookingsByTutorId(String tutorId) async {

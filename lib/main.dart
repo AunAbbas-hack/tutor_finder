@@ -12,6 +12,11 @@ import 'package:tutor_finder/parent_viewmodels/auth_vm.dart';
 import 'package:tutor_finder/core/services/firebase_messaging_handler.dart';
 
 import 'firebase_options.dart';
+import 'core/utils/seed_admin.dart';
+
+/// Enable/disable admin seeding on app start
+/// ⚠️ Set to false in production!
+const bool ENABLE_ADMIN_SEEDING = true; // Change to true to seed admin accounts
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -85,6 +90,22 @@ void main() async {
 
   // Initialize Firebase Cloud Messaging (FCM)
   await _initializeFCM();
+
+  // Seed admin accounts (only if enabled and in debug mode)
+  if (ENABLE_ADMIN_SEEDING && kDebugMode) {
+    try {
+      if (kDebugMode) {
+        debugPrint('\n🌱 Admin seeding is enabled. Running seed script...');
+      }
+      await runAdminSeeding();
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('⚠️ Admin seeding failed: $e');
+        debugPrint('⚠️ You may need to run seed script manually');
+      }
+      // Don't block app startup if seeding fails
+    }
+  }
 
   runApp(
     MultiProvider(

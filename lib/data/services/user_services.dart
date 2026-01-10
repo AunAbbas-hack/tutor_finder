@@ -61,4 +61,88 @@ class UserService {
   Future<void> updateUser(UserModel user) async {
     await _usersCol.doc(user.userId).update(user.toMap());
   }
+
+  /// Get all users (for admin dashboard)
+  /// Note: Fetches all users - use with caution for large datasets
+  Future<List<UserModel>> getAllUsers() async {
+    try {
+      final snapshot = await _usersCol.get();
+      return snapshot.docs
+          .map((doc) => UserModel.fromFirestore(doc))
+          .toList();
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error getting all users: $e');
+      }
+      return [];
+    }
+  }
+
+  /// Get users by role
+  Future<List<UserModel>> getUsersByRole(UserRole role) async {
+    try {
+      // Convert role to string manually since _roleToString is private
+      String roleString;
+      switch (role) {
+        case UserRole.parent:
+          roleString = 'parent';
+          break;
+        case UserRole.student:
+          roleString = 'student';
+          break;
+        case UserRole.tutor:
+          roleString = 'tutor';
+          break;
+        case UserRole.admin:
+          roleString = 'admin';
+          break;
+      }
+      
+      final snapshot = await _usersCol
+          .where('role', isEqualTo: roleString)
+          .get();
+      return snapshot.docs
+          .map((doc) => UserModel.fromFirestore(doc))
+          .toList();
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error getting users by role: $e');
+      }
+      return [];
+    }
+  }
+
+  /// Get users by status
+  Future<List<UserModel>> getUsersByStatus(UserStatus status) async {
+    try {
+      // Convert status to string manually since _statusToString is private
+      String statusString;
+      switch (status) {
+        case UserStatus.active:
+          statusString = 'active';
+          break;
+        case UserStatus.inactive:
+          statusString = 'inactive';
+          break;
+        case UserStatus.suspended:
+          statusString = 'suspended';
+          break;
+        case UserStatus.pending:
+          statusString = 'pending';
+          break;
+      }
+      
+      final snapshot = await _usersCol
+          .where('status', isEqualTo: statusString)
+          .get();
+      return snapshot.docs
+          .map((doc) => UserModel.fromFirestore(doc))
+          .toList();
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error getting users by status: $e');
+      }
+      return [];
+    }
+  }
 }

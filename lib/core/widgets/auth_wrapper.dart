@@ -8,8 +8,7 @@ import '../../data/services/fcm_service.dart';
 import '../../views/auth/login_screen.dart';
 import '../../views/parent/parent_main_screen.dart';
 import '../../views/tutor/tutor_main_screen.dart';
-// TODO: Import admin dashboard when created
-// import '../../views/admin/admin_dashboard_home.dart';
+import '../../views/admin/admin_main_screen.dart';
 
 /// AuthWrapper checks if user is logged in and navigates to appropriate screen
 class AuthWrapper extends StatefulWidget {
@@ -210,12 +209,8 @@ class _AuthWrapperState extends State<AuthWrapper> {
                 debugPrint('✅ AuthWrapper: Navigating to TutorMainScreen');
                 return const TutorMainScreen();
               case UserRole.admin:
-                // TODO: Return AdminDashboardHome when created
-                return Scaffold(
-                  body: Center(
-                    child: Text('Admin Dashboard - Coming Soon\n${userModel.name}'),
-                  ),
-                );
+                debugPrint('✅ AuthWrapper: Navigating to AdminMainScreen');
+                return const AdminMainScreen();
               case UserRole.student:
                 // TODO: Return StudentDashboardHome when created
                 return Scaffold(

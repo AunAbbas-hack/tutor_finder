@@ -9,6 +9,7 @@ import '../../core/widgets/app_textfield.dart';
 import '../../core/widgets/image_picker_bottom_sheet.dart';
 import '../../parent_viewmodels/parent_edit_profile_vm.dart';
 import '../../core/services/image_picker_service.dart';
+import '../auth/location_selection_screen.dart';
 
 class ParentEditProfileScreen extends StatefulWidget {
   const ParentEditProfileScreen({super.key});
@@ -317,10 +318,14 @@ class _ParentEditProfileScreenState extends State<ParentEditProfileScreen> {
       controller: _locationController,
       onChanged: (value) => vm.updateLocation(value),
       textInputAction: TextInputAction.done,
-      suffixIcon: const Icon(
-        Icons.location_on,
-        color: AppColors.iconGrey,
-        size: 20,
+      suffixIcon: IconButton(
+        icon: const Icon(
+          Icons.location_on,
+          color: AppColors.iconGrey,
+          size: 20,
+        ),
+        onPressed: () => _openLocationPicker(vm),
+        tooltip: 'Select on map',
       ),
     );
   }
@@ -340,6 +345,27 @@ class _ParentEditProfileScreenState extends State<ParentEditProfileScreen> {
         }
       },
     );
+  }
+
+  Future<void> _openLocationPicker(ParentEditProfileViewModel vm) async {
+    final result = await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => LocationSelectionScreen(
+          returnLocation: true,
+          initialAddress: vm.location.isNotEmpty ? vm.location : null,
+        ),
+      ),
+    );
+
+    if (!mounted) return;
+
+    if (result is Map) {
+      final address = result['address'] as String?;
+      if (address != null && address.isNotEmpty) {
+        _locationController.text = address;
+        vm.updateLocation(address);
+      }
+    }
   }
 }
 
