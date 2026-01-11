@@ -7,6 +7,7 @@ import '../../core/theme/app_colors.dart';
 import '../../data/models/activity_model.dart';
 import '../../data/models/pending_approval_model.dart';
 import '../../data/models/dashboard_metrics_model.dart';
+import 'tutor_approve_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -554,7 +555,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         // View icon
                         InkWell(
                           onTap: () {
-                            // TODO: Navigate to tutor profile/view screen
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => TutorApproveScreen(
+                                  tutorId: approval.tutorId,
+                                  verificationId: '#${approval.tutorId.substring(0, 4).toUpperCase()}',
+                                ),
+                              ),
+                            ).then((result) {
+                              // Reload data if tutor was approved/rejected
+                              if (result == true) {
+                                vm.initialize();
+                              }
+                            });
                           },
                           borderRadius: BorderRadius.circular(20),
                           child: Container(
@@ -593,23 +606,20 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 child: OutlinedButton(
                   onPressed: vm.isLoading
                       ? null
-                      : () async {
-                          final success = await vm.rejectTutor(approval.tutorId);
-                          if (success && context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Tutor rejected successfully'),
-                                backgroundColor: AppColors.error,
+                      : () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => TutorApproveScreen(
+                                tutorId: approval.tutorId,
+                                verificationId: '#${approval.tutorId.substring(0, 4).toUpperCase()}',
                               ),
-                            );
-                          } else if (!success && context.mounted && vm.errorMessage != null) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(vm.errorMessage!),
-                                backgroundColor: AppColors.error,
-                              ),
-                            );
-                          }
+                            ),
+                          ).then((result) {
+                            // Reload data if tutor was approved/rejected
+                            if (result == true) {
+                              vm.initialize();
+                            }
+                          });
                         },
                   style: OutlinedButton.styleFrom(
                     padding: EdgeInsets.symmetric(vertical: isTablet ? 14 : 12),
@@ -633,23 +643,20 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 child: ElevatedButton(
                   onPressed: vm.isLoading
                       ? null
-                      : () async {
-                          final success = await vm.approveTutor(approval.tutorId);
-                          if (success && context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Tutor approved successfully'),
-                                backgroundColor: AppColors.success,
+                      : () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => TutorApproveScreen(
+                                tutorId: approval.tutorId,
+                                verificationId: '#${approval.tutorId.substring(0, 4).toUpperCase()}',
                               ),
-                            );
-                          } else if (!success && context.mounted && vm.errorMessage != null) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(vm.errorMessage!),
-                                backgroundColor: AppColors.error,
-                              ),
-                            );
-                          }
+                            ),
+                          ).then((result) {
+                            // Reload data if tutor was approved/rejected
+                            if (result == true) {
+                              vm.initialize();
+                            }
+                          });
                         },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,

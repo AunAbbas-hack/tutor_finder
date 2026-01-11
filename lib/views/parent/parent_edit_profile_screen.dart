@@ -312,20 +312,25 @@ class _ParentEditProfileScreenState extends State<ParentEditProfileScreen> {
 
   // ---------- Location Field ----------
   Widget _buildLocationField(BuildContext context, ParentEditProfileViewModel vm) {
-    return AppTextField(
-      label: 'Location',
-      hintText: 'Enter your location',
-      controller: _locationController,
-      onChanged: (value) => vm.updateLocation(value),
-      textInputAction: TextInputAction.done,
-      suffixIcon: IconButton(
-        icon: const Icon(
-          Icons.location_on,
-          color: AppColors.iconGrey,
-          size: 20,
+    return GestureDetector(
+      onTap: (){
+        _openLocationPicker(vm);
+      },
+      child: AppTextField(
+        label: 'Location',
+        hintText: 'Update location',
+        controller: _locationController,
+        onChanged: (value) => vm.updateLocation(value),
+        textInputAction: TextInputAction.done,
+        suffixIcon: IconButton(
+          icon: const Icon(
+            Icons.location_on,
+            color: AppColors.iconGrey,
+            size: 20,
+          ),
+          onPressed: () => _openLocationPicker(vm),
+          tooltip: 'Select on map',
         ),
-        onPressed: () => _openLocationPicker(vm),
-        tooltip: 'Select on map',
       ),
     );
   }
@@ -352,6 +357,8 @@ class _ParentEditProfileScreenState extends State<ParentEditProfileScreen> {
       MaterialPageRoute(
         builder: (_) => LocationSelectionScreen(
           returnLocation: true,
+          initialLatitude: vm.latitude,
+          initialLongitude: vm.longitude,
           initialAddress: vm.location.isNotEmpty ? vm.location : null,
         ),
       ),
@@ -361,10 +368,24 @@ class _ParentEditProfileScreenState extends State<ParentEditProfileScreen> {
 
     if (result is Map) {
       final address = result['address'] as String?;
+      final latValue = result['latitude'];
+      final lngValue = result['longitude'];
+
+      double? latitude;
+      double? longitude;
+
+      if (latValue is num) latitude = latValue.toDouble();
+      if (lngValue is num) longitude = lngValue.toDouble();
+
       if (address != null && address.isNotEmpty) {
         _locationController.text = address;
-        vm.updateLocation(address);
       }
+
+      vm.updateLocation(
+        address ?? vm.location,
+        latitude: latitude,
+        longitude: longitude,
+      );
     }
   }
 }

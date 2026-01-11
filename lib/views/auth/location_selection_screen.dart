@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:provider/provider.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -7,7 +8,6 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/app_primary_button.dart';
 import '../../core/widgets/app_text.dart';
-import '../../core/widgets/app_textfield.dart';
 import '../../parent_viewmodels/auth_vm.dart';
 import '../../parent_viewmodels/location_vm.dart';
 import '../../parent_viewmodels/parent_signup_vm.dart';
@@ -199,110 +199,11 @@ class _LocationSelectionView extends StatelessWidget {
               ],
 
               // Search bar
-              TextField(
-                controller: TextEditingController(text: vm.searchQuery),
-                onChanged: (value) {
-                  vm.updateSearchQuery(value);
-                },
-                onSubmitted: (value) {
-                  if (value.trim().isNotEmpty) {
-                    vm.searchAddress(value);
-                  }
-                },
-                decoration: InputDecoration(
-                  hintText: 'Search for a city or address',
-                  filled: true,
-                  fillColor: AppColors.lightBackground,
-                  prefixIcon:
-                  const Icon(Icons.search, color: AppColors.iconGrey),
-                  suffixIcon: vm.searchQuery.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear, color: AppColors.iconGrey),
-                          onPressed: () {
-                            vm.updateSearchQuery('');
-                          },
-                        )
-                      : null,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(
-                      color: AppColors.primary,
-                      width: 2,
-                    ),
-                  ),
-                ),
-              ),
-              if (vm.errorMessage != null) ...[
-                const SizedBox(height: 8),
-                AppText(
-                  vm.errorMessage!,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: AppColors.error,
-                  ),
-                ),
-              ],
-              const SizedBox(height: 16),
+
 
               // Use my current location
-              GestureDetector(
-                onTap: () {
-                  vm.getCurrentLocation();
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: AppColors.lightBackground,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: AppColors.primary.withOpacity(0.3),
-                      width: 1,
-                    ),
-                  ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                      if (vm.isLoadingLocation)
-                        const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
-                          ),
-                        )
-                      else
-                    Icon(
-                      Icons.my_location,
-                      color: AppColors.primary,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    AppText(
-                      vm.isLoadingLocation
-                          ? 'Detecting your location...'
-                          : 'Use My Current Location',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
+
+              const SizedBox(height: 30),
 
               // Google Map with error handling for billing issues
               ClipRRect(
@@ -312,7 +213,7 @@ class _LocationSelectionView extends StatelessWidget {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(
-                      color: AppColors.primary.withOpacity(0.2),
+                      color: AppColors.primary.withValues(alpha: 0.2),
                       width: 2,
                     ),
                   ),
@@ -339,7 +240,8 @@ class _LocationSelectionView extends StatelessWidget {
                                 },
                                 myLocationButtonEnabled: false,
                                 myLocationEnabled: true,
-                                zoomControlsEnabled: false,
+                                zoomControlsEnabled: true,
+                                zoomGesturesEnabled: true,
                                 mapToolbarEnabled: false,
                                 markers: _buildMarkers(vm),
                                 mapType: MapType.normal,
@@ -347,7 +249,9 @@ class _LocationSelectionView extends StatelessWidget {
                                 rotateGesturesEnabled: true,
                                 scrollGesturesEnabled: true,
                                 tiltGesturesEnabled: false,
-                                zoomGesturesEnabled: true,
+                                gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
+                                  Factory<OneSequenceGestureRecognizer>(() => EagerGestureRecognizer()),
+                                },
                               ),
                               Center(
                                 child: Icon(
@@ -382,7 +286,8 @@ class _LocationSelectionView extends StatelessWidget {
                               },
                               myLocationButtonEnabled: false,
                               myLocationEnabled: true,
-                              zoomControlsEnabled: false,
+                              zoomControlsEnabled: true,
+                              zoomGesturesEnabled: true,
                               mapToolbarEnabled: false,
                               markers: _buildMarkers(vm),
                               mapType: MapType.normal,
@@ -390,7 +295,9 @@ class _LocationSelectionView extends StatelessWidget {
                               rotateGesturesEnabled: true,
                               scrollGesturesEnabled: true,
                               tiltGesturesEnabled: false,
-                              zoomGesturesEnabled: true,
+                              gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
+                                Factory<OneSequenceGestureRecognizer>(() => EagerGestureRecognizer()),
+                              },
                             ),
                             Center(
                               child: Icon(
@@ -435,45 +342,51 @@ class _LocationSelectionView extends StatelessWidget {
                 ),
               ],
               const SizedBox(height: 24),
-
-              // ⭐ Coordinates fields (Latitude + Longitude)
-              AppText(
-                'Coordinates',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textDark,
+              GestureDetector(
+                onTap: () {
+                  vm.getCurrentLocation();
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: AppColors.lightBackground,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppColors.primary.withValues(alpha: 0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (vm.isLoadingLocation)
+                        const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                          ),
+                        )
+                      else
+                        Icon(
+                          Icons.my_location,
+                          color: AppColors.primary,
+                          size: 20,
+                        ),
+                      const SizedBox(width: 8),
+                      AppText(
+                        vm.isLoadingLocation
+                            ? 'Detecting your location...'
+                            : 'Use My Current Location',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-
-              Row(
-                children: [
-                  Expanded(
-                    child: AppTextField(
-                      label: 'Latitude',
-                      hintText: 'e.g. 37.7749',
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                        signed: true,
-                      ),
-                      onChanged: vm.updateLatitude,
-                      textInputAction: TextInputAction.next,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: AppTextField(
-                      label: 'Longitude',
-                      hintText: 'e.g. -122.4194',
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                        signed: true,
-                      ),
-                      onChanged: vm.updateLongitude,
-                      textInputAction: TextInputAction.done,
-                    ),
-                  ),
-                ],
               ),
               const SizedBox(height: 24),
 

@@ -34,6 +34,8 @@ class ParentEditProfileViewModel extends ChangeNotifier {
   String? _errorMessage;
   UserModel? _user;
   ParentModel? _parent;
+  double? _latitude;
+  double? _longitude;
 
   // Editable fields
   String _fullName = '';
@@ -50,6 +52,8 @@ class ParentEditProfileViewModel extends ChangeNotifier {
   String get location => _location;
   String? get imageUrl => _imageUrl;
   File? get selectedImageFile => _selectedImageFile;
+  double? get latitude => _latitude;
+  double? get longitude => _longitude;
   bool get hasChanges => _hasChanges();
 
   // ---------- Initialize ----------
@@ -77,6 +81,8 @@ class ParentEditProfileViewModel extends ChangeNotifier {
         _fullName = _user!.name;
         _email = _user!.email;
         _imageUrl = _user!.imageUrl;
+        _latitude = _user!.latitude;
+        _longitude = _user!.longitude;
       }
 
       // Load parent data for address
@@ -106,8 +112,12 @@ class ParentEditProfileViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void updateLocation(String value) {
+  void updateLocation(String value, {double? latitude, double? longitude}) {
     _location = value.trim();
+    if (latitude != null && longitude != null) {
+      _latitude = latitude;
+      _longitude = longitude;
+    }
     notifyListeners();
   }
 
@@ -192,6 +202,8 @@ class ParentEditProfileViewModel extends ChangeNotifier {
       final updatedUser = _user!.copyWith(
         name: _fullName,
         imageUrl: newImageUrl,
+        latitude: _latitude,
+        longitude: _longitude,
       );
       await _userService.updateUser(updatedUser);
       // #region agent log
@@ -204,6 +216,7 @@ class ParentEditProfileViewModel extends ChangeNotifier {
           address: _location,
         );
         await _parentService.updateParent(updatedParent);
+        _parent = updatedParent; // Update local state
         // #region agent log
         await DebugLogger.log(location: 'parent_edit_profile_vm.dart:171', message: 'Parent updated', data: {'address': _location}, hypothesisId: 'EDIT-PROFILE-3');
         // #endregion
@@ -214,6 +227,7 @@ class ParentEditProfileViewModel extends ChangeNotifier {
           address: _location,
         );
         await _parentService.createParent(newParent);
+        _parent = newParent; // Update local state
         // #region agent log
         await DebugLogger.log(location: 'parent_edit_profile_vm.dart:180', message: 'Parent created', data: {'address': _location}, hypothesisId: 'EDIT-PROFILE-3');
         // #endregion
@@ -246,8 +260,10 @@ class ParentEditProfileViewModel extends ChangeNotifier {
     final nameChanged = _fullName != _user!.name;
     final locationChanged = _location != (_parent?.address ?? '');
     final imageChanged = _selectedImageFile != null;
+    final latitudeChanged = _latitude != _user!.latitude;
+    final longitudeChanged = _longitude != _user!.longitude;
     
-    return nameChanged || locationChanged || imageChanged;
+    return nameChanged || locationChanged || imageChanged || latitudeChanged || longitudeChanged;
   }
 
   void _setLoading(bool value) {

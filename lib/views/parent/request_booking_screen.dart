@@ -6,11 +6,11 @@ import 'package:intl/intl.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/app_text.dart';
 import '../../core/widgets/app_primary_button.dart';
-import '../../core/widgets/app_textfield.dart';
 import '../../parent_viewmodels/request_booking_vm.dart';
 import '../../data/models/booking_model.dart';
 import '../../data/models/student_model.dart';
 import '../../data/services/user_services.dart';
+import 'new_child_sheet.dart';
 
 class RequestBookingScreen extends StatelessWidget {
   final String tutorId;
@@ -81,41 +81,30 @@ class RequestBookingScreen extends StatelessWidget {
                   _buildSelectSubjects(vm),
                   const SizedBox(height: 24),
 
-                  // Select Children
-                  _buildSelectChildren(vm),
-                  const SizedBox(height: 24),
-
                   // Booking Type
                   _buildBookingType(vm),
                   const SizedBox(height: 24),
 
-                  // Monthly Schedule (if monthly booking)
-                  if (vm.bookingType == BookingType.monthlyBooking) ...[
-                    _buildMonthlySchedule(vm, context),
+                  // Select Children
+                  _buildSelectChildren(vm, context),
+                  const SizedBox(height: 24),
+
+                  // Booking Details per Child (Expansion Tiles)
+                  ...vm.selectedChildrenIds.map((childId) =>
+                    _buildChildBookingExpansionTile(vm, childId, context),
+                  ),
+
+                  // Recurring Days (for monthly booking - shared)
+                  if (vm.bookingType == BookingType.monthlyBooking && vm.selectedChildrenIds.isNotEmpty) ...[
+                    _buildRecurringDays(vm),
                     const SizedBox(height: 24),
                   ],
 
-                  // Single Session Schedule (if single session)
-                  if (vm.bookingType == BookingType.singleSession) ...[
-                    _buildSingleSessionSchedule(vm, context),
-                    const SizedBox(height: 24),
+                  // Total Estimated Cost
+                  if (vm.selectedChildrenIds.isNotEmpty) ...[
+                    _buildTotalEstimate(vm),
+                    const SizedBox(height: 32),
                   ],
-
-                  // Monthly Budget (if monthly booking)
-                  if (vm.bookingType == BookingType.monthlyBooking) ...[
-                    _buildMonthlyBudget(vm),
-                    const SizedBox(height: 24),
-                  ],
-
-                  // Hourly Budget (if single session)
-                  if (vm.bookingType == BookingType.singleSession) ...[
-                    _buildHourlyBudget(vm),
-                    const SizedBox(height: 24),
-                  ],
-
-                  // Additional Notes
-                  _buildAdditionalNotes(vm),
-                  const SizedBox(height: 32),
 
                   // Submit Button
                   _buildSubmitButton(vm, context),
@@ -233,7 +222,7 @@ class RequestBookingScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSelectChildren(RequestBookingViewModel vm) {
+  Widget _buildSelectChildren(RequestBookingViewModel vm, BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -269,12 +258,7 @@ class RequestBookingScreen extends StatelessWidget {
         const SizedBox(height: 8),
         TextButton(
           onPressed: () {
-            // TODO: Navigate to add child screen
-            Get.snackbar(
-              'Add Child',
-              'Navigate to add child screen',
-              snackPosition: SnackPosition.BOTTOM,
-            );
+            _showAddChildSheet(context, vm);
           },
           child: const AppText(
             '+ Add another child',
@@ -427,148 +411,6 @@ class RequestBookingScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMonthlySchedule(
-    RequestBookingViewModel vm,
-    BuildContext context,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.lightBackground,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const AppText(
-            'Monthly Schedule',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textDark,
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Start Date
-          GestureDetector(
-            onTap: () async {
-              final picked = await showDatePicker(
-                context: context,
-                initialDate: vm.startDate ?? DateTime.now(),
-                firstDate: DateTime.now(),
-                lastDate: DateTime.now().add(const Duration(days: 365)),
-              );
-              if (picked != null) {
-                vm.setStartDate(picked);
-              }
-            },
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.calendar_today, size: 20, color: AppColors.iconGrey),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: AppText(
-                      vm.startDate != null
-                          ? DateFormat('dd/MM/yyyy').format(vm.startDate!)
-                          : 'Select start date',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: AppColors.textDark,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Recurring Days
-          const AppText(
-            'Recurring Days',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: AppColors.textDark,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _buildDayButton(vm, 'M', 1),
-              _buildDayButton(vm, 'T', 2),
-              _buildDayButton(vm, 'W', 3),
-              _buildDayButton(vm, 'T', 4),
-              _buildDayButton(vm, 'F', 5),
-              _buildDayButton(vm, 'S', 6),
-              _buildDayButton(vm, 'S', 7),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // Time Slots
-          const AppText(
-            'Time Slot',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: AppColors.textDark,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: vm.availableTimeSlots.map((timeSlot) {
-              final isSelected = vm.selectedTimeSlot == timeSlot;
-              return GestureDetector(
-                onTap: () => vm.setTimeSlot(timeSlot),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: isSelected ? AppColors.primary : Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: isSelected ? AppColors.primary : AppColors.border,
-                      width: isSelected ? 2 : 1,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (isSelected)
-                        const Icon(Icons.check, size: 16, color: Colors.white)
-                      else
-                        const SizedBox(width: 16),
-                      AppText(
-                        timeSlot,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: isSelected ? Colors.white : AppColors.textDark,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildDayButton(RequestBookingViewModel vm, String label, int day) {
     final isSelected = vm.isRecurringDaySelected(day);
     return GestureDetector(
@@ -598,82 +440,221 @@ class RequestBookingScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMonthlyBudget(RequestBookingViewModel vm) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const AppText(
-              'Monthly Budget',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textDark,
-              ),
-            ),
-            AppText(
-              vm.formatBudget(vm.monthlyBudget),
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: AppColors.primary,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Slider(
-          value: vm.monthlyBudget,
-          min: 2000.0, // ₹2000
-          max: 12000.0, // ₹12000
-          divisions: 50,
-          activeColor: AppColors.primary,
-          onChanged: (value) => vm.setMonthlyBudget(value),
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const AppText(
-              '₹2,000/mo',
-              style: TextStyle(
-                fontSize: 12,
-                color: AppColors.textGrey,
-              ),
-            ),
-            const AppText(
-              '₹12,000/mo',
-              style: TextStyle(
-                fontSize: 12,
-                color: AppColors.textGrey,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.all(12),
+  Widget _buildChildBookingExpansionTile(
+    RequestBookingViewModel vm,
+    String childId,
+    BuildContext context,
+  ) {
+    final child = vm.children.firstWhere((c) => c.studentId == childId);
+    final userService = UserService();
+    final details = vm.getChildBookingDetails(childId);
+
+    if (details == null) return const SizedBox.shrink();
+
+    return FutureBuilder(
+      future: userService.getUserById(childId),
+      builder: (context, snapshot) {
+        final childName = snapshot.data?.name ?? 'Unknown';
+        final grade = child.grade ?? 'N/A';
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 16),
           decoration: BoxDecoration(
-            color: AppColors.lightBackground,
-            borderRadius: BorderRadius.circular(8),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.border),
           ),
-          child: AppText(
-            'Based on ${vm.sessionsPerMonth} sessions (${vm.formatPricePerSession()})',
-            style: const TextStyle(
-              fontSize: 12,
-              color: AppColors.textGrey,
+          child: Theme(
+            data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+            child: ExpansionTile(
+              initiallyExpanded: true,
+              tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              childrenPadding: const EdgeInsets.all(16),
+              leading: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.primary.withOpacity(0.1),
+                ),
+                child: const Icon(Icons.person, color: AppColors.primary, size: 20),
+              ),
+              title: AppText(
+                childName,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textDark,
+                ),
+              ),
+              subtitle: AppText(
+                'Grade $grade',
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textGrey,
+                ),
+              ),
+              children: [
+                // Booking Date
+                const SizedBox(height: 8),
+                const AppText(
+                  'BOOKING DATE',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textGrey,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                GestureDetector(
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: details.bookingDate ?? DateTime.now(),
+                      firstDate: DateTime.now(),
+                      lastDate: DateTime.now().add(const Duration(days: 365)),
+                    );
+                    if (picked != null) {
+                      vm.setChildBookingDate(childId, picked);
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.lightBackground,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.calendar_today, size: 20, color: AppColors.primary),
+                        const SizedBox(width: 12),
+                        AppText(
+                          details.bookingDate != null
+                              ? DateFormat('dd/MM/yyyy').format(details.bookingDate!)
+                              : 'Select date',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: AppColors.textDark,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Time Slot
+                const AppText(
+                  'TIME SLOT',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textGrey,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                // Same time slots for both Single Session and Monthly Booking
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: vm.availableTimeSlots.map((time) {
+                    final isSelected = details.timeSlot == time;
+                    return GestureDetector(
+                      onTap: () => vm.setChildTimeSlot(childId, time),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: isSelected ? AppColors.primary : AppColors.lightBackground,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: isSelected ? AppColors.primary : AppColors.border,
+                          ),
+                        ),
+                        child: AppText(
+                          time,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: isSelected ? Colors.white : AppColors.textDark,
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 16),
+
+                // Budget
+                const AppText(
+                  'BUDGET',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textGrey,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    AppText(
+                      vm.formatBudget(details.budget),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    if (vm.bookingType == BookingType.monthlyBooking)
+                      AppText(
+                        vm.formatPricePerSession(vm.getChildPricePerSession(childId)),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textGrey,
+                        ),
+                      ),
+                  ],
+                ),
+                Slider(
+                  value: details.budget,
+                  min: vm.bookingType == BookingType.singleSession ? 500.0 : 2000.0,
+                  max: 12000.0,
+                  divisions: 50,
+                  activeColor: AppColors.primary,
+                  onChanged: (value) => vm.setChildBudget(childId, value),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    AppText(
+                      vm.bookingType == BookingType.singleSession ? '500 Rs.' : '2,000 Rs.',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textGrey,
+                      ),
+                    ),
+                    const AppText(
+                      '12,000 Rs.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textGrey,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-        ),
-      ],
+        );
+      },
     );
   }
 
-  Widget _buildSingleSessionSchedule(
-    RequestBookingViewModel vm,
-    BuildContext context,
-  ) {
+  Widget _buildRecurringDays(RequestBookingViewModel vm) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -683,9 +664,8 @@ class RequestBookingScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Preferred Date
           const AppText(
-            'Preferred Date',
+            'Recurring Days (applies to all children)',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -693,224 +673,53 @@ class RequestBookingScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          GestureDetector(
-            onTap: () async {
-              final picked = await showDatePicker(
-                context: context,
-                initialDate: vm.preferredDate ?? DateTime.now(),
-                firstDate: DateTime.now(),
-                lastDate: DateTime.now().add(const Duration(days: 365)),
-              );
-              if (picked != null) {
-                vm.setPreferredDate(picked);
-              }
-            },
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.calendar_today, size: 20, color: AppColors.iconGrey),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: AppText(
-                      vm.preferredDate != null
-                          ? DateFormat('MM/dd/yyyy').format(vm.preferredDate!)
-                          : 'Select preferred date',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: AppColors.textDark,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // Choose a Time
-          const AppText(
-            'Choose a Time',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textDark,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
             children: [
-              Expanded(
-                child: _buildTimePreferenceButton(
-                  vm,
-                  'Morning',
-                  vm.isTimePreferenceSelected('Morning'),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildTimePreferenceButton(
-                  vm,
-                  'Afternoon',
-                  vm.isTimePreferenceSelected('Afternoon'),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildTimePreferenceButton(
-                  vm,
-                  'Evening',
-                  vm.isTimePreferenceSelected('Evening'),
-                ),
-              ),
+              _buildDayButton(vm, 'M', 1),
+              _buildDayButton(vm, 'T', 2),
+              _buildDayButton(vm, 'W', 3),
+              _buildDayButton(vm, 'T', 4),
+              _buildDayButton(vm, 'F', 5),
+              _buildDayButton(vm, 'S', 6),
+              _buildDayButton(vm, 'S', 7),
             ],
-          ),
-          const SizedBox(height: 8),
-          const AppText(
-            'The tutor will confirm the final time.',
-            style: TextStyle(
-              fontSize: 12,
-              color: AppColors.textGrey,
-            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildTimePreferenceButton(
-    RequestBookingViewModel vm,
-    String label,
-    bool isSelected,
-  ) {
-    return GestureDetector(
-      onTap: () => vm.setTimePreference(label),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary.withOpacity(0.1) : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.border,
-            width: isSelected ? 2 : 1,
-          ),
-        ),
-        child: Center(
-          child: AppText(
-            label,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: isSelected ? AppColors.primary : AppColors.textDark,
-            ),
-          ),
-        ),
+  Widget _buildTotalEstimate(RequestBookingViewModel vm) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.primary.withOpacity(0.3)),
       ),
-    );
-  }
-
-  Widget _buildHourlyBudget(RequestBookingViewModel vm) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const AppText(
-              'Your Budget',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textDark,
-              ),
-            ),
-            AppText(
-              vm.formatHourlyBudget(vm.hourlyBudget),
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: AppColors.primary,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Slider(
-          value: vm.hourlyBudget,
-          min: 1000.0, // ₹1000/hr (converted from $25/hr)
-          max: 12000.0, // ₹12000/hr (converted from $150/hr)
-          divisions: 44,
-          activeColor: AppColors.primary,
-          onChanged: (value) => vm.setHourlyBudget(value),
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const AppText(
-              '₹1,000/hr',
-              style: TextStyle(
-                fontSize: 12,
-                color: AppColors.textGrey,
-              ),
-            ),
-            const AppText(
-              '₹12,000/hr',
-              style: TextStyle(
-                fontSize: 12,
-                color: AppColors.textGrey,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAdditionalNotes(RequestBookingViewModel vm) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const AppText(
-          'Additional Notes',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textDark,
-          ),
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          onChanged: vm.updateNotes,
-          maxLines: 4,
-          decoration: InputDecoration(
-            hintText: 'Add any specific topics or questions...',
-            hintStyle: const TextStyle(color: AppColors.textGrey),
-            filled: true,
-            fillColor: AppColors.lightBackground,
-            contentPadding: const EdgeInsets.all(16),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: AppColors.primary,
-                width: 2,
-              ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const AppText(
+            'Total Estimated',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textDark,
             ),
           ),
-        ),
-      ],
+          AppText(
+            '${vm.totalEstimatedCost.toStringAsFixed(0)} Rs.',
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+              color: AppColors.primary,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -919,8 +728,8 @@ class RequestBookingScreen extends StatelessWidget {
     BuildContext context,
   ) {
     final buttonText = vm.bookingType == BookingType.monthlyBooking
-        ? 'Request Monthly Plan'
-        : 'Send Booking Request';
+        ? 'Confirm Booking'
+        : 'Confirm Booking';
 
     return AppPrimaryButton(
       label: buttonText,
@@ -931,7 +740,7 @@ class RequestBookingScreen extends StatelessWidget {
         if (success) {
           Get.snackbar(
             'Success',
-            'Booking request submitted successfully',
+            'Booking requests submitted successfully',
             snackPosition: SnackPosition.BOTTOM,
             backgroundColor: AppColors.success,
             colorText: Colors.white,
@@ -949,6 +758,20 @@ class RequestBookingScreen extends StatelessWidget {
           );
         }
       },
+    );
+  }
+
+  void _showAddChildSheet(BuildContext context, RequestBookingViewModel vm) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => NewChildSheet(
+        onChildAdded: () {
+          // Refresh children list after child is added
+          vm.refreshChildren();
+        },
+      ),
     );
   }
 }

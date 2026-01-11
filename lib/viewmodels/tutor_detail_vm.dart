@@ -52,7 +52,7 @@ class TutorDetailViewModel extends ChangeNotifier {
   // Mock data (will be replaced with actual data from Firestore)
   double get rating => 4.9; // TODO: Fetch from reviews collection
   int get reviewCount => 82; // TODO: Fetch from reviews collection
-  double get hourlyFee => 75.0; // TODO: Add fee field to TutorModel
+  double get hourlyFee => _tutor?.hourlyFee ?? 0.0; // Get fee from TutorModel, default to 0 if not set
   List<String> get languages => ['English', 'German']; // TODO: Add languages field to TutorModel
   String get fullAddress {
     // TODO: Get full address from UserModel or ParentModel

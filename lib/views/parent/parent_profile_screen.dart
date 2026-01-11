@@ -107,46 +107,46 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
             ),
           ),
           // Save Button
-          TextButton(
-            onPressed: vm.isLoading
-                ? null
-                : () async {
-                    final saved = await vm.saveProfile();
-                    if (saved && mounted) {
-                      Get.snackbar(
-                        'Success',
-                        'Profile saved successfully',
-                        snackPosition: SnackPosition.BOTTOM,
-                          backgroundColor: AppColors.success,
-                        colorText: Colors.white,
-                        borderRadius: 12,
-                        margin: const EdgeInsets.all(16),
-                        duration: const Duration(seconds: 2),
-                        icon: const Icon(Icons.check_circle, color: Colors.white),
-                      );
-                    } else if (mounted && vm.errorMessage != null) {
-                      Get.snackbar(
-                        'Error',
-                        vm.errorMessage!,
-                        snackPosition: SnackPosition.BOTTOM,
-                          backgroundColor: AppColors.error,
-                        colorText: Colors.white,
-                        borderRadius: 12,
-                        margin: const EdgeInsets.all(16),
-                        duration: const Duration(seconds: 3),
-                        icon: const Icon(Icons.error, color: Colors.white),
-                      );
-                    }
-                  },
-            child: const AppText(
-              'Save',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: AppColors.primary,
-              ),
-            ),
-          ),
+          // TextButton(
+          //   onPressed: vm.isLoading
+          //       ? null
+          //       : () async {
+          //           final saved = await vm.saveProfile();
+          //           if (saved && mounted) {
+          //             Get.snackbar(
+          //               'Success',
+          //               'Profile saved successfully',
+          //               snackPosition: SnackPosition.BOTTOM,
+          //                 backgroundColor: AppColors.success,
+          //               colorText: Colors.white,
+          //               borderRadius: 12,
+          //               margin: const EdgeInsets.all(16),
+          //               duration: const Duration(seconds: 2),
+          //               icon: const Icon(Icons.check_circle, color: Colors.white),
+          //             );
+          //           } else if (mounted && vm.errorMessage != null) {
+          //             Get.snackbar(
+          //               'Error',
+          //               vm.errorMessage!,
+          //               snackPosition: SnackPosition.BOTTOM,
+          //                 backgroundColor: AppColors.error,
+          //               colorText: Colors.white,
+          //               borderRadius: 12,
+          //               margin: const EdgeInsets.all(16),
+          //               duration: const Duration(seconds: 3),
+          //               icon: const Icon(Icons.error, color: Colors.white),
+          //             );
+          //           }
+          //         },
+          //   child: const AppText(
+          //     'Save',
+          //     style: TextStyle(
+          //       fontSize: 16,
+          //       fontWeight: FontWeight.w600,
+          //       color: AppColors.primary,
+          //     ),
+          //   ),
+          // ),
         ],
       ),
     );

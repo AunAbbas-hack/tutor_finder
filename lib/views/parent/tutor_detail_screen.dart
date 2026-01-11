@@ -404,11 +404,20 @@ class TutorDetailScreen extends StatelessWidget {
                   color: AppColors.textGrey,
                 ),
               ),
+              if (vm.hourlyFee == 0.0)
+                const AppText(
+                  ' (Not set)',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: AppColors.textGrey,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
             ],
           ),
           const SizedBox(height: 12),
           AppText(
-            '\$${vm.hourlyFee.toStringAsFixed(0)}',
+            '${vm.hourlyFee.toStringAsFixed(0)} Rs.',
             style: const TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.w700,
@@ -416,13 +425,13 @@ class TutorDetailScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          const AppText(
-            'Package deals available for 10+ hours',
-            style: TextStyle(
-              fontSize: 12,
-              color: AppColors.textGrey,
-            ),
-          ),
+          // const AppText(
+          //   'Package deals available for 10+ hours',
+          //   style: TextStyle(
+          //     fontSize: 12,
+          //     color: AppColors.textGrey,
+          //   ),
+          // ),
         ],
       ),
     );

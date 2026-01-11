@@ -11,6 +11,35 @@ import '../data/services/student_services.dart';
 import '../data/services/tutor_services.dart';
 import '../data/services/notification_service.dart';
 
+/// Per-child booking details
+class ChildBookingDetails {
+  DateTime? bookingDate;
+  String? timeSlot; // For monthly: "4:00 PM", For single: "Morning"
+  double budget; // Monthly or hourly budget
+  String notes;
+
+  ChildBookingDetails({
+    this.bookingDate,
+    this.timeSlot,
+    this.budget = 5000.0,
+    this.notes = '',
+  });
+
+  ChildBookingDetails copyWith({
+    DateTime? bookingDate,
+    String? timeSlot,
+    double? budget,
+    String? notes,
+  }) {
+    return ChildBookingDetails(
+      bookingDate: bookingDate ?? this.bookingDate,
+      timeSlot: timeSlot ?? this.timeSlot,
+      budget: budget ?? this.budget,
+      notes: notes ?? this.notes,
+    );
+  }
+}
+
 class RequestBookingViewModel extends ChangeNotifier {
   final BookingService _bookingService;
   final UserService _userService;
@@ -41,17 +70,13 @@ class RequestBookingViewModel extends ChangeNotifier {
   String? _errorMessage;
   List<String> _selectedSubjects = [];
   List<String> _selectedChildrenIds = [];
-  BookingType _bookingType = BookingType.monthlyBooking;
-  DateTime? _startDate;
-  List<int> _recurringDays = [];
-  String? _selectedTimeSlot;
-  double _monthlyBudget = 5000.0; // Default 5000 rupees
-  String _notes = '';
+  BookingType _bookingType = BookingType.singleSession; // Changed default to single session
   
-  // Single session fields
-  DateTime? _preferredDate; // For single session
-  String? _timePreference; // 'Morning', 'Afternoon', 'Evening'
-  double _hourlyBudget = 2000.0; // Default ₹2000/hr (converted from $75/hr)
+  // Per-child booking details
+  final Map<String, ChildBookingDetails> _childBookingDetails = {};
+  
+  // For monthly booking: recurring days (shared across all children)
+  List<int> _recurringDays = [];
   
   // Available data
   List<StudentModel> _children = [];
@@ -62,8 +87,6 @@ class RequestBookingViewModel extends ChangeNotifier {
     '7:00 PM',
     '8:00 PM',
   ];
-  
-  List<String> get timePreferences => ['Morning', 'Afternoon', 'Evening'];
 
   // Getters
   bool get isLoading => _isLoading;
@@ -71,18 +94,14 @@ class RequestBookingViewModel extends ChangeNotifier {
   List<String> get selectedSubjects => _selectedSubjects;
   List<String> get selectedChildrenIds => _selectedChildrenIds;
   BookingType get bookingType => _bookingType;
-  DateTime? get startDate => _startDate;
   List<int> get recurringDays => _recurringDays;
-  String? get selectedTimeSlot => _selectedTimeSlot;
-  double get monthlyBudget => _monthlyBudget;
-  String get notes => _notes;
   List<StudentModel> get children => _children;
   List<String> get availableTimeSlots => _availableTimeSlots;
-  
-  // Single session getters
-  DateTime? get preferredDate => _preferredDate;
-  String? get timePreference => _timePreference;
-  double get hourlyBudget => _hourlyBudget;
+
+  // Get booking details for a specific child
+  ChildBookingDetails? getChildBookingDetails(String childId) {
+    return _childBookingDetails[childId];
+  }
 
   // Initialize
   Future<void> initialize() async {
@@ -101,10 +120,6 @@ class RequestBookingViewModel extends ChangeNotifier {
       // Load parent's children
       await _loadChildren(currentUser.uid);
       
-      // Set default dates to today
-      _startDate = DateTime.now();
-      _preferredDate = DateTime.now();
-      
       _setLoading(false);
       notifyListeners();
     } catch (e) {
@@ -120,6 +135,14 @@ class RequestBookingViewModel extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       debugPrint('Error loading children: $e');
+    }
+  }
+
+  // Refresh children list (called after adding new child)
+  Future<void> refreshChildren() async {
+    final currentUser = _auth.currentUser;
+    if (currentUser != null) {
+      await _loadChildren(currentUser.uid);
     }
   }
 
@@ -141,8 +164,15 @@ class RequestBookingViewModel extends ChangeNotifier {
   void toggleChild(String childId) {
     if (_selectedChildrenIds.contains(childId)) {
       _selectedChildrenIds.remove(childId);
+      _childBookingDetails.remove(childId); // Remove booking details
     } else {
       _selectedChildrenIds.add(childId);
+      // Initialize booking details for new child
+      _childBookingDetails[childId] = ChildBookingDetails(
+        bookingDate: DateTime.now(),
+        timeSlot: '4:00 PM', // Same time slots for both types
+        budget: _bookingType == BookingType.singleSession ? 500.0 : 5000.0,
+      );
     }
     notifyListeners();
   }
@@ -154,20 +184,58 @@ class RequestBookingViewModel extends ChangeNotifier {
   // Booking type
   void setBookingType(BookingType type) {
     _bookingType = type;
-    // Set default time preference for single session
-    if (type == BookingType.singleSession && _timePreference == null) {
-      _timePreference = 'Afternoon';
+    
+    // Update all child booking details with new defaults
+    for (var childId in _selectedChildrenIds) {
+      if (_childBookingDetails.containsKey(childId)) {
+        _childBookingDetails[childId] = _childBookingDetails[childId]!.copyWith(
+          timeSlot: '4:00 PM', // Same time slots for both types
+          budget: type == BookingType.singleSession ? 500.0 : 5000.0,
+        );
+      }
     }
+    
     notifyListeners();
   }
 
-  // Start date
-  void setStartDate(DateTime date) {
-    _startDate = date;
-    notifyListeners();
+  // Per-child methods
+  void setChildBookingDate(String childId, DateTime date) {
+    if (_childBookingDetails.containsKey(childId)) {
+      _childBookingDetails[childId] = _childBookingDetails[childId]!.copyWith(
+        bookingDate: date,
+      );
+      notifyListeners();
+    }
   }
 
-  // Recurring days (1=Monday, 2=Tuesday, etc.)
+  void setChildTimeSlot(String childId, String timeSlot) {
+    if (_childBookingDetails.containsKey(childId)) {
+      _childBookingDetails[childId] = _childBookingDetails[childId]!.copyWith(
+        timeSlot: timeSlot,
+      );
+      notifyListeners();
+    }
+  }
+
+  void setChildBudget(String childId, double budget) {
+    if (_childBookingDetails.containsKey(childId)) {
+      _childBookingDetails[childId] = _childBookingDetails[childId]!.copyWith(
+        budget: budget,
+      );
+      notifyListeners();
+    }
+  }
+
+  void setChildNotes(String childId, String notes) {
+    if (_childBookingDetails.containsKey(childId)) {
+      _childBookingDetails[childId] = _childBookingDetails[childId]!.copyWith(
+        notes: notes,
+      );
+      notifyListeners();
+    }
+  }
+
+  // Recurring days (for monthly booking - shared across children)
   void toggleRecurringDay(int day) {
     if (_recurringDays.contains(day)) {
       _recurringDays.remove(day);
@@ -182,77 +250,56 @@ class RequestBookingViewModel extends ChangeNotifier {
     return _recurringDays.contains(day);
   }
 
-  // Time slot
-  void setTimeSlot(String timeSlot) {
-    _selectedTimeSlot = timeSlot;
-    notifyListeners();
-  }
-
-  // Monthly budget
-  void setMonthlyBudget(double budget) {
-    _monthlyBudget = budget;
-    notifyListeners();
-  }
-
-  // Notes
-  void updateNotes(String notes) {
-    _notes = notes;
-    notifyListeners();
-  }
-
-  // Single session - Preferred date
-  void setPreferredDate(DateTime date) {
-    _preferredDate = date;
-    notifyListeners();
-  }
-
-  // Single session - Time preference
-  void setTimePreference(String preference) {
-    _timePreference = preference;
-    notifyListeners();
-  }
-
-  bool isTimePreferenceSelected(String preference) {
-    return _timePreference == preference;
-  }
-
-  // Single session - Hourly budget
-  void setHourlyBudget(double budget) {
-    _hourlyBudget = budget;
-    notifyListeners();
-  }
-
   // Validation
   bool get canSubmit {
     if (_selectedSubjects.isEmpty) return false;
     if (_selectedChildrenIds.isEmpty) return false;
-    if (_bookingType == BookingType.monthlyBooking) {
-      if (_startDate == null) return false;
-      if (_recurringDays.isEmpty) return false;
-      if (_selectedTimeSlot == null) return false;
-    } else {
-      // Single session validation
-      if (_preferredDate == null) return false;
-      if (_timePreference == null) return false;
+    
+    // Check each child has complete booking details
+    for (var childId in _selectedChildrenIds) {
+      final details = _childBookingDetails[childId];
+      if (details == null) return false;
+      if (details.bookingDate == null) return false;
+      if (details.timeSlot == null) return false;
+      
+      // For monthly bookings, check recurring days
+      if (_bookingType == BookingType.monthlyBooking && _recurringDays.isEmpty) {
+        return false;
+      }
     }
+    
     return true;
   }
 
-  // Calculate sessions per month
+  // Calculate sessions per month (for monthly booking)
   int get sessionsPerMonth {
     return _recurringDays.length * 4; // Approximate 4 weeks per month
   }
 
-  // Calculate price per session
-  double get pricePerSession {
+  // Calculate price per session for a child
+  double getChildPricePerSession(String childId) {
     if (sessionsPerMonth == 0) return 0;
-    return _monthlyBudget / sessionsPerMonth;
+    final details = _childBookingDetails[childId];
+    if (details == null) return 0;
+    return details.budget / sessionsPerMonth;
   }
 
-  // Submit booking
+  // Calculate total estimated cost
+  double get totalEstimatedCost {
+    double total = 0;
+    for (var childId in _selectedChildrenIds) {
+      final details = _childBookingDetails[childId];
+      if (details != null) {
+        total += details.budget;
+      }
+    }
+    return total;
+  }
+
+  // Submit bookings (one for each child)
   Future<bool> submitBooking() async {
     if (!canSubmit) {
-      _errorMessage = 'Please fill all required fields';
+      _errorMessage = 'Please complete booking details for all children';
       notifyListeners();
       return false;
     }
@@ -270,64 +317,66 @@ class RequestBookingViewModel extends ChangeNotifier {
         return false;
       }
 
-      final bookingId = DateTime.now().millisecondsSinceEpoch.toString();
-      
-      // Determine booking date and time based on type
-      final bookingDate = _bookingType == BookingType.monthlyBooking
-          ? (_startDate ?? DateTime.now())
-          : (_preferredDate ?? DateTime.now());
-      
-      final bookingTime = _bookingType == BookingType.monthlyBooking
-          ? (_selectedTimeSlot ?? '4:00 PM')
-          : (_timePreference ?? 'Afternoon');
+      final notificationService = NotificationService();
+      final tutorService = TutorService();
+      final parent = await _userService.getUserById(currentUser.uid);
 
-      final booking = BookingModel(
-        bookingId: bookingId,
-        parentId: currentUser.uid,
-        tutorId: tutorId,
-        subject: _selectedSubjects.first, // For backward compatibility
-        subjects: _selectedSubjects,
-        bookingDate: bookingDate,
-        bookingTime: bookingTime,
-        status: BookingStatus.pending,
-        notes: _notes.isNotEmpty ? _notes : null,
-        createdAt: DateTime.now(),
-        bookingType: _bookingType,
-        startDate: _bookingType == BookingType.monthlyBooking ? _startDate : _preferredDate,
-        recurringDays: _recurringDays.isNotEmpty ? _recurringDays : null,
-        monthlyBudget: _bookingType == BookingType.monthlyBooking ? _monthlyBudget : _hourlyBudget,
-        childrenIds: _selectedChildrenIds.isNotEmpty ? _selectedChildrenIds : null,
-      );
-
-      await _bookingService.createBooking(booking);
-
-      // Send notification to tutor
-      try {
-        final notificationService = NotificationService();
-        final tutorService = TutorService();
-        final tutor = await tutorService.getTutorById(tutorId);
-        final parent = await _userService.getUserById(currentUser.uid);
-        
-        if (tutor != null && parent != null) {
-          final subjectsText = _selectedSubjects.join(', ');
-          await notificationService.sendBookingNotificationToTutor(
-            tutorId: tutorId,
-            parentName: parent.name,
-            subject: subjectsText,
-            bookingId: bookingId,
-          );
+      // Create separate booking for each child
+      for (var childId in _selectedChildrenIds) {
+        final details = _childBookingDetails[childId];
+        if (details == null || details.bookingDate == null || details.timeSlot == null) {
+          continue; // Skip if incomplete
         }
-      } catch (e) {
-        // Don't fail booking if notification fails
-        if (kDebugMode) {
-          print('⚠️ Failed to send booking notification: $e');
+
+        final bookingId = '${DateTime.now().millisecondsSinceEpoch}_$childId';
+        
+        final booking = BookingModel(
+          bookingId: bookingId,
+          parentId: currentUser.uid,
+          tutorId: tutorId,
+          subject: _selectedSubjects.first, // For backward compatibility
+          subjects: _selectedSubjects,
+          bookingDate: details.bookingDate!,
+          bookingTime: details.timeSlot!,
+          status: BookingStatus.pending,
+          notes: details.notes.isNotEmpty ? details.notes : null,
+          createdAt: DateTime.now(),
+          bookingType: _bookingType,
+          startDate: details.bookingDate,
+          recurringDays: _bookingType == BookingType.monthlyBooking ? _recurringDays : null,
+          monthlyBudget: details.budget,
+          childrenIds: [childId], // Single child per booking
+        );
+
+        await _bookingService.createBooking(booking);
+
+        // Send notification to tutor for each booking
+        try {
+          if (parent != null) {
+            final child = _children.firstWhere((c) => c.studentId == childId);
+            final childUser = await _userService.getUserById(childId);
+            final childName = childUser?.name ?? 'Student';
+            
+            final subjectsText = _selectedSubjects.join(', ');
+            await notificationService.sendBookingNotificationToTutor(
+              tutorId: tutorId,
+              parentName: '${parent.name} (for $childName)',
+              subject: subjectsText,
+              bookingId: bookingId,
+            );
+          }
+        } catch (e) {
+          // Don't fail booking if notification fails
+          if (kDebugMode) {
+            print('⚠️ Failed to send booking notification: $e');
+          }
         }
       }
 
       _setLoading(false);
       return true;
     } catch (e) {
-      _errorMessage = 'Failed to submit booking: ${e.toString()}';
+      _errorMessage = 'Failed to submit bookings: ${e.toString()}';
       _setLoading(false);
       notifyListeners();
       return false;
@@ -336,16 +385,11 @@ class RequestBookingViewModel extends ChangeNotifier {
 
   // Format budget in rupees
   String formatBudget(double amount) {
-    return '₹${amount.toStringAsFixed(0)}/mo';
-  }
-
-  // Format hourly budget in rupees
-  String formatHourlyBudget(double amount) {
-    return '₹${amount.toStringAsFixed(0)}/hr';
+    return '₹${amount.toStringAsFixed(0)}${_bookingType == BookingType.monthlyBooking ? '/mo' : '/hr'}';
   }
 
   // Format price per session
-  String formatPricePerSession() {
+  String formatPricePerSession(double pricePerSession) {
     return '₹${pricePerSession.toStringAsFixed(0)}/session';
   }
 
@@ -354,4 +398,3 @@ class RequestBookingViewModel extends ChangeNotifier {
     notifyListeners();
   }
 }
-

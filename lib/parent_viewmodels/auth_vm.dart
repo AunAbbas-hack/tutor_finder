@@ -368,8 +368,19 @@ class AuthViewModel extends ChangeNotifier {
         password: _tutorPassword,
       );
 
-      // Send profile under review notification
+      // Initialize FCM token after successful signup
       if (user != null) {
+        try {
+          final fcmService = FCMService();
+          await fcmService.initializeToken();
+        } catch (e) {
+          // Don't fail signup if FCM initialization fails
+          if (kDebugMode) {
+            print('⚠️ Failed to initialize FCM token: $e');
+          }
+        }
+
+        // Send profile under review notification
         try {
           final notificationService = NotificationService();
           await notificationService.sendProfileUnderReviewToTutor(

@@ -1,5 +1,7 @@
 // lib/views/tutor/tutor_booking_request_detail_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:provider/provider.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -118,7 +120,6 @@ class TutorBookingRequestDetailScreen extends StatelessWidget {
   // ---------- Parent Profile Section ----------
   Widget _buildParentProfileSection(TutorBookingRequestDetailViewModel vm) {
     final parent = vm.parent!;
-    final booking = vm.booking!;
     
     // Get student name and grade
     String studentInfo = '';
@@ -410,7 +411,8 @@ class TutorBookingRequestDetailScreen extends StatelessWidget {
                 zoom: 14.0,
               ),
               myLocationButtonEnabled: false,
-              zoomControlsEnabled: false,
+              zoomControlsEnabled: true,
+              zoomGesturesEnabled: true,
               mapToolbarEnabled: false,
               markers: {
                 Marker(
@@ -423,6 +425,9 @@ class TutorBookingRequestDetailScreen extends StatelessWidget {
                     BitmapDescriptor.hueRed,
                   ),
                 ),
+              },
+              gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
+                Factory<OneSequenceGestureRecognizer>(() => EagerGestureRecognizer()),
               },
             ),
           ),
