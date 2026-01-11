@@ -93,75 +93,104 @@ class _LoginViewState extends State<_LoginView> {
                 focusNode: _emailPhoneFocusNode,
                 onChanged: vm.updateEmailOrPhone,
                 textInputAction: TextInputAction.next,
+                errorText: vm.emailOrPhoneError,
               ),
 
               const SizedBox(height: 16),
 
               // Password + Forgot password
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Password',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => const ForgotPasswordScreen(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Password',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
                         ),
-                      );
-                    },
-                    child: AppText.link('Forgot Password?', context),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const ForgotPasswordScreen(),
+                            ),
+                          );
+                        },
+                        child: AppText.link('Forgot Password?', context),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _passwordController,
+                    focusNode: _passwordFocusNode,
+                    obscureText: !vm.isPasswordVisible,
+                    onChanged: vm.updatePassword,
+                    textInputAction: TextInputAction.done,
+                    decoration: InputDecoration(
+                      hintText: 'Enter your password',
+                      filled: true,
+                      fillColor: const Color(0xFFF5F6FA),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 14),
+                      suffixIcon: IconButton(
+                        onPressed: vm.togglePasswordVisibility,
+                        icon: Icon(
+                          vm.isPasswordVisible
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                        ),
+                      ),
+                      errorText: vm.passwordError,
+                      errorStyle: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.red,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(
+                          color: vm.passwordError != null ? Colors.red : Colors.transparent,
+                          width: 2,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(
+                          color: vm.passwordError != null ? Colors.red : const Color(0xFF1A73E8),
+                          width: 2,
+                        ),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                          color: Colors.red,
+                          width: 2,
+                        ),
+                      ),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                          color: Colors.red,
+                          width: 2,
+                        ),
+                      ),
+                    ),
                   ),
                 ],
-              ),
-              TextField(
-                controller: _passwordController,
-                focusNode: _passwordFocusNode,
-                obscureText: !vm.isPasswordVisible,
-                onChanged: vm.updatePassword,
-                textInputAction: TextInputAction.done,
-                decoration: InputDecoration(
-                  hintText: 'Enter your password',
-                  filled: true,
-                  fillColor: const Color(0xFFF5F6FA),
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 14),
-                  suffixIcon: IconButton(
-                    onPressed: vm.togglePasswordVisibility,
-                    icon: Icon(
-                      vm.isPasswordVisible
-                          ? Icons.visibility
-                          : Icons.visibility_off,
-                    ),
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(
-                      color: Color(0xFF1A73E8),
-                      width: 2,
-                    ),
-                  ),
-                ),
               ),
 
               const SizedBox(height: 16),
 
-              // Error message (if any)
-              if (vm.errorMessage != null) ...[
+              // Error message (if any) - for server errors
+              if (vm.errorMessage != null && vm.emailOrPhoneError == null && vm.passwordError == null) ...[
                 Text(
                   vm.errorMessage!,
                   style: theme.textTheme.bodySmall?.copyWith(
@@ -175,13 +204,13 @@ class _LoginViewState extends State<_LoginView> {
               AppPrimaryButton(
                 label: 'Log In',
                 isLoading: vm.isLoading,
-                isDisabled: !vm.canSubmitLogin,
+                isDisabled: false,
                 onPressed: () async {
                   final success = await vm.login();
                   if (success && mounted) {
                     // AuthWrapper automatically handles navigation based on role
                     // No need to manually navigate here
-                  } else if (vm.errorMessage != null && mounted) {
+                  } else if (vm.errorMessage != null && mounted && vm.emailOrPhoneError == null && vm.passwordError == null) {
                     Get.snackbar(
                       'Error',
                       vm.errorMessage!,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:get/get.dart';
 import 'package:tutor_finder/views/tutor/tutor_main_screen.dart';
@@ -108,6 +109,7 @@ class _TutorSignupViewState extends State<_TutorSignupView> {
                 focusNode: _fullNameFocusNode,
                 onChanged: vm.updateTutorFullName,
                 textInputAction: TextInputAction.next,
+                errorText: vm.tutorFullNameError,
               ),
               const SizedBox(height: 16),
 
@@ -120,58 +122,86 @@ class _TutorSignupViewState extends State<_TutorSignupView> {
                 focusNode: _emailFocusNode,
                 onChanged: vm.updateTutorEmail,
                 textInputAction: TextInputAction.next,
+                errorText: vm.tutorEmailError,
               ),
               const SizedBox(height: 16),
 
               // Password
-              AppText(
-                'Password',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textDark,
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _passwordController,
-                focusNode: _passwordFocusNode,
-                obscureText: !_passwordVisible,
-                onChanged: vm.updateTutorPassword,
-                decoration: InputDecoration(
-                  hintText: 'Enter your password',
-                  filled: true,
-                  fillColor: AppColors.lightBackground,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
-                  suffixIcon: IconButton(
-                    onPressed: () {
-                      setState(() => _passwordVisible = !_passwordVisible);
-                    },
-                    icon: Icon(
-                      _passwordVisible
-                          ? Icons.visibility
-                          : Icons.visibility_off,
-                      color: AppColors.iconGrey,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AppText(
+                    'Password',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textDark,
                     ),
                   ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(
-                      color: AppColors.primary,
-                      width: 2,
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _passwordController,
+                    focusNode: _passwordFocusNode,
+                    obscureText: !_passwordVisible,
+                    onChanged: vm.updateTutorPassword,
+                    decoration: InputDecoration(
+                      hintText: 'Enter your password',
+                      filled: true,
+                      fillColor: AppColors.lightBackground,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                      suffixIcon: IconButton(
+                        onPressed: () {
+                          setState(() => _passwordVisible = !_passwordVisible);
+                        },
+                        icon: Icon(
+                          _passwordVisible
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                          color: AppColors.iconGrey,
+                        ),
+                      ),
+                      errorText: vm.tutorPasswordError,
+                      errorStyle: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.error,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(
+                          color: vm.tutorPasswordError != null ? AppColors.error : Colors.transparent,
+                          width: 2,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(
+                          color: vm.tutorPasswordError != null ? AppColors.error : AppColors.primary,
+                          width: 2,
+                        ),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                          color: AppColors.error,
+                          width: 2,
+                        ),
+                      ),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                          color: AppColors.error,
+                          width: 2,
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                ],
               ),
               const SizedBox(height: 16),
 
@@ -184,48 +214,79 @@ class _TutorSignupViewState extends State<_TutorSignupView> {
                 focusNode: _phoneFocusNode,
                 onChanged: vm.updateTutorPhone,
                 textInputAction: TextInputAction.next,
+                errorText: vm.tutorPhoneError,
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
+                ],
               ),
               const SizedBox(height: 16),
 
               // Teaching Subjects & Experience (multiline)
-              AppText(
-                'Teaching Subjects & Experience',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textDark,
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _subjectsExpController,
-                focusNode: _subjectsExpFocusNode,
-                maxLines: 4,
-                keyboardType: TextInputType.multiline,
-                onChanged: vm.updateTutorSubjectsExp,
-                decoration: InputDecoration(
-                  hintText: 'e.g., High School Math, Physics, SAT Prep',
-                  filled: true,
-                  fillColor: AppColors.lightBackground,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(
-                      color: AppColors.primary,
-                      width: 2,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AppText(
+                    'Teaching Subjects & Experience',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textDark,
                     ),
                   ),
-                ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _subjectsExpController,
+                    focusNode: _subjectsExpFocusNode,
+                    maxLines: 4,
+                    keyboardType: TextInputType.multiline,
+                    onChanged: vm.updateTutorSubjectsExp,
+                    decoration: InputDecoration(
+                      hintText: 'e.g., High School Math, Physics, SAT Prep',
+                      filled: true,
+                      fillColor: AppColors.lightBackground,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                      errorText: vm.tutorSubjectsExpError,
+                      errorStyle: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.error,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(
+                          color: vm.tutorSubjectsExpError != null ? AppColors.error : Colors.transparent,
+                          width: 2,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(
+                          color: vm.tutorSubjectsExpError != null ? AppColors.error : AppColors.primary,
+                          width: 2,
+                        ),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                          color: AppColors.error,
+                          width: 2,
+                        ),
+                      ),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                          color: AppColors.error,
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 16),
 
@@ -254,8 +315,13 @@ class _TutorSignupViewState extends State<_TutorSignupView> {
               ),
               const SizedBox(height: 16),
 
-              // Error
-              if (vm.errorMessage != null) ...[
+              // Error (for server errors only)
+              if (vm.errorMessage != null && 
+                  vm.tutorFullNameError == null && 
+                  vm.tutorEmailError == null && 
+                  vm.tutorPasswordError == null && 
+                  vm.tutorPhoneError == null && 
+                  vm.tutorSubjectsExpError == null) ...[
                 Text(
                   vm.errorMessage!,
                   style: theme.textTheme.bodySmall?.copyWith(
@@ -269,7 +335,7 @@ class _TutorSignupViewState extends State<_TutorSignupView> {
               AppPrimaryButton(
                 label: 'Create Account',
                 isLoading: vm.isLoading,
-                isDisabled: !vm.canSubmitTutorSignup,
+                isDisabled: false,
                 onPressed:() async {
                   final ok = await vm.registerTutor();
                   if (!context.mounted) return;
@@ -281,7 +347,12 @@ class _TutorSignupViewState extends State<_TutorSignupView> {
                       MaterialPageRoute(builder: (context) => const TutorMainScreen()),
                       (route) => false,
                     );
-                  } else if (vm.errorMessage != null) {
+                  } else if (vm.errorMessage != null && 
+                      vm.tutorFullNameError == null && 
+                      vm.tutorEmailError == null && 
+                      vm.tutorPasswordError == null && 
+                      vm.tutorPhoneError == null && 
+                      vm.tutorSubjectsExpError == null) {
                     Get.snackbar(
                       'Error',
                       vm.errorMessage!,

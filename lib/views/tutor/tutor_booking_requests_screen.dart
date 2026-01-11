@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/app_text.dart';
 import '../../tutor_viewmodels/tutor_booking_requests_vm.dart';
+import 'tutor_booking_request_detail_screen.dart';
 
 class TutorBookingRequestsScreen extends StatelessWidget {
   const TutorBookingRequestsScreen({super.key});
@@ -71,7 +72,14 @@ class TutorBookingRequestsScreen extends StatelessWidget {
                 itemCount: vm.pendingBookings.length,
                 itemBuilder: (context, index) {
                   final bookingDisplay = vm.pendingBookings[index];
-                  return _buildBookingCard(context, vm, bookingDisplay);
+                  return GestureDetector(
+                    onTap: () {
+                      Get.to(() => TutorBookingRequestDetailScreen(
+                            bookingId: bookingDisplay.booking.bookingId,
+                          ));
+                    },
+                    child: _buildBookingCard(context, vm, bookingDisplay),
+                  );
                 },
               ),
             );

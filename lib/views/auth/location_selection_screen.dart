@@ -102,6 +102,59 @@ class _LocationSelectionView extends StatelessWidget {
     };
   }
 
+  /// Build fallback UI when Google Maps fails to load (e.g., billing issue)
+  Widget _buildMapErrorFallback(LocationViewModel vm, dynamic error) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.map_outlined,
+            size: 48,
+            color: AppColors.error,
+          ),
+          const SizedBox(height: 16),
+          AppText(
+            'Map Not Available',
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textDark,
+            ),
+          ),
+          const SizedBox(height: 8),
+          AppText(
+            kIsWeb
+                ? 'Google Maps requires billing to be enabled.\nPlease use the search bar or enter coordinates manually below.'
+                : 'Unable to load map. Please enter coordinates manually below.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 14,
+              color: AppColors.textGrey,
+            ),
+          ),
+          if (kDebugMode) ...[
+            const SizedBox(height: 12),
+            AppText(
+              'Error: ${error.toString()}',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.error,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<LocationViewModel>();
@@ -251,7 +304,7 @@ class _LocationSelectionView extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
-              // Google Map
+              // Google Map with error handling for billing issues
               ClipRRect(
                 borderRadius: BorderRadius.circular(24),
                 child: Container(
@@ -263,46 +316,93 @@ class _LocationSelectionView extends StatelessWidget {
                       width: 2,
                     ),
                   ),
-                  child: Stack(
-                    children: [
-                      GoogleMap(
-                        initialCameraPosition: vm.cameraPosition,
-                        onMapCreated: (GoogleMapController controller) {
-                          vm.setMapController(controller);
-                        },
-                        onTap: (LatLng position) {
-                          vm.onMapTap(position);
-                        },
-                        onCameraMove: (CameraPosition position) {
-                          // Only update internal state, no rebuilds during drag
-                          vm.onCameraMove(position);
-                        },
-                        onCameraIdle: () {
-                          // Debounced update when camera stops moving
-                          vm.onCameraIdle();
-                        },
-                        myLocationButtonEnabled: false,
-                        myLocationEnabled: true,
-                        zoomControlsEnabled: false,
-                        mapToolbarEnabled: false,
-                        markers: _buildMarkers(vm),
-                        // Optimize rendering
-                        mapType: MapType.normal,
-                        compassEnabled: false,
-                        rotateGesturesEnabled: true,
-                        scrollGesturesEnabled: true,
-                        tiltGesturesEnabled: false,
-                        zoomGesturesEnabled: true,
-                      ),
-                      // Center indicator
-                      Center(
-                        child: Icon(
-                          Icons.location_on,
-                          color: AppColors.primary,
-                          size: 40,
-                        ),
-                      ),
-                    ],
+                  child: Builder(
+                    builder: (context) {
+                      // For web platform, check if Google Maps is available
+                      if (kIsWeb) {
+                        try {
+                          return Stack(
+                            children: [
+                              GoogleMap(
+                                initialCameraPosition: vm.cameraPosition,
+                                onMapCreated: (GoogleMapController controller) {
+                                  vm.setMapController(controller);
+                                },
+                                onTap: (LatLng position) {
+                                  vm.onMapTap(position);
+                                },
+                                onCameraMove: (CameraPosition position) {
+                                  vm.onCameraMove(position);
+                                },
+                                onCameraIdle: () {
+                                  vm.onCameraIdle();
+                                },
+                                myLocationButtonEnabled: false,
+                                myLocationEnabled: true,
+                                zoomControlsEnabled: false,
+                                mapToolbarEnabled: false,
+                                markers: _buildMarkers(vm),
+                                mapType: MapType.normal,
+                                compassEnabled: false,
+                                rotateGesturesEnabled: true,
+                                scrollGesturesEnabled: true,
+                                tiltGesturesEnabled: false,
+                                zoomGesturesEnabled: true,
+                              ),
+                              Center(
+                                child: Icon(
+                                  Icons.location_on,
+                                  color: AppColors.primary,
+                                  size: 40,
+                                ),
+                              ),
+                            ],
+                          );
+                        } catch (e) {
+                          // Fallback UI if Google Maps fails to load (e.g., billing issue)
+                          return _buildMapErrorFallback(vm, e);
+                        }
+                      } else {
+                        // Mobile platforms - normal map rendering
+                        return Stack(
+                          children: [
+                            GoogleMap(
+                              initialCameraPosition: vm.cameraPosition,
+                              onMapCreated: (GoogleMapController controller) {
+                                vm.setMapController(controller);
+                              },
+                              onTap: (LatLng position) {
+                                vm.onMapTap(position);
+                              },
+                              onCameraMove: (CameraPosition position) {
+                                vm.onCameraMove(position);
+                              },
+                              onCameraIdle: () {
+                                vm.onCameraIdle();
+                              },
+                              myLocationButtonEnabled: false,
+                              myLocationEnabled: true,
+                              zoomControlsEnabled: false,
+                              mapToolbarEnabled: false,
+                              markers: _buildMarkers(vm),
+                              mapType: MapType.normal,
+                              compassEnabled: false,
+                              rotateGesturesEnabled: true,
+                              scrollGesturesEnabled: true,
+                              tiltGesturesEnabled: false,
+                              zoomGesturesEnabled: true,
+                            ),
+                            Center(
+                              child: Icon(
+                                Icons.location_on,
+                                color: AppColors.primary,
+                                size: 40,
+                              ),
+                            ),
+                          ],
+                        );
+                      }
+                    },
                   ),
                 ),
               ),

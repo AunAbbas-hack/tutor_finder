@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:tutor_finder/views/auth/parent_signup/parent_signup_screen_2.dart';
 
@@ -123,6 +124,7 @@ class _ParentAccountStepScreenState extends State<ParentAccountStepScreen> {
                   focusNode: _nameFocusNode,
                   onChanged: vm.updateParentName,
                   textInputAction: TextInputAction.next,
+                  errorText: vm.parentNameError,
                 ),
                 const SizedBox(height: 16),
 
@@ -135,115 +137,170 @@ class _ParentAccountStepScreenState extends State<ParentAccountStepScreen> {
                   focusNode: _emailFocusNode,
                   onChanged: vm.updateEmail,
                   textInputAction: TextInputAction.next,
+                  errorText: vm.emailError,
                 ),
                 const SizedBox(height: 16),
 
                 // Password
-                AppText(
-                  'Password',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textDark,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _passwordController,
-                  focusNode: _passwordFocusNode,
-                  obscureText: !_passwordVisible,
-                  onChanged: vm.updatePassword,
-                  decoration: InputDecoration(
-                    hintText: 'Create a strong password',
-                    filled: true,
-                    fillColor: AppColors.lightBackground,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 14,
-                    ),
-                    suffixIcon: IconButton(
-                      onPressed: () {
-                        setState(() => _passwordVisible = !_passwordVisible);
-                      },
-                      icon: Icon(
-                        _passwordVisible
-                            ? Icons.visibility
-                            : Icons.visibility_off,
-                        color: AppColors.iconGrey,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AppText(
+                      'Password',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textDark,
                       ),
                     ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(
-                        color: AppColors.primary,
-                        width: 2,
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _passwordController,
+                      focusNode: _passwordFocusNode,
+                      obscureText: !_passwordVisible,
+                      onChanged: vm.updatePassword,
+                      decoration: InputDecoration(
+                        hintText: 'Create a strong password',
+                        filled: true,
+                        fillColor: AppColors.lightBackground,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
+                        suffixIcon: IconButton(
+                          onPressed: () {
+                            setState(() => _passwordVisible = !_passwordVisible);
+                          },
+                          icon: Icon(
+                            _passwordVisible
+                                ? Icons.visibility
+                                : Icons.visibility_off,
+                            color: AppColors.iconGrey,
+                          ),
+                        ),
+                        errorText: vm.passwordError,
+                        errorStyle: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.error,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(
+                            color: vm.passwordError != null ? AppColors.error : Colors.transparent,
+                            width: 2,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(
+                            color: vm.passwordError != null ? AppColors.error : AppColors.primary,
+                            width: 2,
+                          ),
+                        ),
+                        errorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: const BorderSide(
+                            color: AppColors.error,
+                            width: 2,
+                          ),
+                        ),
+                        focusedErrorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: const BorderSide(
+                            color: AppColors.error,
+                            width: 2,
+                          ),
+                        ),
                       ),
+                      textInputAction: TextInputAction.next,
                     ),
-                  ),
-                  textInputAction: TextInputAction.next,
+                  ],
                 ),
                 const SizedBox(height: 16),
 
                 // Confirm password
-                AppText(
-                  'Confirm Password',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textDark,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _confirmController,
-                  focusNode: _confirmFocusNode,
-                  obscureText: !_confirmPasswordVisible,
-                  onChanged: vm.updateConfirmPassword,
-                  decoration: InputDecoration(
-                    hintText: 'Re-enter your password',
-                    filled: true,
-                    fillColor: AppColors.lightBackground,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 14,
-                    ),
-                    suffixIcon: IconButton(
-                      onPressed: () {
-                        setState(
-                              () => _confirmPasswordVisible =
-                          !_confirmPasswordVisible,
-                        );
-                      },
-                      icon: Icon(
-                        _confirmPasswordVisible
-                            ? Icons.visibility
-                            : Icons.visibility_off,
-                        color: AppColors.iconGrey,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AppText(
+                      'Confirm Password',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textDark,
                       ),
                     ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(
-                        color: AppColors.primary,
-                        width: 2,
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _confirmController,
+                      focusNode: _confirmFocusNode,
+                      obscureText: !_confirmPasswordVisible,
+                      onChanged: vm.updateConfirmPassword,
+                      decoration: InputDecoration(
+                        hintText: 'Re-enter your password',
+                        filled: true,
+                        fillColor: AppColors.lightBackground,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
+                        suffixIcon: IconButton(
+                          onPressed: () {
+                            setState(
+                                  () => _confirmPasswordVisible =
+                              !_confirmPasswordVisible,
+                            );
+                          },
+                          icon: Icon(
+                            _confirmPasswordVisible
+                                ? Icons.visibility
+                                : Icons.visibility_off,
+                            color: AppColors.iconGrey,
+                          ),
+                        ),
+                        errorText: vm.confirmPasswordError,
+                        errorStyle: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.error,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(
+                            color: vm.confirmPasswordError != null ? AppColors.error : Colors.transparent,
+                            width: 2,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(
+                            color: vm.confirmPasswordError != null ? AppColors.error : AppColors.primary,
+                            width: 2,
+                          ),
+                        ),
+                        errorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: const BorderSide(
+                            color: AppColors.error,
+                            width: 2,
+                          ),
+                        ),
+                        focusedErrorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: const BorderSide(
+                            color: AppColors.error,
+                            width: 2,
+                          ),
+                        ),
                       ),
+                      textInputAction: TextInputAction.next,
                     ),
-                  ),
-                  textInputAction: TextInputAction.next,
+                  ],
                 ),
                 const SizedBox(height: 16),
 
@@ -256,6 +313,10 @@ class _ParentAccountStepScreenState extends State<ParentAccountStepScreen> {
                   focusNode: _phoneFocusNode,
                   onChanged: vm.updatePhone,
                   textInputAction: TextInputAction.done,
+                  errorText: vm.phoneError,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
+                  ],
                 ),
                 const SizedBox(height: 16),
 
@@ -293,8 +354,13 @@ class _ParentAccountStepScreenState extends State<ParentAccountStepScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Error
-                if (vm.errorMessage != null) ...[
+                // Error (for server errors only)
+                if (vm.errorMessage != null && 
+                    vm.parentNameError == null && 
+                    vm.emailError == null && 
+                    vm.passwordError == null && 
+                    vm.confirmPasswordError == null && 
+                    vm.phoneError == null) ...[
                   Text(
                     vm.errorMessage!,
                     style: theme.textTheme.bodySmall?.copyWith(
@@ -308,7 +374,7 @@ class _ParentAccountStepScreenState extends State<ParentAccountStepScreen> {
                 AppPrimaryButton(
                   label: 'Continue',
                   isLoading: vm.isLoading,
-                  isDisabled: !vm.isStep1Valid,
+                  isDisabled: false,
                   onPressed: () {
                     final ok = vm.continueFromStep1();
                     if (ok) {

@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../data/models/user_model.dart';
 import '../data/models/tutor_model.dart';
@@ -52,17 +53,22 @@ class AuthViewModel extends ChangeNotifier {
   bool _isPasswordVisible = false;
   bool _isLoading = false;
   String? _errorMessage;
+  String? _emailOrPhoneError;
+  String? _passwordError;
 
   String get emailOrPhone => _emailOrPhone;
   String get password => _password;
   bool get isPasswordVisible => _isPasswordVisible;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
+  String? get emailOrPhoneError => _emailOrPhoneError;
+  String? get passwordError => _passwordError;
 
   void updateEmailOrPhone(String value) {
     if (_isDisposed) return;
     _emailOrPhone = value.trim();
     _errorMessage = null;
+    _emailOrPhoneError = _validateEmailOrPhone(_emailOrPhone);
     _safeNotifyListeners();
   }
 
@@ -70,7 +76,50 @@ class AuthViewModel extends ChangeNotifier {
     if (_isDisposed) return;
     _password = value;
     _errorMessage = null;
+    _passwordError = _validatePassword(_password);
     _safeNotifyListeners();
+  }
+
+  String? _validateEmailOrPhone(String value) {
+    if (value.isEmpty) return null;
+    // Email regex pattern: xxx@xxx.xx format
+    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,}$');
+    if (!emailRegex.hasMatch(value)) {
+      return 'Please enter a valid email address.';
+    }
+    return null;
+  }
+
+  String? _validatePassword(String value) {
+    // Login password validation - just check if not empty
+    if (value.isEmpty) return null;
+    return null;
+  }
+
+  String? _validateStrongPassword(String value) {
+    // Strong password validation for signup
+    if (value.isEmpty) return null;
+    
+    if (value.length < 8) {
+      return 'Password must be at least 8 characters long.';
+    }
+    
+    // Check for capital letter
+    if (!value.contains(RegExp(r'[A-Z]'))) {
+      return 'Password must contain at least one capital letter.';
+    }
+    
+    // Check for number
+    if (!value.contains(RegExp(r'[0-9]'))) {
+      return 'Password must contain at least one number.';
+    }
+    
+    // Check for special symbol
+    if (!value.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) {
+      return 'Password must contain at least one special symbol.';
+    }
+    
+    return null;
   }
 
   void togglePasswordVisibility() {
@@ -86,14 +135,24 @@ class AuthViewModel extends ChangeNotifier {
     // #region agent log
     await DebugLogger.log(location: 'auth_vm.dart:63', message: 'Parent login attempt', data: {'email': _emailOrPhone, 'hasPassword': _password.isNotEmpty}, hypothesisId: 'AUTH-1');
     // #endregion
-    if (!canSubmitLogin) return false;
-
-    if (!_emailOrPhone.contains('@')) {
-      if (_isDisposed) return false;
-      _errorMessage = 'Please enter a valid email address.';
+    
+    // Validate fields
+    _emailOrPhoneError = _validateEmailOrPhone(_emailOrPhone);
+    _passwordError = _validatePassword(_password);
+    
+    if (_emailOrPhone.isEmpty) {
+      _emailOrPhoneError = 'Email is required.';
+    }
+    if (_password.isEmpty) {
+      _passwordError = 'Password is required.';
+    }
+    
+    if (_emailOrPhoneError != null || _passwordError != null) {
       _safeNotifyListeners();
       return false;
     }
+    
+    if (_isDisposed) return false;
 
     try {
       _setLoading(true);
@@ -121,6 +180,16 @@ class AuthViewModel extends ChangeNotifier {
 
       _setLoading(false);
       return true;
+    } on FirebaseAuthException catch (e) {
+      // #region agent log
+      await DebugLogger.log(location: 'auth_vm.dart:87', message: 'Parent login failed', data: {'email': _emailOrPhone, 'error': e.code}, hypothesisId: 'AUTH-1');
+      // #endregion
+      if (!_isDisposed) {
+        _setLoading(false);
+        _errorMessage = _mapFirebaseAuthError(e);
+        _safeNotifyListeners();
+      }
+      return false;
     } on Exception catch (e) {
       // #region agent log
       await DebugLogger.log(location: 'auth_vm.dart:87', message: 'Parent login failed', data: {'email': _emailOrPhone, 'error': e.toString()}, hypothesisId: 'AUTH-1');
@@ -141,17 +210,28 @@ class AuthViewModel extends ChangeNotifier {
   String _tutorPassword = '';
   String _tutorPhone = '';
   String _tutorSubjectsExp = '';
+  String? _tutorFullNameError;
+  String? _tutorEmailError;
+  String? _tutorPasswordError;
+  String? _tutorPhoneError;
+  String? _tutorSubjectsExpError;
 
   String get tutorFullName => _tutorFullName;
   String get tutorEmail => _tutorEmail;
   String get tutorPassword => _tutorPassword;
   String get tutorPhone => _tutorPhone;
   String get tutorSubjectsExp => _tutorSubjectsExp;
+  String? get tutorFullNameError => _tutorFullNameError;
+  String? get tutorEmailError => _tutorEmailError;
+  String? get tutorPasswordError => _tutorPasswordError;
+  String? get tutorPhoneError => _tutorPhoneError;
+  String? get tutorSubjectsExpError => _tutorSubjectsExpError;
 
   void updateTutorFullName(String value) {
     if (_isDisposed) return;
     _tutorFullName = value.trim();
     _errorMessage = null;
+    _tutorFullNameError = _validateTutorFullName(_tutorFullName);
     _safeNotifyListeners();
   }
 
@@ -159,6 +239,7 @@ class AuthViewModel extends ChangeNotifier {
     if (_isDisposed) return;
     _tutorEmail = value.trim();
     _errorMessage = null;
+    _tutorEmailError = _validateTutorEmail(_tutorEmail);
     _safeNotifyListeners();
   }
 
@@ -166,6 +247,7 @@ class AuthViewModel extends ChangeNotifier {
     if (_isDisposed) return;
     _tutorPassword = value;
     _errorMessage = null;
+    _tutorPasswordError = _validateTutorPassword(_tutorPassword);
     _safeNotifyListeners();
   }
 
@@ -173,6 +255,7 @@ class AuthViewModel extends ChangeNotifier {
     if (_isDisposed) return;
     _tutorPhone = value.trim();
     _errorMessage = null;
+    _tutorPhoneError = _validateTutorPhone(_tutorPhone);
     _safeNotifyListeners();
   }
 
@@ -180,19 +263,69 @@ class AuthViewModel extends ChangeNotifier {
     if (_isDisposed) return;
     _tutorSubjectsExp = value.trim();
     _errorMessage = null;
+    _tutorSubjectsExpError = _validateTutorSubjectsExp(_tutorSubjectsExp);
     _safeNotifyListeners();
+  }
+
+  String? _validateTutorFullName(String value) {
+    if (value.isEmpty) return null;
+    return null;
+  }
+
+  String? _validateTutorEmail(String value) {
+    if (value.isEmpty) return null;
+    // Email regex pattern: xxx@xxx.xx format
+    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,}$');
+    if (!emailRegex.hasMatch(value)) {
+      return 'Please enter a valid email address.';
+    }
+    return null;
+  }
+
+  String? _validateTutorPassword(String value) {
+    return _validateStrongPassword(value);
+  }
+
+  String? _validateTutorPhone(String value) {
+    if (value.isEmpty) return null;
+    return null;
+  }
+
+  String? _validateTutorSubjectsExp(String value) {
+    if (value.isEmpty) return null;
+    return null;
   }
 
   bool get canSubmitTutorSignup =>
       _tutorFullName.isNotEmpty &&
           _tutorEmail.isNotEmpty &&
-          _tutorPassword.length >= 6 &&
+          _tutorPassword.length >= 8 &&
           _tutorPhone.isNotEmpty &&
           _tutorSubjectsExp.isNotEmpty &&
           !_isLoading;
 
   Future<bool> registerTutor() async {
-    if (!canSubmitTutorSignup) return false;
+    // Validate all fields
+    _tutorFullNameError = _tutorFullName.isEmpty ? 'Full name is required.' : null;
+    _tutorEmailError = _tutorEmail.isEmpty 
+        ? 'Email is required.' 
+        : _validateTutorEmail(_tutorEmail);
+    _tutorPasswordError = _tutorPassword.isEmpty 
+        ? 'Password is required.' 
+        : _validateStrongPassword(_tutorPassword);
+    _tutorPhoneError = _tutorPhone.isEmpty ? 'Phone number is required.' : null;
+    _tutorSubjectsExpError = _tutorSubjectsExp.isEmpty ? 'Subjects & experience is required.' : null;
+    
+    if (_tutorFullNameError != null || 
+        _tutorEmailError != null || 
+        _tutorPasswordError != null || 
+        _tutorPhoneError != null || 
+        _tutorSubjectsExpError != null) {
+      _safeNotifyListeners();
+      return false;
+    }
+    
+    if (_isDisposed) return false;
 
     try {
       _setLoading(true);
@@ -403,6 +536,36 @@ class AuthViewModel extends ChangeNotifier {
     _safeNotifyListeners();
   }
 
+  String _mapFirebaseAuthError(FirebaseAuthException e) {
+    // Check error code - order matters! Check user-not-found FIRST
+    switch (e.code) {
+      case 'user-not-found':
+        return 'No account found with this email address. Please sign up first.';
+      case 'wrong-password':
+        return 'Incorrect password. Please try again.';
+      case 'invalid-credential':
+        // In newer Firebase versions, invalid-credential can mean either user-not-found or wrong-password
+        // Since we can't differentiate, show a generic message
+        return 'Invalid email or password. Please check your credentials.';
+      case 'invalid-email':
+        return 'Invalid email address.';
+      case 'user-disabled':
+        return 'This account has been disabled. Please contact support.';
+      case 'too-many-requests':
+        return 'Too many failed attempts. Please try again later.';
+      case 'email-already-in-use':
+        return 'This email is already registered.';
+      case 'weak-password':
+        return 'Password is too weak.';
+      default:
+        if (kDebugMode) {
+          print('Firebase Auth error code: ${e.code}');
+          print('Firebase Auth error message: ${e.message}');
+        }
+        return 'Something went wrong. Please try again.';
+    }
+  }
+
   String _mapFirebaseError(Exception e) {
     final message = e.toString();
     if (message.contains('email-already-in-use')) {
@@ -411,6 +574,14 @@ class AuthViewModel extends ChangeNotifier {
       return 'Password is too weak.';
     } else if (message.contains('invalid-email')) {
       return 'Invalid email address.';
+    } else if (message.contains('wrong-password') || message.contains('invalid-credential')) {
+      return 'Incorrect password. Please try again.';
+    } else if (message.contains('user-not-found')) {
+      return 'No account found with this email address. Please sign up first.';
+    } else if (message.contains('user-disabled')) {
+      return 'This account has been disabled. Please contact support.';
+    } else if (message.contains('too-many-requests')) {
+      return 'Too many failed attempts. Please try again later.';
     }
     if (kDebugMode) {
       print('Firebase error: $message');

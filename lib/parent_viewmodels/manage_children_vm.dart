@@ -72,8 +72,14 @@ class ManageChildrenViewModel extends ChangeNotifier {
           .listen(
         (students) async {
           // Fetch user data for each student
+          // Filter out the parent's own student record (created during signup where studentId = parentId)
           final List<ChildProfile> childProfiles = [];
           for (var student in students) {
+            // Skip if studentId equals parentId (this is the parent's own record, not a real child)
+            if (student.studentId == currentUser.uid) {
+              continue;
+            }
+            
             final user = await _userService.getUserById(student.studentId);
             if (user != null) {
               childProfiles.add(ChildProfile(student: student, user: user));

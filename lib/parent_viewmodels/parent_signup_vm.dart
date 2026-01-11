@@ -76,36 +76,113 @@ class ParentSignupViewModel extends ChangeNotifier {
   String _password = '';
   String _confirmPassword = '';
   String _phone = '';
+  String? _parentNameError;
+  String? _emailError;
+  String? _passwordError;
+  String? _confirmPasswordError;
+  String? _phoneError;
 
   String get parentName => _parentName;
   String get email => _email;
   String get password => _password;
   String get confirmPassword => _confirmPassword;
   String get phone => _phone;
+  String? get parentNameError => _parentNameError;
+  String? get emailError => _emailError;
+  String? get passwordError => _passwordError;
+  String? get confirmPasswordError => _confirmPasswordError;
+  String? get phoneError => _phoneError;
 
   void updateParentName(String value) {
     _parentName = value.trim();
     clearError();
+    _parentNameError = _validateParentName(_parentName);
+    notifyListeners();
   }
 
   void updateEmail(String value) {
     _email = value.trim();
     clearError();
+    _emailError = _validateEmail(_email);
+    notifyListeners();
   }
 
   void updatePassword(String value) {
     _password = value;
     clearError();
+    _passwordError = _validatePassword(_password);
+    // Revalidate confirm password if it's not empty
+    if (_confirmPassword.isNotEmpty) {
+      _confirmPasswordError = _validateConfirmPassword(_confirmPassword, _password);
+    }
+    notifyListeners();
   }
 
   void updateConfirmPassword(String value) {
     _confirmPassword = value;
     clearError();
+    _confirmPasswordError = _validateConfirmPassword(_confirmPassword, _password);
+    notifyListeners();
   }
 
   void updatePhone(String value) {
     _phone = value.trim();
     clearError();
+    _phoneError = _validatePhone(_phone);
+    notifyListeners();
+  }
+
+  String? _validateParentName(String value) {
+    if (value.isEmpty) return null;
+    return null;
+  }
+
+  String? _validateEmail(String value) {
+    if (value.isEmpty) return null;
+    // Email regex pattern: xxx@xxx.xx format
+    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,}$');
+    if (!emailRegex.hasMatch(value)) {
+      return 'Please enter a valid email address.';
+    }
+    return null;
+  }
+
+  String? _validatePassword(String value) {
+    if (value.isEmpty) return null;
+    
+    if (value.length < 8) {
+      return 'Password must be at least 8 characters long.';
+    }
+    
+    // Check for capital letter
+    if (!value.contains(RegExp(r'[A-Z]'))) {
+      return 'Password must contain at least one capital letter.';
+    }
+    
+    // Check for number
+    if (!value.contains(RegExp(r'[0-9]'))) {
+      return 'Password must contain at least one number.';
+    }
+    
+    // Check for special symbol
+    if (!value.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) {
+      return 'Password must contain at least one special symbol.';
+    }
+    
+    return null;
+  }
+
+  String? _validateConfirmPassword(String value, String password) {
+    if (value.isEmpty) return null;
+    if (value != password) {
+      return 'Passwords do not match.';
+    }
+    return null;
+  }
+
+  String? _validatePhone(String value) {
+    if (value.isEmpty) return null;
+    return null;
   }
 
   bool get isStep1Valid {
@@ -116,32 +193,41 @@ class ParentSignupViewModel extends ChangeNotifier {
         _phone.isEmpty) {
       return false;
     }
-    if (!_email.contains('@')) return false;
-    if (_password.length < 6) return false;
+    // Use regex for email validation
+    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,}$');
+    if (!emailRegex.hasMatch(_email)) return false;
+    if (_password.length < 8) return false;
     if (_password != _confirmPassword) return false;
+    // Check strong password requirements
+    if (!_password.contains(RegExp(r'[A-Z]'))) return false;
+    if (!_password.contains(RegExp(r'[0-9]'))) return false;
+    if (!_password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) return false;
     return true;
   }
 
   bool continueFromStep1() {
-    if (!isStep1Valid) {
-      if (_parentName.isEmpty ||
-          _email.isEmpty ||
-          _password.isEmpty ||
-          _confirmPassword.isEmpty ||
-          _phone.isEmpty) {
-        _errorMessage = 'Please fill all fields.';
-      } else if (!_email.contains('@')) {
-        _errorMessage = 'Please enter a valid email address.';
-      } else if (_password.length < 6) {
-        _errorMessage = 'Password must be at least 6 characters.';
-      } else if (_password != _confirmPassword) {
-        _errorMessage = 'Passwords do not match.';
-      } else {
-        _errorMessage = 'Please check your details.';
-      }
+    // Validate all fields
+    _parentNameError = _parentName.isEmpty ? 'Full name is required.' : null;
+    _emailError = _email.isEmpty 
+        ? 'Email is required.' 
+        : _validateEmail(_email);
+    _passwordError = _password.isEmpty 
+        ? 'Password is required.' 
+        : _validatePassword(_password);
+    _confirmPasswordError = _confirmPassword.isEmpty 
+        ? 'Please confirm your password.' 
+        : (_confirmPassword == _password ? null : 'Passwords do not match.');
+    _phoneError = _phone.isEmpty ? 'Phone number is required.' : null;
+    
+    if (_parentNameError != null || 
+        _emailError != null || 
+        _passwordError != null || 
+        _confirmPasswordError != null || 
+        _phoneError != null) {
       notifyListeners();
       return false;
     }
+    
     _errorMessage = null;
     nextStep();
     return true;
@@ -152,24 +238,51 @@ class ParentSignupViewModel extends ChangeNotifier {
   String _childName = '';
   String _childGrade = '';
   String _childSchool = '';
+  String? _childNameError;
+  String? _childGradeError;
+  String? _childSchoolError;
 
   String get childName => _childName;
   String get childGrade => _childGrade;
   String get childSchool => _childSchool;
+  String? get childNameError => _childNameError;
+  String? get childGradeError => _childGradeError;
+  String? get childSchoolError => _childSchoolError;
 
   void updateChildName(String value) {
     _childName = value.trim();
     clearError();
+    _childNameError = _validateChildName(_childName);
+    notifyListeners();
   }
 
   void updateChildGrade(String value) {
     _childGrade = value.trim();
     clearError();
+    _childGradeError = _validateChildGrade(_childGrade);
+    notifyListeners();
   }
 
   void updateChildSchool(String value) {
     _childSchool = value.trim();
     clearError();
+    _childSchoolError = _validateChildSchool(_childSchool);
+    notifyListeners();
+  }
+
+  String? _validateChildName(String value) {
+    if (value.isEmpty) return null;
+    return null;
+  }
+
+  String? _validateChildGrade(String value) {
+    if (value.isEmpty) return null;
+    return null;
+  }
+
+  String? _validateChildSchool(String value) {
+    if (value.isEmpty) return null;
+    return null;
   }
 
   bool get isStep2Valid {
@@ -179,11 +292,16 @@ class ParentSignupViewModel extends ChangeNotifier {
   }
 
   bool continueFromStep2() {
-    if (!isStep2Valid) {
-      _errorMessage = 'Please enter your child\'s details.';
+    // Validate all fields
+    _childNameError = _childName.isEmpty ? 'Child\'s name is required.' : null;
+    _childGradeError = _childGrade.isEmpty ? 'Grade/Class is required.' : null;
+    _childSchoolError = _childSchool.isEmpty ? 'School/College is required.' : null;
+    
+    if (_childNameError != null || _childGradeError != null || _childSchoolError != null) {
       notifyListeners();
       return false;
     }
+    
     _errorMessage = null;
     nextStep();
     return true;
@@ -193,28 +311,41 @@ class ParentSignupViewModel extends ChangeNotifier {
 
   String _address = '';
   String _notes = '';
+  String? _addressError;
 
   String get address => _address;
   String get notes => _notes;
+  String? get addressError => _addressError;
 
   void updateAddress(String value) {
     _address = value.trim();
     clearError();
+    _addressError = _validateAddress(_address);
+    notifyListeners();
   }
 
   void updateNotes(String value) {
     _notes = value.trim();
     clearError();
+    notifyListeners();
+  }
+
+  String? _validateAddress(String value) {
+    if (value.isEmpty) return null;
+    return null;
   }
 
   bool get isStep3Valid => _address.isNotEmpty;
 
   bool continueFromStep3() {
-    if (!isStep3Valid) {
-      _errorMessage = 'Please enter your address.';
+    // Validate address field
+    _addressError = _address.isEmpty ? 'Address is required.' : null;
+    
+    if (_addressError != null) {
       notifyListeners();
       return false;
     }
+    
     _errorMessage = null;
     nextStep(); // goes to summary
     return true;

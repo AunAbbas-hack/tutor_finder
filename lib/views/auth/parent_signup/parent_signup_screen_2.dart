@@ -69,10 +69,11 @@ class ParentChildDetailsStepScreen extends StatelessWidget {
                   const SizedBox(height: 24),
 
                   AppTextField(
-                    label: 'Child’s Full Name',
-                    hintText: 'Enter your child’s name',
+                    label: "Child's Full Name",
+                    hintText: "Enter your child's name",
                     onChanged: vm.updateChildName,
                     textInputAction: TextInputAction.next,
+                    errorText: vm.childNameError,
                   ),
                   const SizedBox(height: 16),
 
@@ -81,6 +82,7 @@ class ParentChildDetailsStepScreen extends StatelessWidget {
                     hintText: 'e.g., 5th Grade, O-Levels',
                     onChanged: vm.updateChildGrade,
                     textInputAction: TextInputAction.next,
+                    errorText: vm.childGradeError,
                   ),
                   const SizedBox(height: 16),
 
@@ -89,10 +91,15 @@ class ParentChildDetailsStepScreen extends StatelessWidget {
                     hintText: 'Enter school or college name',
                     onChanged: vm.updateChildSchool,
                     textInputAction: TextInputAction.done,
+                    errorText: vm.childSchoolError,
                   ),
                   const SizedBox(height: 16),
 
-                  if (vm.errorMessage != null) ...[
+                  // Error (for server errors only)
+                  if (vm.errorMessage != null && 
+                      vm.childNameError == null && 
+                      vm.childGradeError == null && 
+                      vm.childSchoolError == null) ...[
                     Text(
                       vm.errorMessage!,
                       style: theme.textTheme.bodySmall?.copyWith(
@@ -105,7 +112,7 @@ class ParentChildDetailsStepScreen extends StatelessWidget {
                   AppPrimaryButton(
                     label: 'Continue',
                     isLoading: vm.isLoading,
-                    isDisabled: !vm.isStep2Valid,
+                    isDisabled: false,
                     onPressed: () {
                       final ok = vm.continueFromStep2();
                       if (ok) {

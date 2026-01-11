@@ -1,5 +1,6 @@
 // lib/widgets/app_text_field.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../theme/app_colors.dart';
 
 class AppTextField extends StatefulWidget {
@@ -12,6 +13,8 @@ class AppTextField extends StatefulWidget {
   final ValueChanged<String>? onChanged;
   final TextInputAction textInputAction;
   final FocusNode? focusNode;
+  final String? errorText;
+  final List<TextInputFormatter>? inputFormatters;
 
   const AppTextField({
     super.key,
@@ -24,6 +27,8 @@ class AppTextField extends StatefulWidget {
     this.onChanged,
     this.textInputAction = TextInputAction.next,
     this.focusNode,
+    this.errorText,
+    this.inputFormatters,
   });
 
   @override
@@ -65,6 +70,7 @@ class _AppTextFieldState extends State<AppTextField> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final hasError = widget.errorText != null && widget.errorText!.isNotEmpty;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -84,6 +90,7 @@ class _AppTextFieldState extends State<AppTextField> {
           obscureText: widget.obscureText,
           onChanged: widget.onChanged,
           textInputAction: widget.textInputAction,
+          inputFormatters: widget.inputFormatters,
           decoration: InputDecoration(
             hintText: widget.hintText,
             hintStyle: TextStyle(color: Colors.grey[600]),
@@ -92,6 +99,11 @@ class _AppTextFieldState extends State<AppTextField> {
             contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             suffixIcon: widget.suffixIcon,
+            errorText: widget.errorText,
+            errorStyle: const TextStyle(
+              fontSize: 12,
+              color: AppColors.error,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide.none,
@@ -99,14 +111,28 @@ class _AppTextFieldState extends State<AppTextField> {
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide(
-                color: Colors.black12,
+                color: hasError ? AppColors.error : Colors.black12,
                 width: 2
               ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(
+                color: hasError ? AppColors.error : AppColors.primary,
+                width: 2,
+              ),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
               borderSide: const BorderSide(
-                color: AppColors.primary,
+                color: AppColors.error,
+                width: 2,
+              ),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(
+                color: AppColors.error,
                 width: 2,
               ),
             ),

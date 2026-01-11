@@ -74,6 +74,7 @@ class ParentPreferencesStepScreen extends StatelessWidget {
                     hintText: 'Street, city, area',
                     onChanged: vm.updateAddress,
                     textInputAction: TextInputAction.newline,
+                    errorText: vm.addressError,
                   ),
                   const SizedBox(height: 16),
 
@@ -117,7 +118,8 @@ class ParentPreferencesStepScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
 
-                  if (vm.errorMessage != null) ...[
+                  // Error (for server errors only)
+                  if (vm.errorMessage != null && vm.addressError == null) ...[
                     Text(
                       vm.errorMessage!,
                       style: theme.textTheme.bodySmall?.copyWith(
@@ -130,7 +132,7 @@ class ParentPreferencesStepScreen extends StatelessWidget {
                   AppPrimaryButton(
                     label: 'Continue',
                     isLoading: vm.isLoading,
-                    isDisabled: !vm.isStep3Valid,
+                    isDisabled: false,
                     onPressed: () {
                       final ok = vm.continueFromStep3();
                       if (ok) {
