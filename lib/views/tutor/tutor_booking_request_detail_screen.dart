@@ -245,10 +245,15 @@ class TutorBookingRequestDetailScreen extends StatelessWidget {
     
     // Get fee
     String fee = '';
-    if (booking.bookingType == BookingType.monthlyBooking && booking.monthlyBudget != null) {
-      fee = '₹${booking.monthlyBudget!.toStringAsFixed(0)}/month';
+    if (booking.monthlyBudget != null) {
+      if (booking.bookingType == BookingType.monthlyBooking) {
+        fee = '₹${booking.monthlyBudget!.toStringAsFixed(0)}/month';
+      } else {
+        // Single session - show as hourly rate
+        fee = '₹${booking.monthlyBudget!.toStringAsFixed(0)}/hr';
+      }
     } else {
-      // Extract fee from bookingTime if available, or use default
+      // Fallback if budget not available
       fee = 'Fee details in message';
     }
 
@@ -403,6 +408,7 @@ class TutorBookingRequestDetailScreen extends StatelessWidget {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: GoogleMap(
+              key: ValueKey('parent_map_${vm.parentLatitude}_${vm.parentLongitude}'),
               initialCameraPosition: CameraPosition(
                 target: LatLng(
                   vm.parentLatitude!,
@@ -410,10 +416,19 @@ class TutorBookingRequestDetailScreen extends StatelessWidget {
                 ),
                 zoom: 14.0,
               ),
+              onMapCreated: (GoogleMapController controller) {
+                // Map controller initialized
+                // Can be used for future map operations if needed
+              },
               myLocationButtonEnabled: false,
               zoomControlsEnabled: true,
               zoomGesturesEnabled: true,
               mapToolbarEnabled: false,
+              mapType: MapType.normal,
+              compassEnabled: false,
+              rotateGesturesEnabled: true,
+              scrollGesturesEnabled: true,
+              tiltGesturesEnabled: false,
               markers: {
                 Marker(
                   markerId: const MarkerId('parent_location'),
@@ -423,6 +438,10 @@ class TutorBookingRequestDetailScreen extends StatelessWidget {
                   ),
                   icon: BitmapDescriptor.defaultMarkerWithHue(
                     BitmapDescriptor.hueRed,
+                  ),
+                  infoWindow: InfoWindow(
+                    title: 'Parent Location',
+                    snippet: vm.parentLocationAddress ?? 'Booking Location',
                   ),
                 ),
               },

@@ -373,6 +373,13 @@ class AuthViewModel extends ChangeNotifier {
         try {
           final fcmService = FCMService();
           await fcmService.initializeToken();
+          
+          if (kDebugMode) {
+            print('✅ FCM token initialized for new tutor: ${user.uid}');
+          }
+          
+          // Wait a moment for Firestore to propagate the token
+          await Future.delayed(const Duration(milliseconds: 1500));
         } catch (e) {
           // Don't fail signup if FCM initialization fails
           if (kDebugMode) {
@@ -383,9 +390,18 @@ class AuthViewModel extends ChangeNotifier {
         // Send profile under review notification
         try {
           final notificationService = NotificationService();
+          
+          if (kDebugMode) {
+            print('📤 Sending profile under review notification to tutor: ${user.uid}');
+          }
+          
           await notificationService.sendProfileUnderReviewToTutor(
             tutorId: user.uid,
           );
+          
+          if (kDebugMode) {
+            print('✅ Profile under review notification sent successfully');
+          }
         } catch (e) {
           // Don't fail signup if notification fails
           if (kDebugMode) {

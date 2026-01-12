@@ -99,27 +99,20 @@ class _TutorSessionScreenState extends State<TutorSessionScreen> {
               ),
             ),
           ),
-          // Filter Icon
-          IconButton(
-            icon: const Icon(
-              Icons.tune,
-              color: AppColors.textDark,
-              size: 28,
+          // Filter Icon (only show when viewing past bookings)
+          if (vm.selectedTabIndex == 2)
+            IconButton(
+              icon: Icon(
+                Icons.tune,
+                color: vm.pastBookingFilter != PastBookingFilter.all
+                    ? AppColors.primary
+                    : AppColors.textDark,
+                size: 28,
+              ),
+              onPressed: () {
+                _showFilterDialog(context, vm);
+              },
             ),
-            onPressed: () {
-              // TODO: Open filter dialog
-              Get.snackbar(
-                'Coming Soon',
-                'Filter feature will be available soon',
-                snackPosition: SnackPosition.BOTTOM,
-                backgroundColor: AppColors.primary,
-                colorText: Colors.white,
-                borderRadius: 12,
-                margin: const EdgeInsets.all(16),
-                duration: const Duration(seconds: 2),
-              );
-            },
-          ),
         ],
       ),
     );
@@ -134,16 +127,24 @@ class _TutorSessionScreenState extends State<TutorSessionScreen> {
           Expanded(
             child: _buildTab(
               'Upcoming',
-              vm.showUpcoming,
-              onTap: () => vm.selectTab(true),
+              vm.selectedTabIndex == 0,
+              onTap: () => vm.selectTab(0),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _buildTab(
+              'Approved',
+              vm.selectedTabIndex == 1,
+              onTap: () => vm.selectTab(1),
             ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: _buildTab(
               'Past',
-              !vm.showUpcoming,
-              onTap: () => vm.selectTab(false),
+              vm.selectedTabIndex == 2,
+              onTap: () => vm.selectTab(2),
             ),
           ),
         ],
@@ -200,7 +201,7 @@ class _TutorSessionScreenState extends State<TutorSessionScreen> {
               ),
             ),
             // Sessions for this date
-            ...dateGroup.sessions.map((session) => _buildSessionCard(session, vm.showUpcoming)),
+            ...dateGroup.sessions.map((session) => _buildSessionCard(session, vm.selectedTabIndex == 0)),
           ],
         );
       },
@@ -215,9 +216,8 @@ class _TutorSessionScreenState extends State<TutorSessionScreen> {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.selectionBg, // Light blue background
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -227,214 +227,292 @@ class _TutorSessionScreenState extends State<TutorSessionScreen> {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header: Profile + Name + Subject + Time
-          Row(
-            children: [
-              // Profile Picture
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.lightBackground,
-                  image: session.parentImageUrl.isNotEmpty
-                      ? DecorationImage(
-                          image: NetworkImage(session.parentImageUrl),
-                          fit: BoxFit.cover,
-                        )
-                      : null,
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Left vertical blue bar
+            Container(
+              width: 4,
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(16),
+                  bottomLeft: Radius.circular(16),
                 ),
-                child: session.parentImageUrl.isEmpty
-                    ? Center(
-                        child: AppText(
-                          parent.name.isNotEmpty
-                              ? parent.name[0].toUpperCase()
-                              : 'P',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      )
-                    : null,
               ),
-              const SizedBox(width: 12),
-              // Name and Subject
-              Expanded(
+            ),
+            // Main card content
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    AppText(
-                      parent.name,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textDark,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    AppText(
-                      booking.subject,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // Time Pill
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: isPast
-                      ? AppColors.lightBackground
-                      : AppColors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: AppText(
-                  booking.bookingTime,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: isPast ? AppColors.textGrey : AppColors.primary,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          // Location
-          Row(
-            children: [
-              Icon(
-                Icons.location_on,
-                size: 16,
-                color: isPast ? AppColors.iconGrey : AppColors.primary,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: AppText(
-                  session.location,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: isPast ? AppColors.textGrey : AppColors.textDark,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          // Duration
-          Row(
-            children: [
-              Icon(
-                Icons.access_time,
-                size: 16,
-                color: isPast ? AppColors.iconGrey : AppColors.primary,
-              ),
-              const SizedBox(width: 8),
-              AppText(
-                '${session.duration.toStringAsFixed(session.duration.truncateToDouble() == session.duration ? 0 : 1)} ${session.duration == 1.0 ? 'hr' : 'hrs'} duration',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: isPast ? AppColors.textGrey : AppColors.textDark,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          // Action Buttons
-          Row(
-            children: [
-              // Details Button
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () {
-                    // TODO: Navigate to session details
-                    Get.snackbar(
-                      'Coming Soon',
-                      'Session details will be available soon',
-                      snackPosition: SnackPosition.BOTTOM,
-                      backgroundColor: AppColors.primary,
-                      colorText: Colors.white,
-                      borderRadius: 12,
-                      margin: const EdgeInsets.all(16),
-                      duration: const Duration(seconds: 2),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: isPast ? Colors.white : AppColors.primary,
-                    foregroundColor: isPast ? AppColors.textDark : Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      side: BorderSide(
-                        color: isPast ? AppColors.border : Colors.transparent,
-                        width: 1,
-                      ),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: const AppText(
-                    'Details',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              // Message Button
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: AppColors.border,
-                    width: 1,
-                  ),
-                ),
-                child: IconButton(
-                  icon: Icon(
-                    Icons.message,
-                    color: isPast ? AppColors.iconGrey : AppColors.primary,
-                    size: 20,
-                  ),
-                  onPressed: () {
-                    // Navigate to chat with parent
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => IndividualChatScreen(
-                          otherUserId: parent.userId,
-                          otherUserName: parent.name,
-                          otherUserImageUrl: session.parentImageUrl.isNotEmpty
-                              ? session.parentImageUrl
+                  // Header: Profile + Name + Subject + Time
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Profile Picture
+                      Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white,
+                          border: Border.all(
+                            color: AppColors.border,
+                            width: 1,
+                          ),
+                          image: session.parentImageUrl.isNotEmpty
+                              ? DecorationImage(
+                                  image: NetworkImage(session.parentImageUrl),
+                                  fit: BoxFit.cover,
+                                )
                               : null,
                         ),
+                        child: session.parentImageUrl.isEmpty
+                            ? Center(
+                                child: AppText(
+                                  parent.name.isNotEmpty
+                                      ? parent.name[0].toUpperCase()
+                                      : 'P',
+                                  style: const TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              )
+                            : null,
                       ),
-                    );
-                  },
-                ),
+                      const SizedBox(width: 12),
+                      // Name and Subject
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            AppText(
+                              parent.name,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textDark,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            AppText(
+                              booking.subject,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.primary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Time Pill (light blue with white text)
+                      Flexible(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withOpacity(0.7),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: AppText(
+                            booking.bookingTime,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  // Separator line
+                  const SizedBox(height: 16),
+                  Divider(
+                    height: 1,
+                    thickness: 1,
+                    color: AppColors.border,
+                  ),
+                  const SizedBox(height: 12),
+                  // Location
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.location_on,
+                        size: 16,
+                        color: AppColors.primary,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: AppText(
+                          session.location,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: AppColors.textDark,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  // Duration
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.access_time,
+                        size: 16,
+                        color: AppColors.primary,
+                      ),
+                      const SizedBox(width: 8),
+                      AppText(
+                        '${session.duration.toStringAsFixed(session.duration.truncateToDouble() == session.duration ? 0 : 1)} ${session.duration == 1.0 ? 'hr' : 'hrs'} duration',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: AppColors.textDark,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  // Action Buttons
+                  Row(
+                    children: [
+                      // Details Button (large, blue, left)
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            // TODO: Navigate to session details
+                            Get.snackbar(
+                              'Coming Soon',
+                              'Session details will be available soon',
+                              snackPosition: SnackPosition.BOTTOM,
+                              backgroundColor: AppColors.primary,
+                              colorText: Colors.white,
+                              borderRadius: 12,
+                              margin: const EdgeInsets.all(16),
+                              duration: const Duration(seconds: 2),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: const AppText(
+                            'Details',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      // Message Button (square, rounded)
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: AppColors.border,
+                            width: 1,
+                          ),
+                        ),
+                        child: IconButton(
+                          icon: const Icon(
+                            Icons.message,
+                            color: AppColors.primary,
+                            size: 20,
+                          ),
+                          onPressed: () {
+                            // Navigate to chat with parent
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => IndividualChatScreen(
+                                  otherUserId: parent.userId,
+                                  otherUserName: parent.name,
+                                  otherUserImageUrl: session.parentImageUrl.isNotEmpty
+                                      ? session.parentImageUrl
+                                      : null,
+                                ),
+                              ),
+                            );
+                          },
+                          padding: EdgeInsets.zero,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ],
-          ),
-        ],
+            ),
+            )],
+        ),
       ),
     );
   }
 
   // ---------- Empty State ----------
   Widget _buildEmptyState(TutorSessionViewModel vm) {
+    String title;
+    String message;
+    IconData icon;
+
+    if (vm.selectedTabIndex == 0) {
+      // Upcoming tab
+      title = 'No Upcoming Sessions';
+      message = 'Your upcoming sessions (with payment done) will appear here.';
+      icon = Icons.event_busy;
+    } else if (vm.selectedTabIndex == 1) {
+      // Approved tab
+      title = 'No Approved Sessions';
+      message = 'Approved bookings awaiting payment will appear here.';
+      icon = Icons.pending_actions;
+    } else {
+      // Past tab
+      switch (vm.pastBookingFilter) {
+        case PastBookingFilter.completed:
+          title = 'No Completed Sessions';
+          message = 'Completed sessions (with payment) will appear here.';
+          icon = Icons.check_circle_outline;
+          break;
+        case PastBookingFilter.pastIncomplete:
+          title = 'No Past Incomplete Sessions';
+          message = 'Past sessions awaiting payment will appear here.';
+          icon = Icons.pending_outlined;
+          break;
+        case PastBookingFilter.all:
+        default:
+          title = 'No Past Sessions';
+          message = 'Your completed sessions will appear here.';
+          icon = Icons.history;
+          break;
+      }
+    }
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -447,14 +525,14 @@ class _TutorSessionScreenState extends State<TutorSessionScreen> {
               shape: BoxShape.circle,
             ),
             child: Icon(
-              vm.showUpcoming ? Icons.event_busy : Icons.history,
+              icon,
               size: 60,
               color: AppColors.iconGrey,
             ),
           ),
           const SizedBox(height: 24),
           AppText(
-            vm.showUpcoming ? 'No Upcoming Sessions' : 'No Past Sessions',
+            title,
             style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w700,
@@ -465,9 +543,7 @@ class _TutorSessionScreenState extends State<TutorSessionScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 40),
             child: AppText(
-              vm.showUpcoming
-                  ? 'Your upcoming sessions will appear here once bookings are confirmed.'
-                  : 'Your completed sessions will appear here.',
+              message,
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 14,
@@ -476,6 +552,136 @@ class _TutorSessionScreenState extends State<TutorSessionScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // ---------- Filter Dialog ----------
+  void _showFilterDialog(BuildContext context, TutorSessionViewModel vm) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(24),
+            topRight: Radius.circular(24),
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle bar
+              Container(
+                margin: const EdgeInsets.only(top: 12, bottom: 8),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              // Title
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                child: Row(
+                  children: [
+                    const AppText(
+                      'Filter Past Bookings',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textDark,
+                      ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: AppColors.textGrey),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              // Filter Options
+              _buildFilterOption(
+                context,
+                'All Past Bookings',
+                PastBookingFilter.all,
+                vm.pastBookingFilter,
+                () {
+                  vm.setPastBookingFilter(PastBookingFilter.all);
+                  Navigator.pop(context);
+                },
+              ),
+              _buildFilterOption(
+                context,
+                'Completed (Paid)',
+                PastBookingFilter.completed,
+                vm.pastBookingFilter,
+                () {
+                  vm.setPastBookingFilter(PastBookingFilter.completed);
+                  Navigator.pop(context);
+                },
+              ),
+              _buildFilterOption(
+                context,
+                'Past Incomplete (Unpaid)',
+                PastBookingFilter.pastIncomplete,
+                vm.pastBookingFilter,
+                () {
+                  vm.setPastBookingFilter(PastBookingFilter.pastIncomplete);
+                  Navigator.pop(context);
+                },
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterOption(
+    BuildContext context,
+    String title,
+    PastBookingFilter filter,
+    PastBookingFilter selectedFilter,
+    VoidCallback onTap,
+  ) {
+    final isSelected = filter == selectedFilter;
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Row(
+          children: [
+            Expanded(
+              child: AppText(
+                title,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                  color: isSelected ? AppColors.primary : AppColors.textDark,
+                ),
+              ),
+            ),
+            if (isSelected)
+              const Icon(
+                Icons.check_circle,
+                color: AppColors.primary,
+                size: 24,
+              )
+            else
+              const Icon(
+                Icons.radio_button_unchecked,
+                color: AppColors.iconGrey,
+                size: 24,
+              ),
+          ],
+        ),
       ),
     );
   }

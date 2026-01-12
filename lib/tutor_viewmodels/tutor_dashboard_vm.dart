@@ -126,7 +126,6 @@ class TutorDashboardViewModel extends ChangeNotifier {
         loadBookings(),
         loadMessagesCount(),
         loadEarnings(),
-        loadFeedback(),
       ]);
       
       // Check and send reminders for upcoming sessions

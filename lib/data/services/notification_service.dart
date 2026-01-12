@@ -214,14 +214,24 @@ class NotificationService {
     Map<String, dynamic>? data,
   }) async {
     try {
+      if (kDebugMode) {
+        print('🔔 sendPushNotification called for userId: $userId');
+        print('   Title: $title');
+      }
+      
       // Get FCM token for the user
       final fcmToken = await _fcmService.getTokenFromFirestore(userId);
       
       if (fcmToken == null) {
         if (kDebugMode) {
-          print('⚠️ FCM token not found for user: $userId');
+          print('⚠️ FCM token not found in Firestore for user: $userId');
+          print('   Notification will be saved to Firestore but push will not be sent');
         }
         return false;
+      }
+      
+      if (kDebugMode) {
+        print('✅ FCM token found: ${fcmToken.substring(0, 30)}...');
       }
 
       // Get authenticated HTTP client with OAuth 2.0 token
@@ -392,7 +402,7 @@ class NotificationService {
     await createAndSendNotification(
       userId: parentId,
       title: 'Booking Approved',
-      message: 'Your booking request has been approved by $tutorName',
+      message: 'Your booking has been approved by $tutorName. Now make payment to confirm your booking',
       data: {
         'type': 'booking_approved',
         'tutorName': tutorName,
@@ -514,7 +524,11 @@ class NotificationService {
   Future<void> sendProfileUnderReviewToTutor({
     required String tutorId,
   }) async {
-    await createAndSendNotification(
+    if (kDebugMode) {
+      print('📨 sendProfileUnderReviewToTutor called for tutorId: $tutorId');
+    }
+    
+    final notificationId = await createAndSendNotification(
       userId: tutorId,
       title: 'Profile Under Review',
       message: 'Your profile is under review by admin. Please make sure you completed your profile.',
@@ -522,6 +536,14 @@ class NotificationService {
         'type': 'profile_under_review',
       },
     );
+    
+    if (kDebugMode) {
+      if (notificationId != null) {
+        print('✅ Profile under review notification created with ID: $notificationId');
+      } else {
+        print('❌ Failed to create profile under review notification');
+      }
+    }
   }
 
   /// Send welcome notification to parent

@@ -6,6 +6,13 @@ import '../data/services/booking_services.dart';
 import '../data/services/user_services.dart';
 import '../data/services/notification_service.dart';
 
+/// Filter options for past bookings
+enum PastBookingFilter {
+  all, // All past bookings
+  completed, // Only completed bookings (admin paid)
+  pastIncomplete, // Past bookings that are not completed
+}
+
 /// Model for displaying session with parent/student info
 class SessionDisplayModel {
   final BookingModel booking;
@@ -53,22 +60,48 @@ class TutorSessionViewModel extends ChangeNotifier {
   bool _isDisposed = false;
   bool _isLoading = false;
   String? _errorMessage;
-  bool _showUpcoming = true; // true = Upcoming, false = Past
+  int _selectedTabIndex = 0; // 0 = Upcoming, 1 = Approved, 2 = Past
   String _userName = '';
   String _userImageUrl = '';
 
+  // Filter state for past bookings
+  PastBookingFilter _pastBookingFilter = PastBookingFilter.all;
+
   List<SessionDisplayModel> _upcomingSessions = [];
+  List<SessionDisplayModel> _approvedSessions = []; // Approved but payment not done
   List<SessionDisplayModel> _pastSessions = [];
+  List<SessionDisplayModel> _completedSessions = [];
+  List<SessionDisplayModel> _pastIncompleteSessions = [];
 
   // Getters
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
-  bool get showUpcoming => _showUpcoming;
+  int get selectedTabIndex => _selectedTabIndex;
+  bool get showUpcoming => _selectedTabIndex == 0;
   String get userName => _userName;
   String get userImageUrl => _userImageUrl;
+  PastBookingFilter get pastBookingFilter => _pastBookingFilter;
 
   List<SessionDisplayModel> get displayedSessions {
-    return _showUpcoming ? _upcomingSessions : _pastSessions;
+    switch (_selectedTabIndex) {
+      case 0: // Upcoming
+        return _upcomingSessions;
+      case 1: // Approved
+        return _approvedSessions;
+      case 2: // Past
+        // Apply filter for past bookings
+        switch (_pastBookingFilter) {
+          case PastBookingFilter.completed:
+            return _completedSessions;
+          case PastBookingFilter.pastIncomplete:
+            return _pastIncompleteSessions;
+          case PastBookingFilter.all:
+          default:
+            return _pastSessions;
+        }
+      default:
+        return _upcomingSessions;
+    }
   }
 
   List<SessionsByDate> get sessionsGroupedByDate {
@@ -87,8 +120,20 @@ class TutorSessionViewModel extends ChangeNotifier {
       );
 
       String dateLabel;
-      if (_showUpcoming) {
+      if (_selectedTabIndex == 0) {
         // For upcoming sessions
+        final today = DateTime(now.year, now.month, now.day);
+        final tomorrow = today.add(const Duration(days: 1));
+
+        if (sessionDate == today) {
+          dateLabel = _formatDateLabel(sessionDate, 'TODAY');
+        } else if (sessionDate == tomorrow) {
+          dateLabel = _formatDateLabel(sessionDate, 'TOMORROW');
+        } else {
+          dateLabel = _formatDateLabel(sessionDate, null);
+        }
+      } else if (_selectedTabIndex == 1) {
+        // For approved sessions (show TODAY/TOMORROW if applicable)
         final today = DateTime(now.year, now.month, now.day);
         final tomorrow = today.add(const Duration(days: 1));
 
@@ -124,14 +169,21 @@ class TutorSessionViewModel extends ChangeNotifier {
         dateLabel: entry.key,
         date: sessionDate,
         sessions: entry.value
-          ..sort((a, b) => a.booking.bookingTime.compareTo(b.booking.bookingTime)),
+          ..sort((a, b) {
+            final aDateTime = _getBookingDateTime(a.booking.bookingDate, a.booking.bookingTime);
+            final bDateTime = _getBookingDateTime(b.booking.bookingDate, b.booking.bookingTime);
+            return aDateTime.compareTo(bDateTime);
+          }),
       );
     }).toList();
 
     // Sort by date
-    result.sort((a, b) => a.date.compareTo(b.date));
-    if (!_showUpcoming) {
-      result.reversed.toList(); // Past sessions: newest first
+    if (_selectedTabIndex == 0 || _selectedTabIndex == 1) {
+      // Upcoming/Approved: oldest first (earliest sessions first)
+      result.sort((a, b) => a.date.compareTo(b.date));
+    } else {
+      // Past: newest first (most recent sessions first)
+      result.sort((a, b) => b.date.compareTo(a.date));
     }
 
     return result;
@@ -199,6 +251,44 @@ class TutorSessionViewModel extends ChangeNotifier {
     }
   }
 
+  // ---------- Helper: Parse booking time string to DateTime ----------
+  /// Parses time string like "4:00 PM" and combines with booking date
+  DateTime _getBookingDateTime(DateTime bookingDate, String bookingTime) {
+    try {
+      // Parse time string (format: "4:00 PM" or "16:00")
+      final timeParts = bookingTime.trim().split(' ');
+      String timeStr = timeParts[0]; // "4:00" or "16:00"
+      bool isPM = timeParts.length > 1 && timeParts[1].toUpperCase() == 'PM';
+
+      final hourMinute = timeStr.split(':');
+      int hour = int.parse(hourMinute[0]);
+      int minute = hourMinute.length > 1 ? int.parse(hourMinute[1]) : 0;
+
+      // Convert to 24-hour format if needed
+      if (isPM && hour != 12) {
+        hour += 12;
+      } else if (!isPM && hour == 12) {
+        hour = 0;
+      }
+
+      // Combine date and time
+      return DateTime(
+        bookingDate.year,
+        bookingDate.month,
+        bookingDate.day,
+        hour,
+        minute,
+      );
+    } catch (e) {
+      // If parsing fails, use booking date at midnight
+      return DateTime(
+        bookingDate.year,
+        bookingDate.month,
+        bookingDate.day,
+      );
+    }
+  }
+
   // ---------- Load Sessions ----------
   Future<void> loadSessions() async {
     try {
@@ -207,85 +297,102 @@ class TutorSessionViewModel extends ChangeNotifier {
 
       final now = DateTime.now();
 
-      // Get upcoming sessions (approved and future dates)
-      final upcomingBookings = await _bookingService.getUpcomingBookingsForTutor(
-        user.uid,
-      );
-
-      // Get past sessions (completed or past approved bookings)
+      // Get all bookings for tutor
       final allTutorBookings = await _bookingService.getBookingsByTutorId(
         user.uid,
       );
 
       final upcomingList = <SessionDisplayModel>[];
+      final approvedList = <SessionDisplayModel>[]; // Approved but payment not done
       final pastList = <SessionDisplayModel>[];
+      final completedList = <SessionDisplayModel>[];
+      final pastIncompleteList = <SessionDisplayModel>[];
 
-      // Process upcoming sessions
-      for (final booking in upcomingBookings) {
-        final parent = await _userService.getUserById(booking.parentId);
-        if (parent != null) {
-          // TODO: Get actual location and duration from booking notes or separate field
-          // For now, using mock data
-          final location = booking.notes?.isNotEmpty == true
-              ? booking.notes!
-              : 'Location TBD';
-          final duration = 1.0; // Default 1 hour, can be extracted from notes
-
-          upcomingList.add(
-            SessionDisplayModel(
-              booking: booking,
-              parent: parent,
-              parentImageUrl: parent.imageUrl ?? '',
-              location: location,
-              duration: duration,
-            ),
-          );
-        }
-      }
-
-      // Process past sessions
+      // Process all bookings and categorize by date + time and payment status
       for (final booking in allTutorBookings) {
-        // Past sessions: completed or approved bookings with past dates
-        if (booking.status == BookingStatus.completed ||
-            (booking.status == BookingStatus.approved &&
-                booking.bookingDate.isBefore(now))) {
-          final parent = await _userService.getUserById(booking.parentId);
-          if (parent != null) {
-            final location = booking.notes?.isNotEmpty == true
-                ? booking.notes!
-                : 'Location TBD';
-            final duration = 1.0;
+        // Skip cancelled and rejected bookings
+        if (booking.status == BookingStatus.cancelled ||
+            booking.status == BookingStatus.rejected) {
+          continue;
+        }
 
-            pastList.add(
-              SessionDisplayModel(
-                booking: booking,
-                parent: parent,
-                parentImageUrl: parent.imageUrl ?? '',
-                location: location,
-                duration: duration,
-              ),
-            );
+        // Get full booking DateTime (date + time)
+        final bookingDateTime = _getBookingDateTime(
+          booking.bookingDate,
+          booking.bookingTime,
+        );
+
+        final parent = await _userService.getUserById(booking.parentId);
+        if (parent == null) continue;
+
+        final location = booking.notes?.isNotEmpty == true
+            ? booking.notes!
+            : 'Location TBD';
+        final duration = 1.0; // Default 1 hour
+
+        final sessionModel = SessionDisplayModel(
+          booking: booking,
+          parent: parent,
+          parentImageUrl: parent.imageUrl ?? '',
+          location: location,
+          duration: duration,
+        );
+
+        // Categorize bookings:
+        // - Upcoming: completed (payment done) + future date+time
+        // - Approved: approved (payment NOT done) - regardless of date
+        // - Past: completed (payment done) + past date OR approved (payment NOT done) + past date
+        if (booking.status == BookingStatus.completed) {
+          // Payment done (completed status)
+          if (bookingDateTime.isAfter(now)) {
+            // Future booking with payment done - upcoming
+            upcomingList.add(sessionModel);
+          } else {
+            // Past booking with payment done - past
+            pastList.add(sessionModel);
+            completedList.add(sessionModel);
+          }
+        } else if (booking.status == BookingStatus.approved) {
+          // Payment NOT done (approved status)
+          if (bookingDateTime.isAfter(now)) {
+            // Future booking without payment - approved tab
+            approvedList.add(sessionModel);
+          } else {
+            // Past booking without payment - past tab (incomplete)
+            pastList.add(sessionModel);
+            pastIncompleteList.add(sessionModel);
           }
         }
+        // Note: pending bookings are not shown in sessions (they're in booking requests)
       }
 
-      // Sort upcoming by date and time
+      // Sort upcoming by date and time (earliest first)
       upcomingList.sort((a, b) {
-        final dateCompare = a.booking.bookingDate.compareTo(b.booking.bookingDate);
-        if (dateCompare != 0) return dateCompare;
-        return a.booking.bookingTime.compareTo(b.booking.bookingTime);
+        final aDateTime = _getBookingDateTime(a.booking.bookingDate, a.booking.bookingTime);
+        final bDateTime = _getBookingDateTime(b.booking.bookingDate, b.booking.bookingTime);
+        return aDateTime.compareTo(bDateTime);
+      });
+
+      // Sort approved by date and time (earliest first)
+      approvedList.sort((a, b) {
+        final aDateTime = _getBookingDateTime(a.booking.bookingDate, a.booking.bookingTime);
+        final bDateTime = _getBookingDateTime(b.booking.bookingDate, b.booking.bookingTime);
+        return aDateTime.compareTo(bDateTime);
       });
 
       // Sort past by date and time (newest first)
       pastList.sort((a, b) {
-        final dateCompare = b.booking.bookingDate.compareTo(a.booking.bookingDate);
-        if (dateCompare != 0) return dateCompare;
-        return b.booking.bookingTime.compareTo(a.booking.bookingTime);
+        final aDateTime = _getBookingDateTime(a.booking.bookingDate, a.booking.bookingTime);
+        final bDateTime = _getBookingDateTime(b.booking.bookingDate, b.booking.bookingTime);
+        return bDateTime.compareTo(aDateTime);
       });
 
       if (!_isDisposed) {
         _upcomingSessions = upcomingList;
+        _approvedSessions = approvedList;
         _pastSessions = pastList;
+        _completedSessions = completedList;
+        _pastIncompleteSessions = pastIncompleteList;
         _safeNotifyListeners();
       }
     } catch (e) {
@@ -300,9 +407,20 @@ class TutorSessionViewModel extends ChangeNotifier {
   }
 
   // ---------- Tab Selection ----------
-  void selectTab(bool isUpcoming) {
+  void selectTab(int tabIndex) {
     if (_isDisposed) return;
-    _showUpcoming = isUpcoming;
+    _selectedTabIndex = tabIndex;
+    // Reset filter when switching away from past tab
+    if (tabIndex != 2) {
+      _pastBookingFilter = PastBookingFilter.all;
+    }
+    _safeNotifyListeners();
+  }
+
+  // ---------- Filter Selection ----------
+  void setPastBookingFilter(PastBookingFilter filter) {
+    if (_isDisposed) return;
+    _pastBookingFilter = filter;
     _safeNotifyListeners();
   }
 

@@ -194,7 +194,7 @@ class BookingsScreenNavbar extends StatelessWidget {
     switch (status) {
       case BookingStatus.approved:
         actionButton = _buildActionButton(
-          'View Details',
+          'Make Payment',
           AppColors.primary,
           () {
             Get.to(() => BookingViewDetailScreen(
