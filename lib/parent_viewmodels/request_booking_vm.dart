@@ -337,6 +337,10 @@ class RequestBookingViewModel extends ChangeNotifier {
       final tutorService = TutorService();
       final parent = await _userService.getUserById(currentUser.uid);
 
+      // Store first booking ID for payment redirect
+      String? firstBookingId;
+      final totalAmount = totalEstimatedCost;
+
       // Create separate booking for each child
       for (var childId in _selectedChildrenIds) {
         final details = _childBookingDetails[childId];
@@ -348,6 +352,9 @@ class RequestBookingViewModel extends ChangeNotifier {
         }
 
         final bookingId = '${DateTime.now().millisecondsSinceEpoch}_$childId';
+        if (firstBookingId == null) {
+          firstBookingId = bookingId; // Store first booking ID for payment
+        }
         
         final booking = BookingModel(
           bookingId: bookingId,
@@ -391,6 +398,9 @@ class RequestBookingViewModel extends ChangeNotifier {
           }
         }
       }
+
+      // Payment redirect removed - parent will pay after booking is approved
+      // Payment will be handled in BookingViewDetailScreen when status is approved
 
       _setLoading(false);
       return true;

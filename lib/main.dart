@@ -16,7 +16,7 @@ import 'core/utils/seed_admin.dart';
 
 /// Enable/disable admin seeding on app start
 /// ⚠️ Set to false in production!
-const bool ENABLE_ADMIN_SEEDING = true; // Change to true to seed admin accounts
+const bool ENABLE_ADMIN_SEEDING = false; // Change to true to seed admin accounts
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

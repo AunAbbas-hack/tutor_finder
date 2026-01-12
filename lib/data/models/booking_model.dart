@@ -32,6 +32,11 @@ class BookingModel {
   final List<int>? recurringDays; // 1=Monday, 2=Tuesday, etc. (1-7)
   final double? monthlyBudget; // In rupees
   final List<String>? childrenIds; // Selected children for this booking
+  
+  // Payment fields
+  final String? paymentStatus; // 'pending', 'paid', 'failed', null if not paid yet
+  final String? paymentId; // Stripe payment intent/session ID or PaymentModel.paymentId
+  final DateTime? paymentDate; // Date when payment was completed
 
   const BookingModel({
     required this.bookingId,
@@ -50,6 +55,9 @@ class BookingModel {
     this.recurringDays,
     this.monthlyBudget,
     this.childrenIds,
+    this.paymentStatus,
+    this.paymentId,
+    this.paymentDate,
   });
 
   BookingModel copyWith({
@@ -69,6 +77,9 @@ class BookingModel {
     List<int>? recurringDays,
     double? monthlyBudget,
     List<String>? childrenIds,
+    String? paymentStatus,
+    String? paymentId,
+    DateTime? paymentDate,
   }) {
     return BookingModel(
       bookingId: bookingId ?? this.bookingId,
@@ -87,6 +98,9 @@ class BookingModel {
       recurringDays: recurringDays ?? this.recurringDays,
       monthlyBudget: monthlyBudget ?? this.monthlyBudget,
       childrenIds: childrenIds ?? this.childrenIds,
+      paymentStatus: paymentStatus ?? this.paymentStatus,
+      paymentId: paymentId ?? this.paymentId,
+      paymentDate: paymentDate ?? this.paymentDate,
     );
   }
 
@@ -108,6 +122,9 @@ class BookingModel {
       'recurringDays': recurringDays,
       'monthlyBudget': monthlyBudget,
       'childrenIds': childrenIds,
+      'paymentStatus': paymentStatus,
+      'paymentId': paymentId,
+      'paymentDate': paymentDate?.toIso8601String(),
     };
   }
 
@@ -136,6 +153,11 @@ class BookingModel {
       recurringDays: (map['recurringDays'] as List?)?.cast<int>(),
       monthlyBudget: (map['monthlyBudget'] as num?)?.toDouble(),
       childrenIds: (map['childrenIds'] as List?)?.cast<String>(),
+      paymentStatus: map['paymentStatus'] as String?,
+      paymentId: map['paymentId'] as String?,
+      paymentDate: map['paymentDate'] != null
+          ? DateTime.parse(map['paymentDate'] as String)
+          : null,
     );
   }
 

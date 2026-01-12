@@ -8,22 +8,31 @@ import '../data/services/booking_services.dart';
 import '../data/services/user_services.dart';
 import '../data/services/parent_services.dart';
 import '../data/services/student_services.dart';
+import '../data/services/payment_service.dart';
+import '../data/services/notification_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class BookingViewDetailViewModel extends ChangeNotifier {
   final BookingService _bookingService;
   final UserService _userService;
   final ParentService _parentService;
   final StudentService _studentService;
+  final PaymentService _paymentService;
+  final FirebaseAuth _auth;
 
   BookingViewDetailViewModel({
     BookingService? bookingService,
     UserService? userService,
     ParentService? parentService,
     StudentService? studentService,
+    PaymentService? paymentService,
+    FirebaseAuth? auth,
   })  : _bookingService = bookingService ?? BookingService(),
         _userService = userService ?? UserService(),
         _parentService = parentService ?? ParentService(),
-        _studentService = studentService ?? StudentService();
+        _studentService = studentService ?? StudentService(),
+        _paymentService = paymentService ?? PaymentService(),
+        _auth = auth ?? FirebaseAuth.instance;
 
   // ---------- State ----------
   bool _isLoading = false;
@@ -154,6 +163,127 @@ class BookingViewDetailViewModel extends ChangeNotifier {
     }
 
     return parts.isNotEmpty ? parts.join(', ') : 'Unknown location';
+  }
+
+  // ---------- Payment ----------
+  
+  /// Get booking amount for payment
+  double getBookingAmount() {
+    if (_booking == null) return 0.0;
+    
+    // For monthly booking, use monthlyBudget
+    if (_booking!.bookingType == BookingType.monthlyBooking && _booking!.monthlyBudget != null) {
+      return _booking!.monthlyBudget!;
+    }
+    
+    // For single session, use monthlyBudget if available, otherwise default
+    // Note: Single session bookings should store amount in monthlyBudget field
+    if (_booking!.monthlyBudget != null) {
+      return _booking!.monthlyBudget!;
+    }
+    
+    // Default amount if not set
+    return 500.0;
+  }
+
+  /// Check if payment is needed (approved booking without payment)
+  bool get needsPayment {
+    if (_booking == null) return false;
+    
+    // Payment needed if:
+    // 1. Booking is approved
+    // 2. Payment status is null, 'pending', or 'failed' (not 'paid')
+    final isApproved = _booking!.status == BookingStatus.approved;
+    final paymentStatus = _booking!.paymentStatus;
+    final isNotPaid = paymentStatus == null || 
+                      paymentStatus == 'pending' || 
+                      paymentStatus == 'failed';
+    
+    return isApproved && isNotPaid;
+  }
+
+  /// Process payment for this booking
+  Future<bool> processPayment() async {
+    if (_booking == null) {
+      _errorMessage = 'Booking not found';
+      notifyListeners();
+      return false;
+    }
+
+    // Validation: Check if payment is needed
+    if (!needsPayment) {
+      if (_booking!.paymentStatus == 'paid') {
+        _errorMessage = 'Payment already completed for this booking';
+      } else if (_booking!.status != BookingStatus.approved) {
+        _errorMessage = 'Booking must be approved before payment';
+      } else {
+        _errorMessage = 'Payment not required for this booking';
+      }
+      notifyListeners();
+      return false;
+    }
+
+    // Validation: Check amount
+    final amount = getBookingAmount();
+    if (amount <= 0) {
+      _errorMessage = 'Invalid payment amount';
+      notifyListeners();
+      return false;
+    }
+
+    final currentUser = _auth.currentUser;
+    if (currentUser == null) {
+      _errorMessage = 'User not authenticated';
+      notifyListeners();
+      return false;
+    }
+
+    _setLoading(true);
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final paymentSuccess = await _paymentService.createCheckoutAndRedirect(
+        amount: amount,
+        bookingId: _booking!.bookingId,
+        tutorId: _booking!.tutorId,
+        parentId: currentUser.uid,
+        currency: 'inr', // INR for Indian Rupees
+      );
+
+      // Payment redirect successful - notification will be sent after payment completes
+      // (via webhook or payment success callback)
+      // Note: Actual payment completion will be handled by Stripe webhook
+      
+      _setLoading(false);
+      return paymentSuccess;
+    } catch (e) {
+      _errorMessage = 'Failed to process payment: ${e.toString()}';
+      _setLoading(false);
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Send payment notification to tutor (called after payment is confirmed)
+  Future<void> sendPaymentNotificationToTutor() async {
+    if (_booking == null || _parent == null) return;
+
+    try {
+      final notificationService = NotificationService();
+      await notificationService.sendPaymentNotificationToTutor(
+        tutorId: _booking!.tutorId,
+        parentName: _parent!.name,
+        bookingDate: _booking!.bookingDate,
+        bookingTime: _booking!.bookingTime,
+        bookingId: _booking!.bookingId,
+      );
+    } catch (e) {
+      // Don't fail payment if notification fails
+      if (kDebugMode) {
+        print('⚠️ Failed to send payment notification: $e');
+      }
+    }
   }
 
   // ---------- Helpers ----------

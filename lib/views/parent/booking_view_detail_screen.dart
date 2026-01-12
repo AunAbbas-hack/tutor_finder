@@ -728,11 +728,110 @@ class BookingViewDetailScreen extends StatelessWidget {
       BuildContext context, BookingViewDetailViewModel vm) {
     final status = vm.booking!.status;
 
-    return Row(
-      children: [
-        // Cancel Button
-        if (status == BookingStatus.approved ||
-            status == BookingStatus.pending)
+    // For approved bookings, show Pay Now button
+    if (status == BookingStatus.approved) {
+      return Column(
+        children: [
+          // Pay Now Button (Primary)
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: vm.isLoading
+                  ? null
+                  : () async {
+                      final success = await vm.processPayment();
+                      if (!success && vm.errorMessage != null) {
+                        Get.snackbar(
+                          'Payment Error',
+                          vm.errorMessage!,
+                          snackPosition: SnackPosition.BOTTOM,
+                          backgroundColor: AppColors.error,
+                          colorText: Colors.white,
+                          duration: const Duration(seconds: 3),
+                        );
+                      }
+                    },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 0,
+              ),
+              child: vm.isLoading
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Icon(Icons.payment, size: 20),
+                        SizedBox(width: 8),
+                        AppText(
+                          'Pay Now',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Chat Button (Secondary)
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: vm.tutor != null
+                  ? () {
+                      Get.to(() => IndividualChatScreen(
+                            otherUserId: vm.tutor!.userId,
+                            otherUserName: vm.tutor!.name,
+                            otherUserImageUrl: vm.tutor!.imageUrl,
+                          ));
+                    }
+                  : null,
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                side: BorderSide(color: AppColors.primary.withValues(alpha: 0.5)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Icon(Icons.chat_bubble_outline, size: 20),
+                  SizedBox(width: 8),
+                  AppText(
+                    'Chat with Tutor',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    // For pending bookings, show Cancel and Chat buttons
+    if (status == BookingStatus.pending) {
+      return Row(
+        children: [
           Expanded(
             child: OutlinedButton(
               onPressed: () {
@@ -760,52 +859,86 @@ class BookingViewDetailScreen extends StatelessWidget {
               ),
             ),
           ),
-        if (status == BookingStatus.approved ||
-            status == BookingStatus.pending)
           const SizedBox(width: 12),
-        // Chat Button
-        Expanded(
-          flex: status == BookingStatus.approved ||
-                  status == BookingStatus.pending
-              ? 1
-              : 2,
-          child: ElevatedButton(
-            onPressed: vm.tutor != null
-                ? () {
-                    Get.to(() => IndividualChatScreen(
-                          otherUserId: vm.tutor!.userId,
-                          otherUserName: vm.tutor!.name,
-                          otherUserImageUrl: vm.tutor!.imageUrl,
-                        ));
-                  }
-                : null,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              elevation: 0,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
-                Icon(Icons.chat_bubble_outline, size: 20),
-                SizedBox(width: 8),
-                AppText(
-                  'Chat with Tutor',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
+          Expanded(
+            child: ElevatedButton(
+              onPressed: vm.tutor != null
+                  ? () {
+                      Get.to(() => IndividualChatScreen(
+                            otherUserId: vm.tutor!.userId,
+                            otherUserName: vm.tutor!.name,
+                            otherUserImageUrl: vm.tutor!.imageUrl,
+                          ));
+                    }
+                  : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
-              ],
+                elevation: 0,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Icon(Icons.chat_bubble_outline, size: 20),
+                  SizedBox(width: 8),
+                  AppText(
+                    'Chat',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
+        ],
+      );
+    }
+
+    // For other statuses, show Chat button only
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: vm.tutor != null
+            ? () {
+                Get.to(() => IndividualChatScreen(
+                      otherUserId: vm.tutor!.userId,
+                      otherUserName: vm.tutor!.name,
+                      otherUserImageUrl: vm.tutor!.imageUrl,
+                    ));
+              }
+            : null,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 0,
         ),
-      ],
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: const [
+            Icon(Icons.chat_bubble_outline, size: 20),
+            SizedBox(width: 8),
+            AppText(
+              'Chat with Tutor',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

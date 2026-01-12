@@ -520,6 +520,38 @@ class NotificationService {
     );
   }
 
+  /// Send payment notification to tutor
+  Future<void> sendPaymentNotificationToTutor({
+    required String tutorId,
+    required String parentName,
+    required DateTime bookingDate,
+    required String bookingTime,
+    String? bookingId,
+  }) async {
+    // Format date (e.g., "October 24, 2024")
+    final months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    final dateStr = '${months[bookingDate.month - 1]} ${bookingDate.day}, ${bookingDate.year}';
+    
+    // Format message with date and time
+    final message = '$parentName has made payment for booking on $dateStr at $bookingTime, ';
+    
+    await createAndSendNotification(
+      userId: tutorId,
+      title: 'Payment Received',
+      message: message,
+      data: {
+        'type': 'payment_received',
+        'parentName': parentName,
+        'bookingDate': bookingDate.toIso8601String(),
+        'bookingTime': bookingTime,
+        if (bookingId != null) 'bookingId': bookingId,
+      },
+    );
+  }
+
   /// Send profile under review notification to tutor
   Future<void> sendProfileUnderReviewToTutor({
     required String tutorId,
