@@ -1,33 +1,60 @@
 // lib/admin_viewmodels/finance_vm.dart
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import '../data/models/payout_request_model.dart';
+import '../data/models/payment_model.dart';
+import '../data/models/user_model.dart';
+import '../data/services/payment_services.dart';
+import '../data/services/user_services.dart';
 
-enum PayoutSort { dateDesc, amountDesc, nameAsc }
+enum PaymentSort { dateDesc, amountDesc, nameAsc }
+
+class PaymentDisplayModel {
+  final PaymentModel payment;
+  final String tutorName;
+  final String parentName;
+  final Color avatarColor1;
+  final Color avatarColor2;
+
+  PaymentDisplayModel({
+    required this.payment,
+    required this.tutorName,
+    required this.parentName,
+    required this.avatarColor1,
+    required this.avatarColor2,
+  });
+}
 
 class FinanceViewModel extends ChangeNotifier {
+  final PaymentService _paymentService;
+  final UserService _userService;
   bool _isDisposed = false;
   bool _isLoading = false;
   String? _errorMessage;
-  List<PayoutRequestModel> _requests = [];
-  PayoutSort _sortBy = PayoutSort.dateDesc;
+  List<PaymentDisplayModel> _payments = [];
+  PaymentSort _sortBy = PaymentSort.dateDesc;
+
+  FinanceViewModel({
+    PaymentService? paymentService,
+    UserService? userService,
+  })  : _paymentService = paymentService ?? PaymentService(),
+        _userService = userService ?? UserService();
 
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
-  PayoutSort get sortBy => _sortBy;
+  PaymentSort get sortBy => _sortBy;
 
-  List<PayoutRequestModel> get pendingRequests {
-    final pending = _requests.where((r) => r.status == PayoutStatus.pending).toList();
+  List<PaymentDisplayModel> get pendingPayments {
+    final pending = _payments.where((p) => 
+      p.payment.status == PaymentStatus.completed && !p.payment.tutorPaid
+    ).toList();
     return _sorted(pending);
   }
 
   double get totalPendingAmount {
-    return _requests
-        .where((r) => r.status == PayoutStatus.pending)
-        .fold(0.0, (sum, item) => sum + item.amount);
+    return pendingPayments.fold(0.0, (sum, item) => sum + item.payment.amount);
   }
 
-  int get pendingCount => pendingRequests.length;
+  int get pendingCount => pendingPayments.length;
 
   Future<void> initialize() async {
     if (_isDisposed) return;
@@ -35,12 +62,31 @@ class FinanceViewModel extends ChangeNotifier {
     _errorMessage = null;
 
     try {
-      // Simulate initial load; replace with real service call later
-      await Future<void>.delayed(const Duration(milliseconds: 200));
-      _requests = _seedData();
+      // Load all completed payments
+      final payments = await _paymentService.getPaymentsByStatus(PaymentStatus.completed);
+      
+      // Load user names for each payment
+      final displayPayments = <PaymentDisplayModel>[];
+      for (final payment in payments) {
+        final tutor = await _userService.getUserById(payment.tutorId);
+        final parent = await _userService.getUserById(payment.parentId);
+        
+        if (tutor != null && parent != null) {
+          final colors = _getAvatarColors(tutor.name);
+          displayPayments.add(PaymentDisplayModel(
+            payment: payment,
+            tutorName: tutor.name,
+            parentName: parent.name,
+            avatarColor1: colors[0],
+            avatarColor2: colors[1],
+          ));
+        }
+      }
+      
+      _payments = displayPayments;
     } catch (e) {
       if (!_isDisposed) {
-        _errorMessage = 'Failed to load payouts: ${e.toString()}';
+        _errorMessage = 'Failed to load payments: ${e.toString()}';
       }
     } finally {
       if (!_isDisposed) {
@@ -49,18 +95,21 @@ class FinanceViewModel extends ChangeNotifier {
     }
   }
 
-  void updateSort(PayoutSort sort) {
+  void updateSort(PaymentSort sort) {
     if (_sortBy == sort) return;
     _sortBy = sort;
     _safeNotifyListeners();
   }
 
-  Future<void> approve(String id) async {
-    _updateStatus(id, PayoutStatus.approved);
-  }
-
-  Future<void> reject(String id) async {
-    _updateStatus(id, PayoutStatus.rejected);
+  Future<void> markAsPaidToTutor(String paymentId) async {
+    try {
+      await _paymentService.markAsPaidToTutor(paymentId);
+      // Reload payments
+      await initialize();
+    } catch (e) {
+      _errorMessage = 'Failed to mark payment as paid: ${e.toString()}';
+      _safeNotifyListeners();
+    }
   }
 
   String formatDate(DateTime date) {
@@ -70,34 +119,40 @@ class FinanceViewModel extends ChangeNotifier {
     return '$month $day, ${date.year}';
   }
 
-  String formatAmount(double amount, {String symbol = '\$'}) {
+  String formatAmount(double amount, {String symbol = 'Rs '}) {
     final isWhole = amount == amount.roundToDouble();
     final text = isWhole ? amount.toStringAsFixed(0) : amount.toStringAsFixed(2);
     return '$symbol$text';
   }
 
-  List<PayoutRequestModel> _sorted(List<PayoutRequestModel> list) {
-    final sorted = List<PayoutRequestModel>.from(list);
+  List<PaymentDisplayModel> _sorted(List<PaymentDisplayModel> list) {
+    final sorted = List<PaymentDisplayModel>.from(list);
     switch (_sortBy) {
-      case PayoutSort.dateDesc:
-        sorted.sort((a, b) => b.requestedAt.compareTo(a.requestedAt));
+      case PaymentSort.dateDesc:
+        sorted.sort((a, b) => b.payment.createdAt.compareTo(a.payment.createdAt));
         break;
-      case PayoutSort.amountDesc:
-        sorted.sort((a, b) => b.amount.compareTo(a.amount));
+      case PaymentSort.amountDesc:
+        sorted.sort((a, b) => b.payment.amount.compareTo(a.payment.amount));
         break;
-      case PayoutSort.nameAsc:
+      case PaymentSort.nameAsc:
         sorted.sort((a, b) => a.tutorName.toLowerCase().compareTo(b.tutorName.toLowerCase()));
         break;
     }
     return sorted;
   }
 
-  void _updateStatus(String id, PayoutStatus status) {
-    final index = _requests.indexWhere((r) => r.id == id);
-    if (index == -1) return;
-
-    _requests[index] = _requests[index].copyWith(status: status);
-    _safeNotifyListeners();
+  List<Color> _getAvatarColors(String name) {
+    // Generate consistent colors based on name
+    final hash = name.hashCode;
+    final colors = [
+      [Color(0xFFFFC39A), Color(0xFFFF8C7F)],
+      [Color(0xFF6DD5ED), Color(0xFF2193B0)],
+      [Color(0xFFFFE29F), Color(0xFFffa99f)],
+      [Color(0xFFa18cd1), Color(0xFFfbc2eb)],
+      [Color(0xFFfad0c4), Color(0xFFffd1ff)],
+      [Color(0xFFa8edea), Color(0xFFfed6e3)],
+    ];
+    return colors[hash.abs() % colors.length];
   }
 
   void _setLoading(bool value) {
@@ -111,53 +166,6 @@ class FinanceViewModel extends ChangeNotifier {
     }
   }
 
-  List<PayoutRequestModel> _seedData() {
-    // Sample data; replace with backend data when available
-    return [
-      PayoutRequestModel(
-        id: 'req_theresa',
-        tutorName: 'Theresa Webb',
-        amount: 450.0,
-        method: PayoutMethod.bankTransfer,
-        accountTitle: 'Theresa Webb',
-        accountNumber: 'PK70 UNIL 0000 1234 5678',
-        requestedAt: DateTime.now().subtract(const Duration(days: 1)),
-        avatarColors: const [Color(0xFFFFC39A), Color(0xFFFF8C7F)],
-      ),
-      PayoutRequestModel(
-        id: 'req_jerome',
-        tutorName: 'Jerome Bell',
-        amount: 1200.0,
-        method: PayoutMethod.easyPaisa,
-        accountTitle: 'Jerome Bell',
-        accountNumber: '920 300 1234567',
-        phoneNumber: '+92 300 1234567',
-        requestedAt: DateTime.now().subtract(const Duration(days: 2)),
-        avatarColors: const [Color(0xFF6DD5ED), Color(0xFF2193B0)],
-      ),
-      PayoutRequestModel(
-        id: 'req_eleanor',
-        tutorName: 'Eleanor Pena',
-        amount: 280.0,
-        method: PayoutMethod.jazzCash,
-        accountTitle: 'Eleanor Pena',
-        accountNumber: '312 9876543',
-        phoneNumber: '+92 312 9876543',
-        requestedAt: DateTime.now().subtract(const Duration(days: 3)),
-        avatarColors: const [Color(0xFFFFE29F), Color(0xFFffa99f)],
-      ),
-      PayoutRequestModel(
-        id: 'req_arham',
-        tutorName: 'Arham Khan',
-        amount: 820.0,
-        method: PayoutMethod.bankTransfer,
-        accountTitle: 'Arham Khan',
-        accountNumber: 'PK09 HBL 0000 9876 5432',
-        requestedAt: DateTime.now().subtract(const Duration(days: 4, hours: 3)),
-        avatarColors: const [Color(0xFFa18cd1), Color(0xFFfbc2eb)],
-      ),
-    ];
-  }
 
   @override
   void dispose() {

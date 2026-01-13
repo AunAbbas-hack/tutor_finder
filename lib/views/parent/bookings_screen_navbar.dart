@@ -6,6 +6,7 @@ import '../../core/widgets/app_text.dart';
 import '../../data/models/booking_model.dart';
 import '../../parent_viewmodels/bookings_navbar_vm.dart';
 import 'booking_view_detail_screen.dart';
+import 'payment_history_screen.dart';
 
 class BookingsScreenNavbar extends StatelessWidget {
   const BookingsScreenNavbar({super.key});
@@ -32,6 +33,18 @@ class BookingsScreenNavbar extends StatelessWidget {
           centerTitle: true,
           elevation: 0,
           backgroundColor: AppColors.lightBackground,
+          actions: [
+            IconButton(
+              icon: const Icon(
+                Icons.receipt_long,
+                color: AppColors.textDark,
+              ),
+              onPressed: () {
+                Get.to(() => const PaymentHistoryScreen());
+              },
+              tooltip: 'Payment History',
+            ),
+          ],
         ),
         body: Consumer<BookingsNavbarViewModel>(
           builder: (context, vm, _) {

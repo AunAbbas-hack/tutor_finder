@@ -360,7 +360,7 @@ class TutorProfileScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const AppText(
-                'Fee Structure',
+                'Tution Fees',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
@@ -399,7 +399,7 @@ class TutorProfileScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         AppText(
-                          '₹${hourlyFee.toStringAsFixed(0)} /hr',
+                          '${hourlyFee.toStringAsFixed(0)}Rs. /hr',
                           style: const TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.w700,
@@ -421,33 +421,33 @@ class TutorProfileScreen extends StatelessWidget {
                   ),
                 ],
                 
-                // Monthly Rate
-                if (monthlyFee != null && monthlyFee > 0) ...[
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const AppText(
-                          'Monthly Rate',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.textDark,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        AppText(
-                          '₹${monthlyFee.toStringAsFixed(0)} /mo',
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+               // Monthly Rate
+               //  if (monthlyFee != null && monthlyFee > 0) ...[
+               //    Expanded(
+               //      child: Column(
+               //        crossAxisAlignment: CrossAxisAlignment.start,
+               //        children: [
+               //          const AppText(
+               //            'Monthly Rate',
+               //            style: TextStyle(
+               //              fontSize: 14,
+               //              fontWeight: FontWeight.w500,
+               //              color: AppColors.textDark,
+               //            ),
+               //          ),
+               //          const SizedBox(height: 8),
+               //          AppText(
+               //            '₹${monthlyFee.toStringAsFixed(0)} /mo',
+               //            style: const TextStyle(
+               //              fontSize: 24,
+               //              fontWeight: FontWeight.w700,
+               //              color: AppColors.primary,
+               //            ),
+               //          ),
+               //        ],
+               //      ),
+               //    ),
+               //  ],
               ],
             ),
           ] else ...[
@@ -461,45 +461,46 @@ class TutorProfileScreen extends StatelessWidget {
           ],
           
           // Savings Note
-          if (savingsPercentage != null && savingsPercentage > 0) ...[
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.info_outline,
-                    size: 16,
-                    color: AppColors.primary,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: AppText(
-                      'Save over ${savingsPercentage.toStringAsFixed(0)}% with monthly plans. Package deals available for 10+ hours.',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ] else if (hourlyFee != null || monthlyFee != null) ...[
-            const SizedBox(height: 12),
-            const AppText(
-              'Package deals available for 10+ hours.',
-              style: TextStyle(
-                fontSize: 12,
-                color: AppColors.textGrey,
-              ),
-            ),
-          ],
+          // if (savingsPercentage != null && savingsPercentage > 0) ...[
+          //   const SizedBox(height: 12),
+          //   Container(
+          //     padding: const EdgeInsets.all(12),
+          //     decoration: BoxDecoration(
+          //       color: AppColors.primary.withOpacity(0.1),
+          //       borderRadius: BorderRadius.circular(8),
+          //     ),
+          //     child: Row(
+          //       children: [
+          //         Icon(
+          //           Icons.info_outline,
+          //           size: 16,
+          //           color: AppColors.primary,
+          //         ),
+          //         const SizedBox(width: 8),
+          //         Expanded(
+          //           child: AppText(
+          //             'Save over ${savingsPercentage.toStringAsFixed(0)}% with monthly plans. Package deals available for 10+ hours.',
+          //             style: TextStyle(
+          //               fontSize: 12,
+          //               color: AppColors.primary,
+          //               fontWeight: FontWeight.w500,
+          //             ),
+          //           ),
+          //         ),
+          //       ],
+          //     ),
+          //   ),
+          // ]
+          // else if (hourlyFee != null || monthlyFee != null) ...[
+          //   const SizedBox(height: 12),
+          //   const AppText(
+          //     'Package deals available for 10+ hours.',
+          //     style: TextStyle(
+          //       fontSize: 12,
+          //       color: AppColors.textGrey,
+          //     ),
+          //   ),
+          // ],
         ],
       ),
     );

@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import '../../admin_viewmodels/finance_vm.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/app_text.dart';
-import '../../data/models/payout_request_model.dart';
 
 class FinanceScreen extends StatefulWidget {
   const FinanceScreen({super.key});
@@ -31,13 +30,13 @@ class _FinanceScreenState extends State<FinanceScreen> {
         body: SafeArea(
           child: Consumer<FinanceViewModel>(
             builder: (context, vm, _) {
-              if (vm.isLoading && vm.pendingRequests.isEmpty) {
+              if (vm.isLoading && vm.pendingPayments.isEmpty) {
                 return const Center(
                   child: CircularProgressIndicator(color: AppColors.primary),
                 );
               }
 
-              if (vm.errorMessage != null && vm.pendingRequests.isEmpty) {
+              if (vm.errorMessage != null && vm.pendingPayments.isEmpty) {
                 return Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -89,13 +88,13 @@ class _FinanceScreenState extends State<FinanceScreen> {
                       SizedBox(height: spacing.sectionGap),
                       _buildPendingHeader(context, vm, spacing),
                       SizedBox(height: spacing.itemGap),
-                      if (vm.pendingRequests.isEmpty)
+                      if (vm.pendingPayments.isEmpty)
                         _buildEmptyState(spacing)
                       else
-                        ...vm.pendingRequests.map(
-                          (request) => Padding(
+                        ...vm.pendingPayments.map(
+                          (paymentDisplay) => Padding(
                             padding: EdgeInsets.only(bottom: spacing.itemGap),
-                            child: _buildRequestCard(context, request, vm, spacing),
+                            child: _buildPaymentCard(context, paymentDisplay, vm, spacing),
                           ),
                         ),
                     ],
@@ -126,7 +125,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               AppText(
-                'Withdrawal Requests',
+                'Payment Management',
                 style: textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w700,
                   color: AppColors.textDark,
@@ -134,7 +133,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
               ),
               SizedBox(height: spacing.smallGap * 0.6),
               AppText(
-                'Manage tutor payouts',
+                'Pay tutors for completed bookings',
                 style: textTheme.bodyMedium?.copyWith(color: AppColors.textGrey),
               ),
             ],
@@ -173,7 +172,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 AppText(
-                  'Total Pending Payouts',
+                  'Total Pending Payments',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Colors.white.withOpacity(0.9),
                         fontWeight: FontWeight.w600,
@@ -229,7 +228,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               AppText(
-                'Pending Requests',
+                'Pending Payments',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                       color: AppColors.textDark,
@@ -237,7 +236,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
               ),
               SizedBox(height: spacing.smallGap * 0.5),
               AppText(
-                'Review and approve payouts',
+                'Mark payments as paid to tutors',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: AppColors.textGrey,
                     ),
@@ -257,7 +256,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
               ),
             ],
           ),
-          child: PopupMenuButton<PayoutSort>(
+          child: PopupMenuButton<PaymentSort>(
             initialValue: vm.sortBy,
             elevation: 6,
             shape: RoundedRectangleBorder(
@@ -266,9 +265,9 @@ class _FinanceScreenState extends State<FinanceScreen> {
             onSelected: vm.updateSort,
             position: PopupMenuPosition.under,
             itemBuilder: (context) => [
-              _buildSortItem('Newest first', PayoutSort.dateDesc, vm.sortBy),
-              _buildSortItem('Amount high → low', PayoutSort.amountDesc, vm.sortBy),
-              _buildSortItem('Name A → Z', PayoutSort.nameAsc, vm.sortBy),
+              _buildSortItem('Newest first', PaymentSort.dateDesc, vm.sortBy),
+              _buildSortItem('Amount high → low', PaymentSort.amountDesc, vm.sortBy),
+              _buildSortItem('Name A → Z', PaymentSort.nameAsc, vm.sortBy),
             ],
             child: Padding(
               padding: EdgeInsets.symmetric(
@@ -295,8 +294,8 @@ class _FinanceScreenState extends State<FinanceScreen> {
     );
   }
 
-  PopupMenuItem<PayoutSort> _buildSortItem(String label, PayoutSort value, PayoutSort selected) {
-    return PopupMenuItem<PayoutSort>(
+  PopupMenuItem<PaymentSort> _buildSortItem(String label, PaymentSort value, PaymentSort selected) {
+    return PopupMenuItem<PaymentSort>(
       value: value,
       child: Row(
         children: [
@@ -312,12 +311,13 @@ class _FinanceScreenState extends State<FinanceScreen> {
     );
   }
 
-  Widget _buildRequestCard(
+  Widget _buildPaymentCard(
     BuildContext context,
-    PayoutRequestModel request,
+    PaymentDisplayModel paymentDisplay,
     FinanceViewModel vm,
     _FinanceSpacing spacing,
   ) {
+    final payment = paymentDisplay.payment;
     final textTheme = Theme.of(context).textTheme;
 
     return Container(
@@ -341,8 +341,8 @@ class _FinanceScreenState extends State<FinanceScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _AvatarBadge(
-                name: request.tutorName,
-                colors: request.avatarColors,
+                name: paymentDisplay.tutorName,
+                colors: [paymentDisplay.avatarColor1, paymentDisplay.avatarColor2],
                 size: spacing.avatarSize,
               ),
               SizedBox(width: spacing.smallGap),
@@ -351,7 +351,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     AppText(
-                      request.tutorName,
+                      paymentDisplay.tutorName,
                       style: textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                         color: AppColors.textDark,
@@ -363,7 +363,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
                         const Icon(Icons.calendar_today_outlined, size: 16, color: AppColors.textLight),
                         SizedBox(width: spacing.smallGap * 0.5),
                         AppText(
-                          'Requested on ${vm.formatDate(request.requestedAt)}',
+                          'Paid on ${vm.formatDate(payment.completedAt ?? payment.createdAt)}',
                           style: textTheme.bodySmall?.copyWith(
                             color: AppColors.textGrey,
                             fontWeight: FontWeight.w500,
@@ -378,25 +378,29 @@ class _FinanceScreenState extends State<FinanceScreen> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   AppText(
-                    request.formattedAmount,
+                    vm.formatAmount(payment.amount, symbol: 'Rs '),
                     style: textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
                       color: AppColors.textDark,
                     ),
                   ),
                   SizedBox(height: spacing.smallGap * 0.5),
-                  Row(
-                    children: [
-                      Icon(request.methodIcon, size: 18, color: AppColors.primary),
-                      SizedBox(width: spacing.smallGap * 0.4),
-                      AppText(
-                        request.methodLabel,
-                        style: textTheme.bodySmall?.copyWith(
-                          color: AppColors.textGrey,
-                          fontWeight: FontWeight.w600,
-                        ),
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: spacing.smallGap * 0.7,
+                      vertical: spacing.smallGap * 0.3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.success.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(spacing.cardRadius * 0.5),
+                    ),
+                    child: AppText(
+                      'Paid by ${paymentDisplay.parentName}',
+                      style: textTheme.bodySmall?.copyWith(
+                        color: AppColors.success,
+                        fontWeight: FontWeight.w600,
                       ),
-                    ],
+                    ),
                   ),
                 ],
               ),
@@ -408,66 +412,86 @@ class _FinanceScreenState extends State<FinanceScreen> {
             spacing: spacing.itemGap,
             children: [
               _buildInfoTile(
-                label: request.method == PayoutMethod.bankTransfer ? 'Account Title' : 'Wallet Name',
-                value: request.accountTitle,
+                label: 'Booking ID',
+                value: payment.bookingId.substring(0, 8),
                 spacing: spacing,
               ),
               _buildInfoTile(
-                label: request.method == PayoutMethod.bankTransfer ? 'Account / IBAN' : 'Wallet Number',
-                value: request.accountNumber,
+                label: 'Payment ID',
+                value: payment.paymentId.substring(0, 8),
                 spacing: spacing,
               ),
-              if (request.phoneNumber != null && request.phoneNumber!.isNotEmpty)
+              if (payment.stripeSessionId != null)
                 _buildInfoTile(
-                  label: 'Phone Number',
-                  value: request.phoneNumber!,
+                  label: 'Stripe Session',
+                  value: payment.stripeSessionId!.substring(0, 12),
                   spacing: spacing,
                 ),
             ],
           ),
           SizedBox(height: spacing.itemGap),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () => vm.reject(request.id),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Color(0xFFFECACA)),
-                    foregroundColor: const Color(0xFFB91C1C),
-                    backgroundColor: const Color(0xFFFFF1F2),
-                    minimumSize: Size.fromHeight(spacing.buttonHeight),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(spacing.cardRadius),
-                    ),
+          if (!payment.tutorPaid)
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () async {
+                  await vm.markAsPaidToTutor(payment.paymentId);
+                  if (vm.errorMessage != null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(vm.errorMessage!),
+                        backgroundColor: AppColors.error,
+                      ),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Payment marked as paid to tutor'),
+                        backgroundColor: AppColors.success,
+                      ),
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  minimumSize: Size.fromHeight(spacing.buttonHeight),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(spacing.cardRadius),
                   ),
-                  child: const Text(
-                    'Reject',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                    ),
+                ),
+                child: const Text(
+                  'Mark as Paid to Tutor',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
-              SizedBox(width: spacing.smallGap),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () => vm.approve(request.id),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    minimumSize: Size.fromHeight(spacing.buttonHeight),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(spacing.cardRadius),
+            )
+          else
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(spacing.cardPadding * 0.7),
+              decoration: BoxDecoration(
+                color: AppColors.success.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(spacing.cardRadius),
+                border: Border.all(color: AppColors.success.withOpacity(0.3)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.check_circle, color: AppColors.success, size: 20),
+                  SizedBox(width: spacing.smallGap * 0.5),
+                  AppText(
+                    'Paid to Tutor on ${vm.formatDate(payment.tutorPaidAt!)}',
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: AppColors.success,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  child: const Text(
-                    'Approve Payout',
-                    style: TextStyle(fontWeight: FontWeight.w800),
-                  ),
-                ),
+                ],
               ),
-            ],
-          ),
+            ),
         ],
       ),
     );

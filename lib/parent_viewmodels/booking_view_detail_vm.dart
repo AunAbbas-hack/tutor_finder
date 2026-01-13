@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../data/models/booking_model.dart';
 import '../data/models/user_model.dart';
 import '../data/models/parent_model.dart';
@@ -44,6 +45,8 @@ class BookingViewDetailViewModel extends ChangeNotifier {
   Map<String, UserModel> _studentUsers = {}; // studentId -> UserModel
   String? _tutorLocationAddress;
   String? _tutorImageUrl;
+  GoogleMapController? _mapController;
+  bool _isMapReady = false;
 
   // Getters
   bool get isLoading => _isLoading;
@@ -55,6 +58,8 @@ class BookingViewDetailViewModel extends ChangeNotifier {
   Map<String, UserModel> get studentUsers => _studentUsers;
   String? get tutorLocationAddress => _tutorLocationAddress;
   String? get tutorImageUrl => _tutorImageUrl;
+  GoogleMapController? get mapController => _mapController;
+  bool get isMapReady => _isMapReady;
 
   // Convenience getters
   bool get hasTutorLocation => _tutor?.latitude != null && _tutor?.longitude != null;
@@ -256,9 +261,15 @@ class BookingViewDetailViewModel extends ChangeNotifier {
       // Note: Actual payment completion will be handled by Stripe webhook
       
       _setLoading(false);
+      notifyListeners();
       return paymentSuccess;
     } catch (e) {
-      _errorMessage = 'Failed to process payment: ${e.toString()}';
+      String errorMsg = e.toString();
+      // Remove "Exception: " prefix if present
+      if (errorMsg.startsWith('Exception: ')) {
+        errorMsg = errorMsg.substring(11);
+      }
+      _errorMessage = errorMsg;
       _setLoading(false);
       notifyListeners();
       return false;
@@ -286,6 +297,107 @@ class BookingViewDetailViewModel extends ChangeNotifier {
     }
   }
 
+  /// Check if booking can be marked as completed
+  bool get canCompleteBooking {
+    if (_booking == null) return false;
+    
+    // Can complete if:
+    // 1. Booking is approved
+    // 2. Payment status is 'paid' or 'completed'
+    // 3. Booking status is not already completed
+    final isApproved = _booking!.status == BookingStatus.approved;
+    final paymentStatus = _booking!.paymentStatus;
+    final isPaid = paymentStatus == 'paid' || paymentStatus == 'completed';
+    final isNotCompleted = _booking!.status != BookingStatus.completed;
+    
+    return isApproved && isPaid && isNotCompleted;
+  }
+
+  /// Mark booking as completed
+  Future<bool> completeBooking() async {
+    if (_booking == null) {
+      _errorMessage = 'Booking not found';
+      notifyListeners();
+      return false;
+    }
+
+    if (!canCompleteBooking) {
+      if (_booking!.paymentStatus != 'paid' && _booking!.paymentStatus != 'completed') {
+        _errorMessage = 'Payment must be completed before marking booking as complete';
+      } else if (_booking!.status == BookingStatus.completed) {
+        _errorMessage = 'Booking is already completed';
+      } else {
+        _errorMessage = 'Cannot complete this booking';
+      }
+      notifyListeners();
+      return false;
+    }
+
+    _setLoading(true);
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await _bookingService.completeSession(_booking!.bookingId);
+      
+      // Reload booking to get updated status
+      _booking = await _bookingService.getBookingById(_booking!.bookingId);
+      
+      _setLoading(false);
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = 'Failed to complete booking: ${e.toString()}';
+      _setLoading(false);
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // ---------- Map Controller ----------
+  void setMapController(GoogleMapController controller) async {
+    _mapController = controller;
+    _isMapReady = false;
+    
+    // Wait for map to fully initialize before positioning
+    await Future.delayed(const Duration(milliseconds: 500));
+    
+    // Ensure map is properly positioned after creation
+    if (_tutor?.latitude != null && _tutor?.longitude != null) {
+      try {
+        await _mapController?.animateCamera(
+          CameraUpdate.newCameraPosition(
+            CameraPosition(
+              target: LatLng(_tutor!.latitude!, _tutor!.longitude!),
+              zoom: 14.0,
+            ),
+          ),
+        );
+        // Wait a bit more for map tiles to load
+        await Future.delayed(const Duration(milliseconds: 300));
+        _isMapReady = true;
+        notifyListeners();
+      } catch (e) {
+        if (kDebugMode) {
+          print('Error animating camera: $e');
+        }
+        // Still mark as ready even if animation fails
+        _isMapReady = true;
+        notifyListeners();
+      }
+    } else {
+      _isMapReady = true;
+      notifyListeners();
+    }
+  }
+
+  // ---------- Refresh ----------
+  /// Refresh booking details (reload from Firestore)
+  Future<void> refresh() async {
+    if (_booking == null) return;
+    await initialize(_booking!.bookingId);
+  }
+
   // ---------- Helpers ----------
   void _setLoading(bool value) {
     _isLoading = value;
@@ -295,5 +407,11 @@ class BookingViewDetailViewModel extends ChangeNotifier {
   void clearError() {
     _errorMessage = null;
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _mapController?.dispose();
+    super.dispose();
   }
 }

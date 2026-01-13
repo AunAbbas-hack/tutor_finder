@@ -14,6 +14,7 @@ class LocationViewModel extends ChangeNotifier {
   String? _selectedAddress;
   bool _hasUserSelectedLocation = false; // Track if user has selected a location
   bool _isUpdatingCamera = false; // Prevent updates during programmatic camera moves
+  bool _isMapReady = false; // Track if map is fully initialized
   
   // Map controller and camera position
   GoogleMapController? _mapController;
@@ -72,6 +73,40 @@ class LocationViewModel extends ChangeNotifier {
 
   void setMapController(GoogleMapController controller) {
     _mapController = controller;
+    // Wait a bit for map to fully initialize before marking as ready
+    Future.delayed(const Duration(milliseconds: 300), () async {
+      _isMapReady = true;
+      
+      // If a location was already selected before map was ready, animate to it now
+      if (_hasUserSelectedLocation && 
+          _latitude.isNotEmpty && 
+          _longitude.isNotEmpty) {
+        final lat = double.tryParse(_latitude);
+        final lng = double.tryParse(_longitude);
+        if (lat != null && lng != null) {
+          try {
+            _isUpdatingCamera = true;
+            await controller.animateCamera(
+              CameraUpdate.newCameraPosition(
+                CameraPosition(
+                  target: LatLng(lat, lng),
+                  zoom: 14.0,
+                ),
+              ),
+            );
+            await Future.delayed(const Duration(milliseconds: 500));
+            _isUpdatingCamera = false;
+          } catch (e) {
+            if (kDebugMode) {
+              print('Error animating to pending location: $e');
+            }
+            _isUpdatingCamera = false;
+          }
+        }
+      }
+      
+      notifyListeners();
+    });
   }
 
   /// Set camera position and update coordinates
@@ -86,15 +121,47 @@ class LocationViewModel extends ChangeNotifier {
       zoom: 14.0,
     );
     
-    // Move map camera
-    if (_mapController != null) {
-      _isUpdatingCamera = true; // Prevent onCameraIdle from triggering during programmatic move
-      await _mapController!.animateCamera(
-        CameraUpdate.newCameraPosition(_cameraPosition),
-      );
-      // Wait a bit after animation completes before allowing camera idle updates
-      await Future.delayed(const Duration(milliseconds: 500));
-      _isUpdatingCamera = false;
+    // Wait for map controller to be ready (with timeout)
+    int attempts = 0;
+    const maxAttempts = 15; // Wait up to 3 seconds (15 * 200ms)
+    
+    while ((_mapController == null || !_isMapReady) && attempts < maxAttempts) {
+      await Future.delayed(const Duration(milliseconds: 200));
+      attempts++;
+    }
+    
+    // Move map camera if controller is available
+    if (_mapController != null && _isMapReady) {
+      try {
+        _isUpdatingCamera = true; // Prevent onCameraIdle from triggering during programmatic move
+        await _mapController!.animateCamera(
+          CameraUpdate.newCameraPosition(_cameraPosition),
+        );
+        // Wait a bit after animation completes before allowing camera idle updates
+        await Future.delayed(const Duration(milliseconds: 500));
+        _isUpdatingCamera = false;
+      } catch (e) {
+        // If animation fails, try to move camera without animation
+        if (kDebugMode) {
+          print('Error animating camera: $e');
+        }
+        try {
+          await _mapController!.moveCamera(
+            CameraUpdate.newCameraPosition(_cameraPosition),
+          );
+          await Future.delayed(const Duration(milliseconds: 500));
+          _isUpdatingCamera = false;
+        } catch (e2) {
+          if (kDebugMode) {
+            print('Error moving camera: $e2');
+          }
+          _isUpdatingCamera = false;
+        }
+      }
+    } else {
+      // If map controller is still not ready, at least update the camera position
+      // so when the map loads, it will use the correct position
+      notifyListeners();
     }
     
     // Get address from coordinates

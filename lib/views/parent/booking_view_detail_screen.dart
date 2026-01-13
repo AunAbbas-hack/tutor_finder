@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:provider/provider.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -11,6 +13,7 @@ import '../../data/models/user_model.dart';
 import '../../data/services/user_services.dart';
 import '../../core/utils/distance_calculator.dart';
 import '../chat/individual_chat_screen.dart';
+import 'review_screen.dart';
 
 class BookingViewDetailScreen extends StatelessWidget {
   final String bookingId;
@@ -96,6 +99,7 @@ class BookingViewDetailScreen extends StatelessWidget {
                 final horizontalPadding = isSmallScreen ? 16.0 : 20.0;
                 
                 return SingleChildScrollView(
+                  physics: const ClampingScrollPhysics(),
                   padding: EdgeInsets.symmetric(
                     horizontal: horizontalPadding,
                     vertical: 20,
@@ -434,7 +438,7 @@ class BookingViewDetailScreen extends StatelessWidget {
                 iconColor: AppColors.success,
                 label: 'Offered Amount',
                 value: booking.monthlyBudget != null
-                    ? '\$${booking.monthlyBudget!.toStringAsFixed(2)}'
+                    ? '${booking.monthlyBudget!.toStringAsFixed(2)} Rs.'
                     : 'N/A',
               ),
             ],
@@ -580,82 +584,109 @@ class BookingViewDetailScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  // Map
-                  if (vm.tutorLatitude != null && vm.tutorLongitude != null)
+                  // Map - Isolated from scroll to prevent frame issues
+                  if (vm.tutorLatitude != null && 
+                      vm.tutorLongitude != null &&
+                      vm.tutorLatitude! >= -90 && 
+                      vm.tutorLatitude! <= 90 &&
+                      vm.tutorLongitude! >= -180 && 
+                      vm.tutorLongitude! <= 180)
                     LayoutBuilder(
                       builder: (context, constraints) {
                         final mapHeight = constraints.maxWidth < 400 ? 180.0 : 200.0;
-                        return ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Container(
-                            height: mapHeight,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: AppColors.border,
-                                width: 1,
-                              ),
-                            ),
-                            child: Stack(
-                              children: [
-                                GoogleMap(
-                                  initialCameraPosition: CameraPosition(
-                                    target: LatLng(
-                                      vm.tutorLatitude!,
-                                      vm.tutorLongitude!,
-                                    ),
-                                    zoom: 14.0,
+                        return RepaintBoundary(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: SizedBox(
+                              height: mapHeight,
+                              width: double.infinity,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: AppColors.border,
+                                    width: 1,
                                   ),
-                                  myLocationButtonEnabled: false,
-                                  zoomControlsEnabled: false,
-                                  mapToolbarEnabled: false,
-                                  markers: {
-                                    Marker(
-                                      markerId: const MarkerId('tutor_location'),
-                                      position: LatLng(
-                                        vm.tutorLatitude!,
-                                        vm.tutorLongitude!,
-                                      ),
-                                      icon: BitmapDescriptor.defaultMarkerWithHue(
-                                        BitmapDescriptor.hueBlue,
-                                      ),
-                                    ),
-                                  },
                                 ),
-                                // Map expand button
-                                Positioned(
-                                  bottom: 8,
-                                  right: 8,
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      // TODO: Open full screen map
-                                    },
-                                    child: Container(
-                                      width: 40,
-                                      height: 40,
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        shape: BoxShape.circle,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.1),
-                                        blurRadius: 4,
-                                        offset: const Offset(0, 2),
+                                child: Stack(
+                                  children: [
+                                    GoogleMap(
+                                        key: ValueKey('booking_map_${vm.tutorLatitude}_${vm.tutorLongitude}'),
+                                        initialCameraPosition: CameraPosition(
+                                          target: LatLng(
+                                            vm.tutorLatitude!,
+                                            vm.tutorLongitude!,
+                                          ),
+                                          zoom: 14.0,
+                                        ),
+                                        onMapCreated: (GoogleMapController controller) {
+                                          vm.setMapController(controller);
+                                        },
+                                        myLocationButtonEnabled: false,
+                                        zoomControlsEnabled: true,
+                                        zoomGesturesEnabled: true,
+                                        scrollGesturesEnabled: true,
+                                        rotateGesturesEnabled: true,
+                                        tiltGesturesEnabled: false,
+                                        mapToolbarEnabled: false,
+                                        compassEnabled: false,
+                                        mapType: MapType.normal,
+                                        liteModeEnabled: false,
+                                        minMaxZoomPreference: const MinMaxZoomPreference(5.0, 20.0),
+                                        markers: {
+                                          Marker(
+                                            markerId: const MarkerId('tutor_location'),
+                                            position: LatLng(
+                                              vm.tutorLatitude!,
+                                              vm.tutorLongitude!,
+                                            ),
+                                            icon: BitmapDescriptor.defaultMarkerWithHue(
+                                              BitmapDescriptor.hueBlue,
+                                            ),
+                                          ),
+                                        },
+                                        gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
+                                          Factory<OneSequenceGestureRecognizer>(
+                                            () => EagerGestureRecognizer(),
+                                          ),
+                                        },
+                                      ),
+                                      // Map expand button
+                                      Positioned(
+                                        bottom: 8,
+                                        right: 8,
+                                        child: GestureDetector(
+                                          onTap: () {
+                                            // TODO: Open full screen map
+                                          },
+                                          child: Container(
+                                            width: 40,
+                                            height: 40,
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              shape: BoxShape.circle,
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.black.withValues(alpha: 0.1),
+                                                  blurRadius: 4,
+                                                  offset: const Offset(0, 2),
+                                                ),
+                                              ],
+                                            ),
+                                            child: const Icon(
+                                              Icons.map,
+                                              color: AppColors.primary,
+                                              size: 20,
+                                            ),
+                                          ),
+                                        ),
                                       ),
                                     ],
-                                      ),
-                                      child: const Icon(
-                                        Icons.map,
-                                        color: AppColors.primary,
-                                        size: 20,
-                                      ),
-                                    ),
                                   ),
                                 ),
-                              ],
+                              ),
                             ),
-                          ),
-                        );
+                          );
                       },
                     ),
                 ],
@@ -730,62 +761,131 @@ class BookingViewDetailScreen extends StatelessWidget {
 
     // For approved bookings, show Pay Now button
     if (status == BookingStatus.approved) {
+      final isPaid = vm.booking?.paymentStatus == 'paid' || vm.booking?.paymentStatus == 'completed';
+      
       return Column(
         children: [
-          // Pay Now Button (Primary)
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: vm.isLoading
-                  ? null
-                  : () async {
-                      final success = await vm.processPayment();
-                      if (!success && vm.errorMessage != null) {
-                        Get.snackbar(
-                          'Payment Error',
-                          vm.errorMessage!,
-                          snackPosition: SnackPosition.BOTTOM,
-                          backgroundColor: AppColors.error,
-                          colorText: Colors.white,
-                          duration: const Duration(seconds: 3),
-                        );
-                      }
-                    },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+          // Pay Now Button (Primary) - Show only if not paid
+          if (!isPaid)
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: vm.isLoading
+                    ? null
+                    : () async {
+                        final success = await vm.processPayment();
+                        if (!success && vm.errorMessage != null) {
+                          Get.snackbar(
+                            'Payment Error',
+                            vm.errorMessage!,
+                            snackPosition: SnackPosition.BOTTOM,
+                            backgroundColor: AppColors.error,
+                            colorText: Colors.white,
+                            duration: const Duration(seconds: 3),
+                          );
+                        }
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 0,
                 ),
-                elevation: 0,
-              ),
-              child: vm.isLoading
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
-                    )
-                  : Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
-                        Icon(Icons.payment, size: 20),
-                        SizedBox(width: 8),
-                        AppText(
-                          'Pay Now',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
+                child: vm.isLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                         ),
-                      ],
-                    ),
+                      )
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(Icons.payment, size: 20),
+                          SizedBox(width: 8),
+                          AppText(
+                            'Pay Now',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+              ),
             ),
-          ),
+          // Complete Booking Button - Show only if paid
+          if (isPaid && vm.canCompleteBooking) ...[
+            if (!isPaid) const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: vm.isLoading
+                    ? null
+                    : () async {
+                        final success = await vm.completeBooking();
+                        if (success) {
+                          Get.snackbar(
+                            'Success',
+                            'Booking marked as completed',
+                            snackPosition: SnackPosition.BOTTOM,
+                            backgroundColor: AppColors.success,
+                            colorText: Colors.white,
+                            duration: const Duration(seconds: 2),
+                          );
+                        } else if (vm.errorMessage != null) {
+                          Get.snackbar(
+                            'Error',
+                            vm.errorMessage!,
+                            snackPosition: SnackPosition.BOTTOM,
+                            backgroundColor: AppColors.error,
+                            colorText: Colors.white,
+                            duration: const Duration(seconds: 3),
+                          );
+                        }
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.success,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 0,
+                ),
+                child: vm.isLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(Icons.check_circle, size: 20),
+                          SizedBox(width: 8),
+                          AppText(
+                            'Complete Booking',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+              ),
+            ),
+          ],
           const SizedBox(height: 12),
           // Chat Button (Secondary)
           SizedBox(
@@ -891,6 +991,93 @@ class BookingViewDetailScreen extends StatelessWidget {
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                       color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    // For completed bookings, show Write Review and Chat buttons
+    if (status == BookingStatus.completed) {
+      return Column(
+        children: [
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: vm.tutor != null
+                  ? () async {
+                      final result = await Get.to(() => ReviewScreen(
+                            tutorId: vm.booking!.tutorId,
+                            tutorName: vm.tutor?.name ?? 'Tutor',
+                            bookingId: vm.booking!.bookingId,
+                          ));
+                      if (result == true) {
+                        // Refresh booking details if review was submitted
+                        vm.refresh();
+                      }
+                    }
+                  : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 0,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Icon(Icons.star, size: 20),
+                  SizedBox(width: 8),
+                  AppText(
+                    'Write a Review',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: vm.tutor != null
+                  ? () {
+                      Get.to(() => IndividualChatScreen(
+                            otherUserId: vm.tutor!.userId,
+                            otherUserName: vm.tutor!.name,
+                            otherUserImageUrl: vm.tutor!.imageUrl,
+                          ));
+                    }
+                  : null,
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                side: BorderSide(color: AppColors.primary.withValues(alpha: 0.5)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Icon(Icons.chat_bubble_outline, size: 20),
+                  SizedBox(width: 8),
+                  AppText(
+                    'Chat with Tutor',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primary,
                     ),
                   ),
                 ],

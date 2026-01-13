@@ -544,7 +544,7 @@ class _TutorProfileScreenState extends State<_TutorProfileView> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               AppText(
-                'Tuition Fees',
+                'Tution Fees',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                       color: Colors.black87,
@@ -585,7 +585,7 @@ class _TutorProfileScreenState extends State<_TutorProfileView> {
                       },
                       decoration: InputDecoration(
                         hintText: '0',
-                        prefixText: '\$ ',
+                        suffixText: "Rs.",
                         prefixStyle: const TextStyle(
                           color: AppColors.textDark,
                           fontWeight: FontWeight.w600,
@@ -616,58 +616,58 @@ class _TutorProfileScreenState extends State<_TutorProfileView> {
                 ),
               ),
               const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    AppText(
-                      'Monthly Fee',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black87,
-                          ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _monthlyFeeController,
-                      focusNode: _monthlyFeeFocusNode,
-                      keyboardType: TextInputType.numberWithOptions(decimal: true),
-                      textInputAction: TextInputAction.done,
-                      onChanged: (value) {
-                        vm.updateMonthlyFee(value);
-                      },
-                      decoration: InputDecoration(
-                        hintText: '0',
-                        prefixText: '\$ ',
-                        prefixStyle: const TextStyle(
-                          color: AppColors.textDark,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        hintStyle: TextStyle(color: Colors.grey[600]),
-                        filled: true,
-                        fillColor: const Color(0xFFF5F6FA),
-                        contentPadding:
-                            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide.none,
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide.none,
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: const BorderSide(
-                            color: AppColors.primary,
-                            width: 2,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              // Expanded(
+              //   child: Column(
+              //     crossAxisAlignment: CrossAxisAlignment.start,
+              //     children: [
+              //       AppText(
+              //         'Monthly Fee',
+              //         style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              //               fontWeight: FontWeight.w600,
+              //               color: Colors.black87,
+              //             ),
+              //       ),
+              //       const SizedBox(height: 8),
+              //       TextField(
+              //         controller: _monthlyFeeController,
+              //         focusNode: _monthlyFeeFocusNode,
+              //         keyboardType: TextInputType.numberWithOptions(decimal: true),
+              //         textInputAction: TextInputAction.done,
+              //         onChanged: (value) {
+              //           vm.updateMonthlyFee(value);
+              //         },
+              //         decoration: InputDecoration(
+              //           hintText: '0',
+              //           prefixText: '\$ ',
+              //           prefixStyle: const TextStyle(
+              //             color: AppColors.textDark,
+              //             fontWeight: FontWeight.w600,
+              //           ),
+              //           hintStyle: TextStyle(color: Colors.grey[600]),
+              //           filled: true,
+              //           fillColor: const Color(0xFFF5F6FA),
+              //           contentPadding:
+              //               const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              //           border: OutlineInputBorder(
+              //             borderRadius: BorderRadius.circular(16),
+              //             borderSide: BorderSide.none,
+              //           ),
+              //           enabledBorder: OutlineInputBorder(
+              //             borderRadius: BorderRadius.circular(16),
+              //             borderSide: BorderSide.none,
+              //           ),
+              //           focusedBorder: OutlineInputBorder(
+              //             borderRadius: BorderRadius.circular(16),
+              //             borderSide: const BorderSide(
+              //               color: AppColors.primary,
+              //               width: 2,
+              //             ),
+              //           ),
+              //         ),
+              //       ),
+              //     ],
+              //   ),
+              // ),
             ],
           ),
         ],

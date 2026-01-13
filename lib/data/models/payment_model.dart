@@ -35,6 +35,8 @@ class PaymentModel {
   final DateTime? completedAt;
   final DateTime? updatedAt;
   final Map<String, dynamic>? metadata; // Additional payment data
+  final bool tutorPaid; // Whether admin has paid this amount to tutor
+  final DateTime? tutorPaidAt; // Date when admin paid tutor
 
   const PaymentModel({
     required this.paymentId,
@@ -53,6 +55,8 @@ class PaymentModel {
     this.completedAt,
     this.updatedAt,
     this.metadata,
+    this.tutorPaid = false,
+    this.tutorPaidAt,
   });
 
   PaymentModel copyWith({
@@ -72,6 +76,8 @@ class PaymentModel {
     DateTime? completedAt,
     DateTime? updatedAt,
     Map<String, dynamic>? metadata,
+    bool? tutorPaid,
+    DateTime? tutorPaidAt,
   }) {
     return PaymentModel(
       paymentId: paymentId ?? this.paymentId,
@@ -90,6 +96,8 @@ class PaymentModel {
       completedAt: completedAt ?? this.completedAt,
       updatedAt: updatedAt ?? this.updatedAt,
       metadata: metadata ?? this.metadata,
+      tutorPaid: tutorPaid ?? this.tutorPaid,
+      tutorPaidAt: tutorPaidAt ?? this.tutorPaidAt,
     );
   }
 
@@ -101,7 +109,7 @@ class PaymentModel {
       'tutorId': tutorId,
       'amount': amount,
       'currency': currency,
-      'status': _statusToString(status),
+      'status': statusToString(status),
       'paymentMethod': _paymentMethodToString(paymentMethod),
       'stripeSessionId': stripeSessionId,
       'stripePaymentIntentId': stripePaymentIntentId,
@@ -111,6 +119,8 @@ class PaymentModel {
       'completedAt': completedAt?.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
       'metadata': metadata,
+      'tutorPaid': tutorPaid,
+      'tutorPaidAt': tutorPaidAt?.toIso8601String(),
     };
   }
 
@@ -136,6 +146,10 @@ class PaymentModel {
           ? DateTime.parse(map['updatedAt'] as String)
           : null,
       metadata: map['metadata'] as Map<String, dynamic>?,
+      tutorPaid: map['tutorPaid'] as bool? ?? false,
+      tutorPaidAt: map['tutorPaidAt'] != null
+          ? DateTime.parse(map['tutorPaidAt'] as String)
+          : null,
     );
   }
 
@@ -148,7 +162,7 @@ class PaymentModel {
     });
   }
 
-  static String _statusToString(PaymentStatus status) {
+  static String statusToString(PaymentStatus status) {
     switch (status) {
       case PaymentStatus.pending:
         return 'pending';

@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/app_text.dart';
+import '../../data/models/review_model.dart';
 import '../../viewmodels/tutor_detail_vm.dart';
 import '../chat/individual_chat_screen.dart';
 import '../../core/utils/debug_logger.dart';
@@ -564,30 +565,238 @@ class TutorDetailScreen extends StatelessWidget {
   }
 
   Widget _buildReviewsTab(TutorDetailViewModel vm) {
+    if (vm.reviewCount == 0) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.star_border,
+              size: 64,
+              color: AppColors.iconGrey,
+            ),
+            const SizedBox(height: 16),
+            const AppText(
+              'No reviews yet',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textDark,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const AppText(
+              'Be the first to review this tutor',
+              style: TextStyle(
+                fontSize: 14,
+                color: AppColors.textGrey,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const AppText(
-          'Reviews',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textDark,
+        // Rating Summary
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.shadow,
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              // Average Rating
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      AppText(
+                        vm.rating.toStringAsFixed(1),
+                        style: const TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textDark,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Icon(
+                        Icons.star,
+                        color: Colors.amber,
+                        size: 28,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  AppText(
+                    '${vm.reviewCount} ${vm.reviewCount == 1 ? 'review' : 'reviews'}',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: AppColors.textGrey,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 16),
-        // TODO: Implement reviews list
-        Center(
-          child: AppText(
-            'No reviews yet',
-            style: TextStyle(
-              fontSize: 14,
-              color: AppColors.textGrey,
-            ),
+        // Reviews List
+        Expanded(
+          child: ListView.builder(
+            itemCount: vm.reviews.length,
+            itemBuilder: (context, index) {
+              final review = vm.reviews[index];
+              return _buildReviewCard(review);
+            },
           ),
         ),
       ],
     );
+  }
+
+  Widget _buildReviewCard(review) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadow,
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Rating Stars
+          Row(
+            children: List.generate(5, (index) {
+              return Icon(
+                index < review.rating ? Icons.star : Icons.star_border,
+                size: 18,
+                color: index < review.rating ? Colors.amber : AppColors.iconGrey,
+              );
+            }),
+          ),
+          const SizedBox(height: 8),
+          // Comment
+          if (review.hasComment) ...[
+            AppText(
+              review.comment!,
+              style: const TextStyle(
+                fontSize: 14,
+                color: AppColors.textDark,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+          // Date
+          AppText(
+            _formatDate(review.createdAt),
+            style: const TextStyle(
+              fontSize: 12,
+              color: AppColors.textLight,
+            ),
+          ),
+          // Tutor Reply (if exists)
+          if (review.hasReply) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.lightBackground,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const AppText(
+                    'Tutor\'s Reply',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textDark,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  AppText(
+                    review.reply!,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: AppColors.textGrey,
+                      height: 1.4,
+                    ),
+                  ),
+                  if (review.repliedAt != null) ...[
+                    const SizedBox(height: 4),
+                    AppText(
+                      _formatDate(review.repliedAt!),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppColors.textLight,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inDays == 0) {
+      if (difference.inHours == 0) {
+        if (difference.inMinutes == 0) {
+          return 'Just now';
+        }
+        return '${difference.inMinutes}m ago';
+      }
+      return '${difference.inHours}h ago';
+    } else if (difference.inDays == 1) {
+      return 'Yesterday';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays}d ago';
+    } else {
+      final months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec'
+      ];
+      return '${months[date.month - 1]} ${date.day}, ${date.year}';
+    }
   }
 
   Widget _buildFooterButtons(TutorDetailViewModel vm, BuildContext context) {

@@ -3,13 +3,16 @@ import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../data/models/user_model.dart';
 import '../data/models/tutor_model.dart';
+import '../data/models/review_model.dart';
 import '../data/services/user_services.dart';
 import '../data/services/tutor_services.dart';
+import '../data/services/review_service.dart';
 import '../core/utils/debug_logger.dart';
 
 class TutorDetailViewModel extends ChangeNotifier {
   final UserService _userService;
   final TutorService _tutorService;
+  final ReviewService _reviewService;
   final FirebaseAuth _auth;
 
   final String tutorId;
@@ -18,9 +21,11 @@ class TutorDetailViewModel extends ChangeNotifier {
     required this.tutorId,
     UserService? userService,
     TutorService? tutorService,
+    ReviewService? reviewService,
     FirebaseAuth? auth,
   })  : _userService = userService ?? UserService(),
         _tutorService = tutorService ?? TutorService(),
+        _reviewService = reviewService ?? ReviewService(),
         _auth = auth ?? FirebaseAuth.instance;
 
   // Loading state
@@ -49,9 +54,14 @@ class TutorDetailViewModel extends ChangeNotifier {
   String? _selectedTimeSlot;
   String? get selectedTimeSlot => _selectedTimeSlot;
 
-  // Mock data (will be replaced with actual data from Firestore)
-  double get rating => 4.9; // TODO: Fetch from reviews collection
-  int get reviewCount => 82; // TODO: Fetch from reviews collection
+  // Reviews data
+  List<ReviewModel> _reviews = [];
+  double _averageRating = 0.0;
+  int _reviewCount = 0;
+
+  List<ReviewModel> get reviews => _reviews;
+  double get rating => _averageRating;
+  int get reviewCount => _reviewCount;
   double get hourlyFee => _tutor?.hourlyFee ?? 0.0; // Get fee from TutorModel, default to 0 if not set
   List<String> get languages => ['English', 'German']; // TODO: Add languages field to TutorModel
   String get fullAddress {
@@ -115,6 +125,9 @@ class TutorDetailViewModel extends ChangeNotifier {
         return;
       }
 
+      // Load reviews and ratings
+      await _loadReviews();
+
       _setLoading(false);
       notifyListeners();
     } catch (e) {
@@ -146,31 +159,36 @@ class TutorDetailViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Request booking
-  Future<bool> requestBooking({
-    required String subject,
-    required DateTime bookingDate,
-    required String bookingTime,
-    String? notes,
-  }) async {
-    // #region agent log
-    await DebugLogger.log(location: 'tutor_detail_vm.dart:131', message: 'Request booking called', data: {'tutorId': tutorId, 'subject': subject, 'date': bookingDate.toString(), 'time': bookingTime}, hypothesisId: 'BOOKING-CREATE-1');
-    // #endregion
+  // ---------- Load Reviews ----------
+  Future<void> _loadReviews() async {
     try {
-      // TODO: Implement booking request creation
-      // This will call BookingService to create a booking request
-      // #region agent log
-      await DebugLogger.log(location: 'tutor_detail_vm.dart:140', message: 'Booking request not implemented - returning true without creating booking', data: {'tutorId': tutorId}, hypothesisId: 'BOOKING-CREATE-1');
-      // #endregion
-      return true;
+      _reviews = await _reviewService.getReviewsByTutorId(tutorId);
+      _reviewCount = _reviews.length;
+      
+      if (_reviews.isNotEmpty) {
+        _averageRating = await _reviewService.getAverageRating(tutorId);
+      } else {
+        _averageRating = 0.0;
+      }
+
+      if (kDebugMode) {
+        print('✅ Reviews loaded: $_reviewCount reviews, average rating: $_averageRating');
+      }
     } catch (e) {
-      // #region agent log
-      await DebugLogger.log(location: 'tutor_detail_vm.dart:144', message: 'Booking request failed', data: {'tutorId': tutorId, 'error': e.toString()}, hypothesisId: 'BOOKING-CREATE-1');
-      // #endregion
-      _errorMessage = 'Failed to request booking: ${e.toString()}';
-      notifyListeners();
-      return false;
+      if (kDebugMode) {
+        print('❌ Error loading reviews: $e');
+      }
+      // Don't fail initialization if reviews fail to load
+      _reviews = [];
+      _reviewCount = 0;
+      _averageRating = 0.0;
     }
+  }
+
+  // Refresh reviews (call after submitting a new review)
+  Future<void> refreshReviews() async {
+    await _loadReviews();
+    notifyListeners();
   }
 
   void _setLoading(bool value) {

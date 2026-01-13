@@ -34,27 +34,32 @@ class _TutorSignupViewState extends State<_TutorSignupView> {
   final _fullNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   final _phoneController = TextEditingController();
   final _subjectsExpController = TextEditingController();
 
   final _fullNameFocusNode = FocusNode();
   final _emailFocusNode = FocusNode();
   final _passwordFocusNode = FocusNode();
+  final _confirmPasswordFocusNode = FocusNode();
   final _phoneFocusNode = FocusNode();
   final _subjectsExpFocusNode = FocusNode();
 
   bool _passwordVisible = false;
+  bool _confirmPasswordVisible = false;
 
   @override
   void dispose() {
     _fullNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     _phoneController.dispose();
     _subjectsExpController.dispose();
     _fullNameFocusNode.dispose();
     _emailFocusNode.dispose();
     _passwordFocusNode.dispose();
+    _confirmPasswordFocusNode.dispose();
     _phoneFocusNode.dispose();
     _subjectsExpFocusNode.dispose();
     super.dispose();
@@ -143,6 +148,10 @@ class _TutorSignupViewState extends State<_TutorSignupView> {
                     focusNode: _passwordFocusNode,
                     obscureText: !_passwordVisible,
                     onChanged: vm.updateTutorPassword,
+                    textInputAction: TextInputAction.next,
+                    onSubmitted: (_) {
+                      FocusScope.of(context).requestFocus(_confirmPasswordFocusNode);
+                    },
                     decoration: InputDecoration(
                       hintText: 'Enter your password',
                       filled: true,
@@ -182,6 +191,86 @@ class _TutorSignupViewState extends State<_TutorSignupView> {
                         borderRadius: BorderRadius.circular(16),
                         borderSide: BorderSide(
                           color: vm.tutorPasswordError != null ? AppColors.error : AppColors.primary,
+                          width: 2,
+                        ),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                          color: AppColors.error,
+                          width: 2,
+                        ),
+                      ),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                          color: AppColors.error,
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Confirm Password
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AppText(
+                    'Confirm Password',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textDark,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _confirmPasswordController,
+                    focusNode: _confirmPasswordFocusNode,
+                    obscureText: !_confirmPasswordVisible,
+                    onChanged: vm.updateTutorConfirmPassword,
+                    textInputAction: TextInputAction.next,
+                    decoration: InputDecoration(
+                      hintText: 'Re-enter your password',
+                      filled: true,
+                      fillColor: AppColors.lightBackground,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                      suffixIcon: IconButton(
+                        onPressed: () {
+                          setState(() => _confirmPasswordVisible = !_confirmPasswordVisible);
+                        },
+                        icon: Icon(
+                          _confirmPasswordVisible
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                          color: AppColors.iconGrey,
+                        ),
+                      ),
+                      errorText: vm.tutorConfirmPasswordError,
+                      errorStyle: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.error,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(
+                          color: vm.tutorConfirmPasswordError != null ? AppColors.error : Colors.transparent,
+                          width: 2,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(
+                          color: vm.tutorConfirmPasswordError != null ? AppColors.error : AppColors.primary,
                           width: 2,
                         ),
                       ),
@@ -320,6 +409,7 @@ class _TutorSignupViewState extends State<_TutorSignupView> {
                   vm.tutorFullNameError == null && 
                   vm.tutorEmailError == null && 
                   vm.tutorPasswordError == null && 
+                  vm.tutorConfirmPasswordError == null &&
                   vm.tutorPhoneError == null && 
                   vm.tutorSubjectsExpError == null) ...[
                 Text(
@@ -351,6 +441,7 @@ class _TutorSignupViewState extends State<_TutorSignupView> {
                       vm.tutorFullNameError == null && 
                       vm.tutorEmailError == null && 
                       vm.tutorPasswordError == null && 
+                      vm.tutorConfirmPasswordError == null &&
                       vm.tutorPhoneError == null && 
                       vm.tutorSubjectsExpError == null) {
                     Get.snackbar(

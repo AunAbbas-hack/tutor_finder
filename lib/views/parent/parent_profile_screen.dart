@@ -8,6 +8,7 @@ import '../../core/widgets/app_primary_button.dart';
 import '../../parent_viewmodels/parent_profile_vm.dart';
 import 'manage_children_screen.dart';
 import 'parent_edit_profile_screen.dart';
+import 'payment_history_screen.dart';
 
 
 class ParentProfileScreen extends StatefulWidget {
@@ -57,8 +58,8 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                           _buildAccountSection(context),
                           const SizedBox(height: 24),
                           // Notifications Section
-                          _buildNotificationsSection(context, vm),
-                          const SizedBox(height: 24),
+                          // _buildNotificationsSection(context, vm),
+                          // const SizedBox(height: 24),
                           // Support & Legal Section
                           _buildSupportSection(context),
                           const SizedBox(height: 32),
@@ -259,40 +260,30 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
         ),
         _buildSettingsItem(
           context,
-          icon: Icons.payment,
-          title: 'Payment Methods',
-          onTap: () {
-            // TODO: Navigate to payment methods
-            Get.snackbar(
-              'Coming Soon',
-              'Payment Methods feature will be available soon',
-              snackPosition: SnackPosition.BOTTOM,
-              backgroundColor: AppColors.primary,
-              colorText: Colors.white,
-              borderRadius: 12,
-              margin: const EdgeInsets.all(16),
-              duration: const Duration(seconds: 2),
-            );
-          },
-        ),
-        _buildSettingsItem(
-          context,
           icon: Icons.receipt_long,
-          title: 'Subscription & Billing',
+          title: 'Payment History',
           onTap: () {
-            // TODO: Navigate to subscription
-            Get.snackbar(
-              'Coming Soon',
-              'Subscription & Billing feature will be available soon',
-              snackPosition: SnackPosition.BOTTOM,
-              backgroundColor: AppColors.primary,
-              colorText: Colors.white,
-              borderRadius: 12,
-              margin: const EdgeInsets.all(16),
-              duration: const Duration(seconds: 2),
-            );
+            Get.to(() => const PaymentHistoryScreen());
           },
         ),
+        // _buildSettingsItem(
+        //   context,
+        //   icon: Icons.payment,
+        //   title: 'Payment Methods',
+        //   onTap: () {
+        //     // TODO: Navigate to payment methods
+        //     Get.snackbar(
+        //       'Coming Soon',
+        //       'Payment Methods feature will be available soon',
+        //       snackPosition: SnackPosition.BOTTOM,
+        //       backgroundColor: AppColors.primary,
+        //       colorText: Colors.white,
+        //       borderRadius: 12,
+        //       margin: const EdgeInsets.all(16),
+        //       duration: const Duration(seconds: 2),
+        //     );
+        //   },
+        // ),
       ],
     );
   }

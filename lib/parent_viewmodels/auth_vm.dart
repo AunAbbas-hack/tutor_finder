@@ -208,22 +208,26 @@ class AuthViewModel extends ChangeNotifier {
   String _tutorFullName = '';
   String _tutorEmail = '';
   String _tutorPassword = '';
+  String _tutorConfirmPassword = '';
   String _tutorPhone = '';
   String _tutorSubjectsExp = '';
   String? _tutorFullNameError;
   String? _tutorEmailError;
   String? _tutorPasswordError;
+  String? _tutorConfirmPasswordError;
   String? _tutorPhoneError;
   String? _tutorSubjectsExpError;
 
   String get tutorFullName => _tutorFullName;
   String get tutorEmail => _tutorEmail;
   String get tutorPassword => _tutorPassword;
+  String get tutorConfirmPassword => _tutorConfirmPassword;
   String get tutorPhone => _tutorPhone;
   String get tutorSubjectsExp => _tutorSubjectsExp;
   String? get tutorFullNameError => _tutorFullNameError;
   String? get tutorEmailError => _tutorEmailError;
   String? get tutorPasswordError => _tutorPasswordError;
+  String? get tutorConfirmPasswordError => _tutorConfirmPasswordError;
   String? get tutorPhoneError => _tutorPhoneError;
   String? get tutorSubjectsExpError => _tutorSubjectsExpError;
 
@@ -248,6 +252,18 @@ class AuthViewModel extends ChangeNotifier {
     _tutorPassword = value;
     _errorMessage = null;
     _tutorPasswordError = _validateTutorPassword(_tutorPassword);
+    // Re-validate confirm password when password changes
+    if (_tutorConfirmPassword.isNotEmpty) {
+      _tutorConfirmPasswordError = _validateTutorConfirmPassword(_tutorConfirmPassword);
+    }
+    _safeNotifyListeners();
+  }
+
+  void updateTutorConfirmPassword(String value) {
+    if (_isDisposed) return;
+    _tutorConfirmPassword = value;
+    _errorMessage = null;
+    _tutorConfirmPasswordError = _validateTutorConfirmPassword(_tutorConfirmPassword);
     _safeNotifyListeners();
   }
 
@@ -286,6 +302,14 @@ class AuthViewModel extends ChangeNotifier {
     return _validateStrongPassword(value);
   }
 
+  String? _validateTutorConfirmPassword(String value) {
+    if (value.isEmpty) return null;
+    if (value != _tutorPassword) {
+      return 'Passwords do not match.';
+    }
+    return null;
+  }
+
   String? _validateTutorPhone(String value) {
     if (value.isEmpty) return null;
     return null;
@@ -313,12 +337,16 @@ class AuthViewModel extends ChangeNotifier {
     _tutorPasswordError = _tutorPassword.isEmpty 
         ? 'Password is required.' 
         : _validateStrongPassword(_tutorPassword);
+    _tutorConfirmPasswordError = _tutorConfirmPassword.isEmpty 
+        ? 'Please confirm your password.' 
+        : _validateTutorConfirmPassword(_tutorConfirmPassword);
     _tutorPhoneError = _tutorPhone.isEmpty ? 'Phone number is required.' : null;
     _tutorSubjectsExpError = _tutorSubjectsExp.isEmpty ? 'Subjects & experience is required.' : null;
     
     if (_tutorFullNameError != null || 
         _tutorEmailError != null || 
         _tutorPasswordError != null || 
+        _tutorConfirmPasswordError != null ||
         _tutorPhoneError != null || 
         _tutorSubjectsExpError != null) {
       _safeNotifyListeners();

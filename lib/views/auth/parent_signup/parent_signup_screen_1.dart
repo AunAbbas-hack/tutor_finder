@@ -184,7 +184,10 @@ class _ParentAccountStepScreenState extends State<ParentAccountStepScreen> {
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide.none,
+                          borderSide: BorderSide(
+                              color: vm.passwordError!=null ? AppColors.error : Colors.black12,
+                              width: 2
+                          ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
@@ -267,7 +270,9 @@ class _ParentAccountStepScreenState extends State<ParentAccountStepScreen> {
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide.none,
+                          borderSide: BorderSide(
+                              color: vm.confirmPasswordError !=null ? AppColors.error : Colors.black12,
+                              width: 2                          ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
