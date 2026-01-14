@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../admin_viewmodels/finance_vm.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/app_text.dart';
+import '../../data/models/tutor_model.dart';
 
 class FinanceScreen extends StatefulWidget {
   const FinanceScreen({super.key});
@@ -430,6 +431,13 @@ class _FinanceScreenState extends State<FinanceScreen> {
             ],
           ),
           SizedBox(height: spacing.itemGap),
+          // Bank Information Section
+          if (paymentDisplay.tutor != null &&
+              (paymentDisplay.tutor!.accountTitle != null ||
+                  paymentDisplay.tutor!.bankName != null ||
+                  paymentDisplay.tutor!.accountNumber != null))
+            _buildBankInformationSection(paymentDisplay.tutor!, spacing),
+          SizedBox(height: spacing.itemGap),
           if (!payment.tutorPaid)
             SizedBox(
               width: double.infinity,
@@ -528,6 +536,122 @@ class _FinanceScreenState extends State<FinanceScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildBankInformationSection(
+    TutorModel tutorModel,
+    _FinanceSpacing spacing,
+  ) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(spacing.cardPadding),
+      decoration: BoxDecoration(
+        color: AppColors.lightBackground,
+        borderRadius: BorderRadius.circular(spacing.cardRadius),
+        border: Border.all(
+          color: AppColors.border,
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.account_balance,
+                  color: AppColors.primary,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AppText(
+                      'Bank Information',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textDark,
+                          ),
+                    ),
+                    const SizedBox(height: 2),
+                    AppText(
+                      'Receive your earnings',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppColors.textGrey,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (tutorModel.accountTitle != null && tutorModel.accountTitle!.isNotEmpty)
+            _buildBankInfoField('ACCOUNT TITLE', tutorModel.accountTitle!, spacing),
+          if (tutorModel.bankName != null && tutorModel.bankName!.isNotEmpty) ...[
+            if (tutorModel.accountTitle != null && tutorModel.accountTitle!.isNotEmpty)
+              SizedBox(height: spacing.smallGap),
+            _buildBankInfoField('BANK NAME', tutorModel.bankName!, spacing),
+          ],
+          if (tutorModel.accountNumber != null && tutorModel.accountNumber!.isNotEmpty) ...[
+            if ((tutorModel.accountTitle != null && tutorModel.accountTitle!.isNotEmpty) ||
+                (tutorModel.bankName != null && tutorModel.bankName!.isNotEmpty))
+              SizedBox(height: spacing.smallGap),
+            _buildBankInfoField('IBAN / ACCOUNT NUMBER', tutorModel.accountNumber!, spacing),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBankInfoField(String label, String value, _FinanceSpacing spacing) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AppText(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textGrey,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Container(
+          width: double.infinity,
+          padding: EdgeInsets.symmetric(
+            horizontal: spacing.cardPadding * 0.8,
+            vertical: spacing.smallGap * 1.2,
+          ),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(spacing.cardRadius * 0.8),
+            border: Border.all(
+              color: AppColors.border,
+              width: 1,
+            ),
+          ),
+          child: AppText(
+            value,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textDark,
+            ),
+          ),
+        ),
+      ],
     );
   }
 

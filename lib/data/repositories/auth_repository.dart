@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/user_model.dart';
 import '../models/tutor_model.dart';
@@ -92,20 +93,22 @@ class AuthRepository {
   // ---------- COMPLETE PARENT SIGNUP (with Student) ----------
   /// Complete parent signup: users + parents + students collections me data save karega.
   /// SRS ke according: Parent signup me User, Parent, aur Student dono create hone chahiye.
+  /// Child ke liye unique studentId generate karta hai (parentId ke equal nahi) taake manage_children_screen mein show ho.
   Future<User?> registerParentWithStudent({
     required UserModel baseUser,
     required ParentModel parent,
     required StudentModel student,
     required String password,
+    required String childName, // Child's name for UserModel
   }) async {
-    // 1) Auth user create
+    // 1) Auth user create (for parent)
     final cred = await _authService.signUpWithEmail(
       email: baseUser.email,
       password: password,
     );
     final uid = cred.user!.uid;
 
-    // 2) users collection
+    // 2) users collection (parent's user record)
     if (kDebugMode) {
       print('📍 AuthRepository.registerParentWithStudent:');
       print('   Before copyWith - latitude: ${baseUser.latitude}, longitude: ${baseUser.longitude}');
@@ -120,13 +123,38 @@ class AuthRepository {
     final parentWithId = parent.copyWith(parentId: uid);
     await _parentService.createParent(parentWithId);
 
-    // 4) students collection (SRS requirement)
-    // Note: During signup, studentId = parentId (same uid), but parentId is set to link to parent
+    // 4) Create child with unique studentId (different from parentId)
+    // Generate unique student ID using Firestore document reference (same as new_child_sheet)
+    final studentDocRef = FirebaseFirestore.instance.collection('users').doc();
+    final studentId = studentDocRef.id;
+
+    if (kDebugMode) {
+      print('📍 Creating child:');
+      print('   Parent ID: $uid');
+      print('   Child Student ID: $studentId');
+      print('   Child Name: $childName');
+    }
+
+    // 5) Create UserModel for child (student role)
+    final childUserModel = UserModel(
+      userId: studentId,
+      name: childName,
+      email: '', // Students don't need email
+      role: UserRole.student,
+      status: UserStatus.active,
+    );
+    await _userService.createUser(childUserModel);
+
+    // 6) Create StudentModel with unique studentId
     final studentWithId = student.copyWith(
-      studentId: uid,
-      parentId: uid, // Parent's uid (same as studentId during initial signup)
+      studentId: studentId, // Unique ID, not equal to parentId
+      parentId: uid, // Link to parent
     );
     await _studentService.createStudent(studentWithId);
+
+    if (kDebugMode) {
+      print('✅ Child created successfully with studentId: $studentId');
+    }
 
     return cred.user;
   }

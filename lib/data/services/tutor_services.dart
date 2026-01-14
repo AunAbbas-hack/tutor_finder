@@ -33,6 +33,8 @@ class TutorService {
     nonArrayData.remove('education');
     nonArrayData.remove('certifications');
     nonArrayData.remove('portfolioDocuments');
+    nonArrayData.remove('subjects');
+    nonArrayData.remove('languages');
     
     if (nonArrayData.isNotEmpty) {
       await _tutorsCol.doc(tutor.tutorId).set(nonArrayData, SetOptions(merge: true));
@@ -43,6 +45,8 @@ class TutorService {
       'education': tutor.education.map((e) => e.toMap()).toList(),
       'certifications': tutor.certifications.map((c) => c.toMap()).toList(),
       'portfolioDocuments': tutor.portfolioDocuments.map((p) => p.toMap()).toList(),
+      'subjects': tutor.subjects,
+      'languages': tutor.languages,
     });
   }
 

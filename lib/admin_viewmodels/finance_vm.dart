@@ -3,8 +3,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../data/models/payment_model.dart';
 import '../data/models/user_model.dart';
+import '../data/models/tutor_model.dart';
 import '../data/services/payment_services.dart';
 import '../data/services/user_services.dart';
+import '../data/services/tutor_services.dart';
 
 enum PaymentSort { dateDesc, amountDesc, nameAsc }
 
@@ -14,6 +16,7 @@ class PaymentDisplayModel {
   final String parentName;
   final Color avatarColor1;
   final Color avatarColor2;
+  final TutorModel? tutor; // Include tutor data for bank details
 
   PaymentDisplayModel({
     required this.payment,
@@ -21,12 +24,14 @@ class PaymentDisplayModel {
     required this.parentName,
     required this.avatarColor1,
     required this.avatarColor2,
+    this.tutor,
   });
 }
 
 class FinanceViewModel extends ChangeNotifier {
   final PaymentService _paymentService;
   final UserService _userService;
+  final TutorService _tutorService;
   bool _isDisposed = false;
   bool _isLoading = false;
   String? _errorMessage;
@@ -36,8 +41,10 @@ class FinanceViewModel extends ChangeNotifier {
   FinanceViewModel({
     PaymentService? paymentService,
     UserService? userService,
+    TutorService? tutorService,
   })  : _paymentService = paymentService ?? PaymentService(),
-        _userService = userService ?? UserService();
+        _userService = userService ?? UserService(),
+        _tutorService = tutorService ?? TutorService();
 
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
@@ -65,20 +72,22 @@ class FinanceViewModel extends ChangeNotifier {
       // Load all completed payments
       final payments = await _paymentService.getPaymentsByStatus(PaymentStatus.completed);
       
-      // Load user names for each payment
+      // Load user names and tutor data for each payment
       final displayPayments = <PaymentDisplayModel>[];
       for (final payment in payments) {
-        final tutor = await _userService.getUserById(payment.tutorId);
+        final tutorUser = await _userService.getUserById(payment.tutorId);
         final parent = await _userService.getUserById(payment.parentId);
+        final tutorModel = await _tutorService.getTutorById(payment.tutorId);
         
-        if (tutor != null && parent != null) {
-          final colors = _getAvatarColors(tutor.name);
+        if (tutorUser != null && parent != null) {
+          final colors = _getAvatarColors(tutorUser.name);
           displayPayments.add(PaymentDisplayModel(
             payment: payment,
-            tutorName: tutor.name,
+            tutorName: tutorUser.name,
             parentName: parent.name,
             avatarColor1: colors[0],
             avatarColor2: colors[1],
+            tutor: tutorModel,
           ));
         }
       }

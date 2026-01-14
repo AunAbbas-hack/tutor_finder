@@ -104,6 +104,10 @@ class TutorModel {
   final double? monthlyFee; // Monthly tuition fee
   final String? cnicFrontUrl; // CNIC front side image URL
   final String? cnicBackUrl; // CNIC back side image URL
+  final String? accountTitle; // Bank account title/name
+  final String? bankName; // Bank name
+  final String? accountNumber; // IBAN / Account Number
+  final List<String> languages; // Languages spoken by tutor
 
   const TutorModel({
     required this.tutorId,
@@ -118,6 +122,10 @@ class TutorModel {
     this.monthlyFee,
     this.cnicFrontUrl,
     this.cnicBackUrl,
+    this.accountTitle,
+    this.bankName,
+    this.accountNumber,
+    this.languages = const [],
   });
 
   TutorModel copyWith({
@@ -133,6 +141,10 @@ class TutorModel {
     double? monthlyFee,
     String? cnicFrontUrl,
     String? cnicBackUrl,
+    String? accountTitle,
+    String? bankName,
+    String? accountNumber,
+    List<String>? languages,
   }) {
     return TutorModel(
       tutorId: tutorId ?? this.tutorId,
@@ -147,6 +159,10 @@ class TutorModel {
       monthlyFee: monthlyFee ?? this.monthlyFee,
       cnicFrontUrl: cnicFrontUrl ?? this.cnicFrontUrl,
       cnicBackUrl: cnicBackUrl ?? this.cnicBackUrl,
+      accountTitle: accountTitle ?? this.accountTitle,
+      bankName: bankName ?? this.bankName,
+      accountNumber: accountNumber ?? this.accountNumber,
+      languages: languages ?? this.languages,
     );
   }
 
@@ -164,6 +180,10 @@ class TutorModel {
       'monthlyFee': monthlyFee,
       'cnicFrontUrl': cnicFrontUrl,
       'cnicBackUrl': cnicBackUrl,
+      'accountTitle': accountTitle,
+      'bankName': bankName,
+      'accountNumber': accountNumber,
+      'languages': languages,
     };
   }
 
@@ -192,6 +212,13 @@ class TutorModel {
       monthlyFee: (map['monthlyFee'] as num?)?.toDouble(),
       cnicFrontUrl: map['cnicFrontUrl'] as String?,
       cnicBackUrl: map['cnicBackUrl'] as String?,
+      accountTitle: map['accountTitle'] as String?,
+      bankName: map['bankName'] as String?,
+      accountNumber: map['accountNumber'] as String?,
+      languages: (map['languages'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          <String>[],
     );
   }
 }

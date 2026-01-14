@@ -37,6 +37,7 @@ class TutorProfileViewModel extends ChangeNotifier {
   bool _isCertificationsExpanded = false;
   bool _isPortfolioExpanded = false;
   bool _isFeesExpanded = false;
+  bool _isLanguagesExpanded = false;
 
   // Getters
   bool get isLoading => _isLoading;
@@ -52,6 +53,7 @@ class TutorProfileViewModel extends ChangeNotifier {
   String get aboutMe => _tutor?.bio ?? '';
   String get imageUrl => _user?.imageUrl ?? '';
   List<String> get areasOfExpertise => _tutor?.subjects ?? [];
+  List<String> get languages => _tutor?.languages ?? [];
   double? get latitude => _user?.latitude;
   double? get longitude => _user?.longitude;
   bool get hasLocation => _user?.latitude != null && _user?.longitude != null;
@@ -86,6 +88,7 @@ class TutorProfileViewModel extends ChangeNotifier {
   bool get isCertificationsExpanded => _isCertificationsExpanded;
   bool get isPortfolioExpanded => _isPortfolioExpanded;
   bool get isFeesExpanded => _isFeesExpanded;
+  bool get isLanguagesExpanded => _isLanguagesExpanded;
 
   // ---------- Initialize ----------
   Future<void> initialize() async {
@@ -197,6 +200,11 @@ class TutorProfileViewModel extends ChangeNotifier {
   // ---------- Toggle Expandable Sections ----------
   void toggleExpertise() {
     _isExpertiseExpanded = !_isExpertiseExpanded;
+    notifyListeners();
+  }
+
+  void toggleLanguages() {
+    _isLanguagesExpanded = !_isLanguagesExpanded;
     notifyListeners();
   }
 

@@ -247,10 +247,10 @@ class TutorBookingRequestDetailScreen extends StatelessWidget {
     String fee = '';
     if (booking.monthlyBudget != null) {
       if (booking.bookingType == BookingType.monthlyBooking) {
-        fee = '₹${booking.monthlyBudget!.toStringAsFixed(0)}/month';
+        fee = '${booking.monthlyBudget!.toStringAsFixed(0)}Rs./month';
       } else {
         // Single session - show as hourly rate
-        fee = '₹${booking.monthlyBudget!.toStringAsFixed(0)}/hr';
+        fee = '${booking.monthlyBudget!.toStringAsFixed(0)}Rs./hr';
       }
     } else {
       // Fallback if budget not available

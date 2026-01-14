@@ -76,7 +76,8 @@ class TutorDetailViewModel extends ChangeNotifier {
   double get rating => _averageRating;
   int get reviewCount => _reviewCount;
   double get hourlyFee => _tutor?.hourlyFee ?? 0.0; // Get fee from TutorModel, default to 0 if not set
-  List<String> get languages => ['English', 'German']; // TODO: Add languages field to TutorModel
+  double? get monthlyFee => _tutor?.monthlyFee; // Get monthly fee from TutorModel
+  List<String> get languages => _tutor?.languages ?? []; // Get languages from TutorModel
   String get fullAddress {
     if (_locationAddress != null && _locationAddress!.isNotEmpty) {
       return _locationAddress!;

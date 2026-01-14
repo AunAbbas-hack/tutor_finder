@@ -91,6 +91,12 @@ class TutorProfileScreen extends StatelessWidget {
                                , child: _buildAreasOfExpertiseSection(vm)),
                             const SizedBox(height: 24),
 
+                            // Languages Section
+                            Align(
+                                alignment: Alignment.topLeft,
+                                child: _buildLanguagesSection(vm)),
+                            const SizedBox(height: 24),
+
                             // Fee Structure Section - Always show
                             Align(
                               alignment: Alignment.topLeft,
@@ -433,32 +439,32 @@ class TutorProfileScreen extends StatelessWidget {
                 ],
                 
                // Monthly Rate
-               //  if (monthlyFee != null && monthlyFee > 0) ...[
-               //    Expanded(
-               //      child: Column(
-               //        crossAxisAlignment: CrossAxisAlignment.start,
-               //        children: [
-               //          const AppText(
-               //            'Monthly Rate',
-               //            style: TextStyle(
-               //              fontSize: 14,
-               //              fontWeight: FontWeight.w500,
-               //              color: AppColors.textDark,
-               //            ),
-               //          ),
-               //          const SizedBox(height: 8),
-               //          AppText(
-               //            '₹${monthlyFee.toStringAsFixed(0)} /mo',
-               //            style: const TextStyle(
-               //              fontSize: 24,
-               //              fontWeight: FontWeight.w700,
-               //              color: AppColors.primary,
-               //            ),
-               //          ),
-               //        ],
-               //      ),
-               //    ),
-               //  ],
+                if (monthlyFee != null && monthlyFee > 0) ...[
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const AppText(
+                          'Monthly Rate',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.textDark,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        AppText(
+                          '${monthlyFee.toStringAsFixed(0)}Rs. /mo',
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ],
             ),
           ] else ...[
@@ -470,48 +476,7 @@ class TutorProfileScreen extends StatelessWidget {
               ),
             ),
           ],
-          
-          // Savings Note
-          // if (savingsPercentage != null && savingsPercentage > 0) ...[
-          //   const SizedBox(height: 12),
-          //   Container(
-          //     padding: const EdgeInsets.all(12),
-          //     decoration: BoxDecoration(
-          //       color: AppColors.primary.withOpacity(0.1),
-          //       borderRadius: BorderRadius.circular(8),
-          //     ),
-          //     child: Row(
-          //       children: [
-          //         Icon(
-          //           Icons.info_outline,
-          //           size: 16,
-          //           color: AppColors.primary,
-          //         ),
-          //         const SizedBox(width: 8),
-          //         Expanded(
-          //           child: AppText(
-          //             'Save over ${savingsPercentage.toStringAsFixed(0)}% with monthly plans. Package deals available for 10+ hours.',
-          //             style: TextStyle(
-          //               fontSize: 12,
-          //               color: AppColors.primary,
-          //               fontWeight: FontWeight.w500,
-          //             ),
-          //           ),
-          //         ),
-          //       ],
-          //     ),
-          //   ),
-          // ]
-          // else if (hourlyFee != null || monthlyFee != null) ...[
-          //   const SizedBox(height: 12),
-          //   const AppText(
-          //     'Package deals available for 10+ hours.',
-          //     style: TextStyle(
-          //       fontSize: 12,
-          //       color: AppColors.textGrey,
-          //     ),
-          //   ),
-          // ],
+
         ],
       ),
     );
@@ -573,6 +538,76 @@ class TutorProfileScreen extends StatelessWidget {
                   ),
                   child: AppText(
                     subject,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildLanguagesSection(TutorProfileViewModel vm) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InkWell(
+          onTap: vm.toggleLanguages,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const AppText(
+                'Languages',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textDark,
+                ),
+              ),
+              Icon(
+                vm.isLanguagesExpanded
+                    ? Icons.keyboard_arrow_up
+                    : Icons.keyboard_arrow_down,
+                color: AppColors.iconGrey,
+              ),
+            ],
+          ),
+        ),
+        if (vm.isLanguagesExpanded) ...[
+          const SizedBox(height: 12),
+          if (vm.languages.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.lightBackground,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: AppText(
+                'No languages added.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textGrey,
+                ),
+              ),
+            )
+          else
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: vm.languages.map((language) {
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: AppText(
+                    language,
                     style: const TextStyle(
                       fontSize: 14,
                       color: AppColors.primary,

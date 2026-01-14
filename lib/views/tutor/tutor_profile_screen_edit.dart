@@ -44,11 +44,15 @@ class _TutorProfileScreenState extends State<_TutorProfileView> {
   late TextEditingController _educationInstitutionController;
   late TextEditingController _educationPeriodController;
   late TextEditingController _expertiseController;
+  late TextEditingController _languageController;
   late TextEditingController _certificationTitleController;
   late TextEditingController _certificationIssuerController;
   late TextEditingController _certificationYearController;
   late TextEditingController _hourlyFeeController;
   late TextEditingController _monthlyFeeController;
+  late TextEditingController _accountTitleController;
+  late TextEditingController _bankNameController;
+  late TextEditingController _accountNumberController;
 
   late FocusNode _fullNameFocusNode;
   late FocusNode _headlineFocusNode;
@@ -57,11 +61,15 @@ class _TutorProfileScreenState extends State<_TutorProfileView> {
   late FocusNode _educationInstitutionFocusNode;
   late FocusNode _educationPeriodFocusNode;
   late FocusNode _expertiseFocusNode;
+  late FocusNode _languageFocusNode;
   late FocusNode _certificationTitleFocusNode;
   late FocusNode _certificationIssuerFocusNode;
   late FocusNode _certificationYearFocusNode;
   late FocusNode _hourlyFeeFocusNode;
   late FocusNode _monthlyFeeFocusNode;
+  late FocusNode _accountTitleFocusNode;
+  late FocusNode _bankNameFocusNode;
+  late FocusNode _accountNumberFocusNode;
 
   @override
   void initState() {
@@ -73,11 +81,15 @@ class _TutorProfileScreenState extends State<_TutorProfileView> {
     _educationInstitutionController = TextEditingController();
     _educationPeriodController = TextEditingController();
     _expertiseController = TextEditingController();
+    _languageController = TextEditingController();
     _certificationTitleController = TextEditingController();
     _certificationIssuerController = TextEditingController();
     _certificationYearController = TextEditingController();
     _hourlyFeeController = TextEditingController();
     _monthlyFeeController = TextEditingController();
+    _accountTitleController = TextEditingController();
+    _bankNameController = TextEditingController();
+    _accountNumberController = TextEditingController();
 
     _fullNameFocusNode = FocusNode();
     _headlineFocusNode = FocusNode();
@@ -86,11 +98,15 @@ class _TutorProfileScreenState extends State<_TutorProfileView> {
     _educationInstitutionFocusNode = FocusNode();
     _educationPeriodFocusNode = FocusNode();
     _expertiseFocusNode = FocusNode();
+    _languageFocusNode = FocusNode();
     _certificationTitleFocusNode = FocusNode();
     _certificationIssuerFocusNode = FocusNode();
     _certificationYearFocusNode = FocusNode();
     _hourlyFeeFocusNode = FocusNode();
     _monthlyFeeFocusNode = FocusNode();
+    _accountTitleFocusNode = FocusNode();
+    _bankNameFocusNode = FocusNode();
+    _accountNumberFocusNode = FocusNode();
   }
 
   void _updateControllersFromViewModel(TutorProfileViewModel vm) {
@@ -113,6 +129,16 @@ class _TutorProfileScreenState extends State<_TutorProfileView> {
       if (_monthlyFeeController.text != monthlyFeeText) {
         _monthlyFeeController.text = monthlyFeeText;
       }
+      // Update bank account controllers
+      if (_accountTitleController.text != vm.accountTitle) {
+        _accountTitleController.text = vm.accountTitle;
+      }
+      if (_bankNameController.text != vm.bankName) {
+        _bankNameController.text = vm.bankName;
+      }
+      if (_accountNumberController.text != vm.accountNumber) {
+        _accountNumberController.text = vm.accountNumber;
+      }
     }
   }
 
@@ -125,11 +151,15 @@ class _TutorProfileScreenState extends State<_TutorProfileView> {
     _educationInstitutionController.dispose();
     _educationPeriodController.dispose();
     _expertiseController.dispose();
+    _languageController.dispose();
     _certificationTitleController.dispose();
     _certificationIssuerController.dispose();
     _certificationYearController.dispose();
     _hourlyFeeController.dispose();
     _monthlyFeeController.dispose();
+    _accountTitleController.dispose();
+    _bankNameController.dispose();
+    _accountNumberController.dispose();
 
     _fullNameFocusNode.dispose();
     _headlineFocusNode.dispose();
@@ -138,11 +168,15 @@ class _TutorProfileScreenState extends State<_TutorProfileView> {
     _educationInstitutionFocusNode.dispose();
     _educationPeriodFocusNode.dispose();
     _expertiseFocusNode.dispose();
+    _languageFocusNode.dispose();
     _certificationTitleFocusNode.dispose();
     _certificationIssuerFocusNode.dispose();
     _certificationYearFocusNode.dispose();
     _hourlyFeeFocusNode.dispose();
     _monthlyFeeFocusNode.dispose();
+    _accountTitleFocusNode.dispose();
+    _bankNameFocusNode.dispose();
+    _accountNumberFocusNode.dispose();
     super.dispose();
   }
 
@@ -248,6 +282,10 @@ class _TutorProfileScreenState extends State<_TutorProfileView> {
                   _buildExpertiseSection(vm),
                   const SizedBox(height: 24),
 
+                  // Languages
+                  _buildLanguagesSection(vm),
+                  const SizedBox(height: 24),
+
                   // Tuition Fees
                   _buildTuitionFeesSection(vm),
                   const SizedBox(height: 24),
@@ -266,6 +304,10 @@ class _TutorProfileScreenState extends State<_TutorProfileView> {
 
                   // Identity Verification (CNIC)
                   _buildIdentityVerificationSection(vm),
+                  const SizedBox(height: 24),
+
+                  // Payout Account Details
+                  _buildPayoutAccountSection(vm),
                   const SizedBox(height: 32),
 
                   // Save Profile Button
@@ -616,58 +658,57 @@ class _TutorProfileScreenState extends State<_TutorProfileView> {
                 ),
               ),
               const SizedBox(width: 12),
-              // Expanded(
-              //   child: Column(
-              //     crossAxisAlignment: CrossAxisAlignment.start,
-              //     children: [
-              //       AppText(
-              //         'Monthly Fee',
-              //         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              //               fontWeight: FontWeight.w600,
-              //               color: Colors.black87,
-              //             ),
-              //       ),
-              //       const SizedBox(height: 8),
-              //       TextField(
-              //         controller: _monthlyFeeController,
-              //         focusNode: _monthlyFeeFocusNode,
-              //         keyboardType: TextInputType.numberWithOptions(decimal: true),
-              //         textInputAction: TextInputAction.done,
-              //         onChanged: (value) {
-              //           vm.updateMonthlyFee(value);
-              //         },
-              //         decoration: InputDecoration(
-              //           hintText: '0',
-              //           prefixText: '\$ ',
-              //           prefixStyle: const TextStyle(
-              //             color: AppColors.textDark,
-              //             fontWeight: FontWeight.w600,
-              //           ),
-              //           hintStyle: TextStyle(color: Colors.grey[600]),
-              //           filled: true,
-              //           fillColor: const Color(0xFFF5F6FA),
-              //           contentPadding:
-              //               const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              //           border: OutlineInputBorder(
-              //             borderRadius: BorderRadius.circular(16),
-              //             borderSide: BorderSide.none,
-              //           ),
-              //           enabledBorder: OutlineInputBorder(
-              //             borderRadius: BorderRadius.circular(16),
-              //             borderSide: BorderSide.none,
-              //           ),
-              //           focusedBorder: OutlineInputBorder(
-              //             borderRadius: BorderRadius.circular(16),
-              //             borderSide: const BorderSide(
-              //               color: AppColors.primary,
-              //               width: 2,
-              //             ),
-              //           ),
-              //         ),
-              //       ),
-              //     ],
-              //   ),
-              // ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AppText(
+                      'Monthly Fee',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                          ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _monthlyFeeController,
+                      focusNode: _monthlyFeeFocusNode,
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      textInputAction: TextInputAction.done,
+                      onChanged: (value) {
+                        vm.updateMonthlyFee(value);
+                      },
+                      decoration: InputDecoration(
+                        hintText: '0',suffixText: 'Rs.',
+                        prefixStyle: const TextStyle(
+                          color: AppColors.textDark,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        hintStyle: TextStyle(color: Colors.grey[600]),
+                        filled: true,
+                        fillColor: const Color(0xFFF5F6FA),
+                        contentPadding:
+                            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: const BorderSide(
+                            color: AppColors.primary,
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ],
@@ -791,6 +832,133 @@ class _TutorProfileScreenState extends State<_TutorProfileView> {
                     if (_expertiseController.text.trim().isNotEmpty) {
                       vm.addExpertise(_expertiseController.text.trim());
                       _expertiseController.clear();
+                    }
+                  },
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildLanguagesSection(TutorProfileViewModel vm) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InkWell(
+          onTap: vm.toggleLanguages,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              AppText(
+                'Languages',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+              ),
+              Icon(
+                vm.isLanguagesExpanded
+                    ? Icons.keyboard_arrow_up
+                    : Icons.keyboard_arrow_down,
+                color: AppColors.iconGrey,
+              ),
+            ],
+          ),
+        ),
+        if (vm.isLanguagesExpanded) ...[
+          const SizedBox(height: 12),
+          // Existing language tags
+          if (vm.languages.isNotEmpty)
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: vm.languages.map((language) {
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.selectionBg,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      AppText(
+                        language,
+                        style: const TextStyle(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      GestureDetector(
+                        onTap: () => vm.removeLanguage(language),
+                        child: const Icon(
+                          Icons.close,
+                          size: 16,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+          const SizedBox(height: 12),
+          // Add new language
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _languageController,
+                  focusNode: _languageFocusNode,
+                  textInputAction: TextInputAction.done,
+                  decoration: InputDecoration(
+                    hintText: 'Add language (e.g., English, Urdu)',
+                    hintStyle: TextStyle(color: Colors.grey[600]),
+                    filled: true,
+                    fillColor: const Color(0xFFF5F6FA),
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(
+                        color: AppColors.primary,
+                        width: 2,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppColors.border,
+                    width: 1,
+                  ),
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.add, color: AppColors.primary),
+                  onPressed: () {
+                    if (_languageController.text.trim().isNotEmpty) {
+                      vm.addLanguage(_languageController.text.trim());
+                      _languageController.clear();
                     }
                   },
                 ),
@@ -1476,6 +1644,100 @@ class _TutorProfileScreenState extends State<_TutorProfileView> {
                 ),
               ),
             ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildPayoutAccountSection(TutorProfileViewModel vm) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InkWell(
+          onTap: vm.togglePayoutAccount,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.account_balance,
+                      color: AppColors.primary,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AppText(
+                        'Payout Account Details',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
+                      ),
+                      const SizedBox(height: 2),
+                      AppText(
+                        'Receive your earnings',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: AppColors.textGrey,
+                            ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              Icon(
+                vm.isPayoutAccountExpanded
+                    ? Icons.keyboard_arrow_up
+                    : Icons.keyboard_arrow_down,
+                color: AppColors.iconGrey,
+              ),
+            ],
+          ),
+        ),
+        if (vm.isPayoutAccountExpanded) ...[
+          const SizedBox(height: 16),
+          AppTextField(
+            label: 'ACCOUNT TITLE',
+            hintText: 'Enter account holder name',
+            controller: _accountTitleController,
+            focusNode: _accountTitleFocusNode,
+            onChanged: (value) {
+              vm.updateAccountTitle(value);
+            },
+            textInputAction: TextInputAction.next,
+          ),
+          const SizedBox(height: 16),
+          AppTextField(
+            label: 'BANK NAME',
+            hintText: 'Enter bank name',
+            controller: _bankNameController,
+            focusNode: _bankNameFocusNode,
+            onChanged: (value) {
+              vm.updateBankName(value);
+            },
+            textInputAction: TextInputAction.next,
+          ),
+          const SizedBox(height: 16),
+          AppTextField(
+            label: 'IBAN / ACCOUNT NUMBER',
+            hintText: 'Enter IBAN or account number',
+            controller: _accountNumberController,
+            focusNode: _accountNumberFocusNode,
+            onChanged: (value) {
+              vm.updateAccountNumber(value);
+            },
+            textInputAction: TextInputAction.done,
           ),
         ],
       ],

@@ -426,6 +426,7 @@ class ParentSignupViewModel extends ChangeNotifier {
         parent: parent,
         student: student,
         password: _password,
+        childName: _childName, // Pass child name for UserModel
       );
 
       // Send welcome notification

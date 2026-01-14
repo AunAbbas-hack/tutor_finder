@@ -52,6 +52,7 @@ class TutorProfileViewModel extends ChangeNotifier {
   String _professionalHeadline = '';
   String _aboutMe = '';
   List<String> _areasOfExpertise = [];
+  List<String> _languages = [];
   List<EducationEntry> _education = [];
   List<CertificationEntry> _certifications = [];
   List<PortfolioDocument> _portfolioDocuments = [];
@@ -89,11 +90,17 @@ class TutorProfileViewModel extends ChangeNotifier {
   double? _hourlyFee;
   double? _monthlyFee;
 
+  // Bank account fields
+  String _accountTitle = '';
+  String _bankName = '';
+  String _accountNumber = '';
+
   // Getters
   String get fullName => _fullName;
   String get professionalHeadline => _professionalHeadline;
   String get aboutMe => _aboutMe;
   List<String> get areasOfExpertise => _areasOfExpertise;
+  List<String> get languages => _languages;
   List<EducationEntry> get education => _education;
   List<CertificationEntry> get certifications => _certifications;
   List<PortfolioDocument> get portfolioDocuments => _portfolioDocuments;
@@ -117,6 +124,11 @@ class TutorProfileViewModel extends ChangeNotifier {
   double? get hourlyFee => _hourlyFee;
   double? get monthlyFee => _monthlyFee;
 
+  // Bank account getters
+  String get accountTitle => _accountTitle;
+  String get bankName => _bankName;
+  String get accountNumber => _accountNumber;
+
   // Expandable sections state
   bool _isExpertiseExpanded = true;
   bool _isEducationExpanded = false;
@@ -124,6 +136,8 @@ class TutorProfileViewModel extends ChangeNotifier {
   bool _isPortfolioExpanded = false;
   bool _isFeesExpanded = false;
   bool _isIdentityVerificationExpanded = false;
+  bool _isPayoutAccountExpanded = false;
+  bool _isLanguagesExpanded = false;
 
   bool get isExpertiseExpanded => _isExpertiseExpanded;
   bool get isEducationExpanded => _isEducationExpanded;
@@ -131,6 +145,8 @@ class TutorProfileViewModel extends ChangeNotifier {
   bool get isPortfolioExpanded => _isPortfolioExpanded;
   bool get isFeesExpanded => _isFeesExpanded;
   bool get isIdentityVerificationExpanded => _isIdentityVerificationExpanded;
+  bool get isPayoutAccountExpanded => _isPayoutAccountExpanded;
+  bool get isLanguagesExpanded => _isLanguagesExpanded;
 
   // Initialize and load data
   Future<void> initialize() async {
@@ -167,6 +183,7 @@ class TutorProfileViewModel extends ChangeNotifier {
       _professionalHeadline = _tutor!.qualification ?? '';
       _aboutMe = _tutor!.bio ?? '';
       _areasOfExpertise = List<String>.from(_tutor!.subjects);
+      _languages = List<String>.from(_tutor!.languages);
       _education = List<EducationEntry>.from(_tutor!.education);
       // Location
       _latitude = _user!.latitude;
@@ -180,6 +197,10 @@ class TutorProfileViewModel extends ChangeNotifier {
       // CNIC
       _cnicFrontUrl = _tutor!.cnicFrontUrl;
       _cnicBackUrl = _tutor!.cnicBackUrl;
+      // Bank account
+      _accountTitle = _tutor!.accountTitle ?? '';
+      _bankName = _tutor!.bankName ?? '';
+      _accountNumber = _tutor!.accountNumber ?? '';
 
       _setLoading(false);
     } catch (e) {
@@ -267,6 +288,23 @@ class TutorProfileViewModel extends ChangeNotifier {
 
   void removeExpertise(String expertise) {
     _areasOfExpertise.remove(expertise);
+    notifyListeners();
+  }
+
+  void addLanguage(String language) {
+    if (language.trim().isNotEmpty && !_languages.contains(language.trim())) {
+      _languages.add(language.trim());
+      notifyListeners();
+    }
+  }
+
+  void removeLanguage(String language) {
+    _languages.remove(language);
+    notifyListeners();
+  }
+
+  void toggleLanguages() {
+    _isLanguagesExpanded = !_isLanguagesExpanded;
     notifyListeners();
   }
 
@@ -396,6 +434,27 @@ class TutorProfileViewModel extends ChangeNotifier {
 
   void toggleIdentityVerification() {
     _isIdentityVerificationExpanded = !_isIdentityVerificationExpanded;
+    notifyListeners();
+  }
+
+  void togglePayoutAccount() {
+    _isPayoutAccountExpanded = !_isPayoutAccountExpanded;
+    notifyListeners();
+  }
+
+  // Bank account update methods
+  void updateAccountTitle(String value) {
+    _accountTitle = value;
+    notifyListeners();
+  }
+
+  void updateBankName(String value) {
+    _bankName = value;
+    notifyListeners();
+  }
+
+  void updateAccountNumber(String value) {
+    _accountNumber = value;
     notifyListeners();
   }
 
@@ -574,6 +633,10 @@ class TutorProfileViewModel extends ChangeNotifier {
         monthlyFee: _monthlyFee,
         cnicFrontUrl: newCnicFrontUrl,
         cnicBackUrl: newCnicBackUrl,
+        accountTitle: _accountTitle.isNotEmpty ? _accountTitle : null,
+        bankName: _bankName.isNotEmpty ? _bankName : null,
+        accountNumber: _accountNumber.isNotEmpty ? _accountNumber : null,
+        languages: _languages,
       );
       
       // Debug: Print education list before saving

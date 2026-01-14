@@ -15,6 +15,7 @@ class LocationViewModel extends ChangeNotifier {
   bool _hasUserSelectedLocation = false; // Track if user has selected a location
   bool _isUpdatingCamera = false; // Prevent updates during programmatic camera moves
   bool _isMapReady = false; // Track if map is fully initialized
+  String? _mapError; // Track map loading errors
   
   // Map controller and camera position
   GoogleMapController? _mapController;
@@ -52,6 +53,7 @@ class LocationViewModel extends ChangeNotifier {
   String? get selectedAddress => _selectedAddress;
   CameraPosition get cameraPosition => _cameraPosition;
   GoogleMapController? get mapController => _mapController;
+  String? get mapError => _mapError;
 
   void updateSearchQuery(String value) {
     _searchQuery = value;
@@ -73,6 +75,7 @@ class LocationViewModel extends ChangeNotifier {
 
   void setMapController(GoogleMapController controller) {
     _mapController = controller;
+    _mapError = null; // Clear any previous map errors
     // Wait a bit for map to fully initialize before marking as ready
     Future.delayed(const Duration(milliseconds: 300), () async {
       _isMapReady = true;
@@ -98,15 +101,26 @@ class LocationViewModel extends ChangeNotifier {
             _isUpdatingCamera = false;
           } catch (e) {
             if (kDebugMode) {
-              print('Error animating to pending location: $e');
+              print('❌ Error animating to pending location: $e');
             }
+            _mapError = 'Map initialization error: ${e.toString()}';
             _isUpdatingCamera = false;
+            notifyListeners();
           }
         }
       }
       
       notifyListeners();
     });
+  }
+  
+  /// Set map error (called when map fails to load)
+  void setMapError(String error) {
+    _mapError = error;
+    if (kDebugMode) {
+      print('❌ Map Error: $error');
+    }
+    notifyListeners();
   }
 
   /// Set camera position and update coordinates

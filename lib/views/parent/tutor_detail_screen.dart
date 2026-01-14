@@ -388,6 +388,11 @@ class TutorDetailScreen extends StatelessWidget {
   }
 
   Widget _buildFeeStructure(TutorDetailViewModel vm) {
+    final hourlyFee = vm.hourlyFee;
+    final monthlyFee = vm.monthlyFee;
+    final hasHourly = hourlyFee > 0;
+    final hasMonthly = monthlyFee != null && monthlyFee > 0;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -401,48 +406,102 @@ class TutorDetailScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const AppText(
-                'Fee Structure',
+                'Tution Fees',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textDark,
                 ),
               ),
-              const AppText(
-                'per hour',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppColors.textGrey,
-                ),
-              ),
-              if (vm.hourlyFee == 0.0)
+              if (hasHourly)
                 const AppText(
-                  ' (Not set)',
+                  'per hour',
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: 12,
                     color: AppColors.textGrey,
-                    fontStyle: FontStyle.italic,
                   ),
                 ),
             ],
           ),
           const SizedBox(height: 12),
-          AppText(
-            '${vm.hourlyFee.toStringAsFixed(0)} Rs.',
-            style: const TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.w700,
-              color: AppColors.primary,
+          // Show both hourly and monthly rates if available
+          if (hasHourly || hasMonthly) ...[
+            Row(
+              children: [
+                // Hourly Rate
+                if (hasHourly) ...[
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const AppText(
+                          'Hourly Rate',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.textDark,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        AppText(
+                          '${hourlyFee.toStringAsFixed(0)}Rs. /hr',
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                // Divider if both rates exist
+                if (hasHourly && hasMonthly) ...[
+                  Container(
+                    width: 1,
+                    height: 50,
+                    color: AppColors.border,
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                  ),
+                ],
+                // Monthly Rate
+                if (hasMonthly) ...[
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const AppText(
+                          'Monthly Rate',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.textDark,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        AppText(
+                          '${monthlyFee!.toStringAsFixed(0)}Rs. /mo',
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
             ),
-          ),
-          const SizedBox(height: 8),
-          // const AppText(
-          //   'Package deals available for 10+ hours',
-          //   style: TextStyle(
-          //     fontSize: 12,
-          //     color: AppColors.textGrey,
-          //   ),
-          // ),
+          ] else ...[
+            const AppText(
+              'Fee structure not available',
+              style: TextStyle(
+                fontSize: 14,
+                color: AppColors.textGrey,
+              ),
+            ),
+          ],
         ],
       ),
     );

@@ -6,6 +6,8 @@ import '../../core/widgets/app_text.dart';
 import '../../core/theme/app_colors.dart';
 import '../../data/models/user_model.dart';
 import '../../data/models/tutor_model.dart';
+import 'tutor_approve_screen.dart';
+import 'admin_parent_detail_screen.dart';
 
 class UserManagementScreen extends StatefulWidget {
   const UserManagementScreen({super.key});
@@ -363,7 +365,25 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       ),
       child: InkWell(
         onTap: () {
-          // TODO: Navigate to user detail screen
+          if (userDisplay.user.role == UserRole.tutor) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => TutorApproveScreen(
+                  tutorId: userDisplay.user.userId,
+                ),
+              ),
+            );
+          } else if (userDisplay.user.role == UserRole.parent) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => AdminParentDetailScreen(
+                  parentId: userDisplay.user.userId,
+                ),
+              ),
+            );
+          }
         },
         borderRadius: BorderRadius.circular(12),
         child: Row(

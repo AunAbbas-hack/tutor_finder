@@ -104,6 +104,11 @@ class _LocationSelectionView extends StatelessWidget {
 
   /// Build fallback UI when Google Maps fails to load (e.g., billing issue)
   Widget _buildMapErrorFallback(LocationViewModel vm, dynamic error) {
+    final errorMessage = error?.toString() ?? 'Unknown error';
+    final isApiKeyError = errorMessage.toLowerCase().contains('api') || 
+                         errorMessage.toLowerCase().contains('key') ||
+                         errorMessage.toLowerCase().contains('billing');
+    
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -130,9 +135,13 @@ class _LocationSelectionView extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           AppText(
-            kIsWeb
-                ? 'Google Maps requires billing to be enabled.\nPlease use the search bar or enter coordinates manually below.'
-                : 'Unable to load map. Please enter coordinates manually below.',
+            isApiKeyError
+                ? (kIsWeb
+                    ? 'Google Maps requires billing to be enabled.\nPlease enable Maps SDK for Android/iOS in Google Cloud Console.'
+                    : 'Maps SDK not enabled or API key invalid.\nPlease check Google Cloud Console:\n1. Enable Maps SDK for Android/iOS\n2. Verify API key restrictions\n3. Ensure billing is enabled')
+                : (kIsWeb
+                    ? 'Google Maps requires billing to be enabled.\nPlease use the search bar or enter coordinates manually below.'
+                    : 'Unable to load map. Please check:\n1. Internet connection\n2. API key configuration\n3. Maps SDK enabled in Google Cloud'),
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 14,
@@ -142,7 +151,7 @@ class _LocationSelectionView extends StatelessWidget {
           if (kDebugMode) ...[
             const SizedBox(height: 12),
             AppText(
-              'Error: ${error.toString()}',
+              'Error: $errorMessage',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 12,
@@ -267,13 +276,25 @@ class _LocationSelectionView extends StatelessWidget {
                           return _buildMapErrorFallback(vm, e);
                         }
                       } else {
-                        // Mobile platforms - normal map rendering
+                        // Mobile platforms - normal map rendering with error handling
+                        // Check if map has error
+                        if (vm.mapError != null) {
+                          return _buildMapErrorFallback(vm, vm.mapError);
+                        }
+                        
                         return Stack(
                           children: [
                             GoogleMap(
                               initialCameraPosition: vm.cameraPosition,
                               onMapCreated: (GoogleMapController controller) {
-                                vm.setMapController(controller);
+                                try {
+                                  vm.setMapController(controller);
+                                } catch (e) {
+                                  if (kDebugMode) {
+                                    print('❌ Error creating map controller: $e');
+                                  }
+                                  vm.setMapError('Failed to initialize map: ${e.toString()}');
+                                }
                               },
                               onTap: (LatLng position) {
                                 vm.onMapTap(position);
@@ -313,6 +334,74 @@ class _LocationSelectionView extends StatelessWidget {
                   ),
                 ),
               ),
+              // Show error message if map failed to load
+              if (vm.mapError != null) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.error.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppColors.error.withValues(alpha: 0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        color: AppColors.error,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: AppText(
+                          vm.mapError!,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: AppColors.error,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+              // Show location error if any
+              if (vm.errorMessage != null && vm.mapError == null) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.error.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppColors.error.withValues(alpha: 0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        color: AppColors.error,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: AppText(
+                          vm.errorMessage!,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: AppColors.error,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               if (vm.selectedAddress != null) ...[
                 const SizedBox(height: 12),
                 Container(

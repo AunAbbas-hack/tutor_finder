@@ -52,8 +52,8 @@
 	<string>This app needs access to your location to show nearby tutors and help you find the best matches.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>This app needs access to your location to show nearby tutors and help you find the best matches.</string>
-	<!-- Google Maps API Key -->
+	<!-- Google Maps API Key (Same as Web) -->
 	<key>GMSApiKey</key>
-	<string>AIzaSyBRdpt-CA5VhjTkIggIXlavuGT0yfkrJuQ</string>
+	<string>AIzaSyD3drczRNnaKA95wt9kqfBh1OLFIDsNg2I</string>
 </dict>
 </plist>
