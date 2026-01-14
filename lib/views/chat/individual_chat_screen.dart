@@ -7,6 +7,10 @@ import '../../core/theme/app_colors.dart';
 import '../../core/widgets/app_text.dart';
 import '../../viewmodels/individual_chat_vm.dart';
 import '../../data/models/message_model.dart';
+import '../../data/models/chat_model.dart';
+import '../../data/services/chat_service.dart';
+import '../../data/services/user_services.dart';
+import '../../parent_viewmodels/chat_vm.dart';
 import '../../core/services/image_picker_service.dart';
 import '../../core/services/file_picker_service.dart';
 
@@ -290,7 +294,7 @@ class _IndividualChatScreenState extends State<IndividualChatScreen> {
                     ),
                   ),
                 // Message Bubble
-                _buildMessageBubble(message, isSent, vm),
+                _buildMessageBubble(message, isSent, vm, context),
                 const SizedBox(height: 8),
               ],
             );
@@ -304,6 +308,7 @@ class _IndividualChatScreenState extends State<IndividualChatScreen> {
     MessageModel message,
     bool isSent,
     IndividualChatViewModel vm,
+    BuildContext context,
   ) {
     return Align(
       alignment: isSent ? Alignment.centerRight : Alignment.centerLeft,
@@ -339,68 +344,71 @@ class _IndividualChatScreenState extends State<IndividualChatScreen> {
             ),
             const SizedBox(width: 8),
           ],
-          // Message Bubble
+          // Message Bubble with Long Press Menu
           Flexible(
-            child: Container(
-              constraints: BoxConstraints(
-                maxWidth: MediaQuery.of(context).size.width * 0.7,
-              ),
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 12,
-              ),
-              decoration: BoxDecoration(
-                color: isSent ? AppColors.primary : AppColors.lightBackground,
-                borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(16),
-                  topRight: const Radius.circular(16),
-                  bottomLeft: Radius.circular(isSent ? 16 : 4),
-                  bottomRight: Radius.circular(isSent ? 4 : 16),
+            child: GestureDetector(
+              onLongPress: () => _showMessageOptions(context, message, vm, isSent),
+              child: Container(
+                constraints: BoxConstraints(
+                  maxWidth: MediaQuery.of(context).size.width * 0.7,
                 ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Message Text, Image, or File
-                  if (message.type == MessageType.image)
-                    _buildImageMessage(message, isSent)
-                  else if (message.type == MessageType.file)
-                    _buildFileAttachment(message, isSent)
-                  else
-                    AppText(
-                      message.text,
-                      style: TextStyle(
-                        fontSize: 15,
-                        color: isSent ? Colors.white : AppColors.textDark,
-                      ),
-                    ),
-                  const SizedBox(height: 4),
-                  // Timestamp
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      AppText(
-                        vm.formatBubbleTime(message),
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: isSent
-                              ? Colors.white70
-                              : AppColors.textGrey,
-                        ),
-                      ),
-                      if (isSent) ...[
-                        const SizedBox(width: 4),
-                        Icon(
-                          message.isRead
-                              ? Icons.done_all
-                              : Icons.done,
-                          size: 14,
-                          color: Colors.white70,
-                        ),
-                      ],
-                    ],
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: isSent ? AppColors.primary : AppColors.lightBackground,
+                  borderRadius: BorderRadius.only(
+                    topLeft: const Radius.circular(16),
+                    topRight: const Radius.circular(16),
+                    bottomLeft: Radius.circular(isSent ? 16 : 4),
+                    bottomRight: Radius.circular(isSent ? 4 : 16),
                   ),
-                ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Message Text, Image, or File
+                    if (message.type == MessageType.image)
+                      _buildImageMessage(message, isSent)
+                    else if (message.type == MessageType.file)
+                      _buildFileAttachment(message, isSent)
+                    else
+                      AppText(
+                        message.text,
+                        style: TextStyle(
+                          fontSize: 15,
+                          color: isSent ? Colors.white : AppColors.textDark,
+                        ),
+                      ),
+                    const SizedBox(height: 4),
+                    // Timestamp
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        AppText(
+                          vm.formatBubbleTime(message),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isSent
+                                ? Colors.white70
+                                : AppColors.textGrey,
+                          ),
+                        ),
+                        if (isSent) ...[
+                          const SizedBox(width: 4),
+                          Icon(
+                            message.isRead
+                                ? Icons.done_all
+                                : Icons.done,
+                            size: 14,
+                            color: Colors.white70,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -1035,6 +1043,426 @@ class _IndividualChatScreenState extends State<IndividualChatScreen> {
       MaterialPageRoute(
         builder: (context) => _FullScreenImageViewer(imageUrl: imageUrl),
         fullscreenDialog: true,
+      ),
+    );
+  }
+
+  // ---------- Message Options Menu ----------
+  void _showMessageOptions(
+    BuildContext context,
+    MessageModel message,
+    IndividualChatViewModel vm,
+    bool isSent,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: AppColors.background,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle bar
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(top: 12, bottom: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              // Options
+              ListTile(
+                leading: const Icon(Icons.forward, color: AppColors.primary),
+                title: const AppText(
+                  'Forward',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textDark,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showForwardDialog(context, message, vm);
+                },
+              ),
+              if (isSent) ...[
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.delete, color: AppColors.error),
+                  title: const AppText(
+                    'Delete',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.error,
+                    ),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showDeleteConfirmation(context, message, vm);
+                  },
+                ),
+              ],
+              const SizedBox(height: 10),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ---------- Delete Confirmation ----------
+  void _showDeleteConfirmation(
+    BuildContext context,
+    MessageModel message,
+    IndividualChatViewModel vm,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: const AppText(
+          'Delete Message',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textDark,
+          ),
+        ),
+        content: const AppText(
+          'Are you sure you want to delete this message?',
+          style: TextStyle(
+            fontSize: 16,
+            color: AppColors.textGrey,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const AppText(
+              'Cancel',
+              style: TextStyle(
+                fontSize: 16,
+                color: AppColors.textGrey,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              final success = await vm.deleteMessage(message.messageId);
+              if (success) {
+                Get.snackbar(
+                  'Success',
+                  'Message deleted',
+                  snackPosition: SnackPosition.BOTTOM,
+                  backgroundColor: AppColors.success,
+                  colorText: Colors.white,
+                  duration: const Duration(seconds: 2),
+                );
+              } else {
+                Get.snackbar(
+                  'Error',
+                  vm.errorMessage ?? 'Failed to delete message',
+                  snackPosition: SnackPosition.BOTTOM,
+                  backgroundColor: AppColors.error,
+                  colorText: Colors.white,
+                  duration: const Duration(seconds: 2),
+                );
+              }
+            },
+            child: const AppText(
+              'Delete',
+              style: TextStyle(
+                fontSize: 16,
+                color: AppColors.error,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ---------- Forward Dialog ----------
+  void _showForwardDialog(
+    BuildContext context,
+    MessageModel message,
+    IndividualChatViewModel vm,
+  ) {
+    // Get conversations list for forwarding
+    showDialog(
+      context: context,
+      builder: (context) => _ForwardDialog(
+        message: message,
+        currentUserId: vm.currentUserId ?? '',
+        otherUserId: widget.otherUserId,
+      ),
+    );
+  }
+}
+
+// Forward Dialog Widget
+class _ForwardDialog extends StatefulWidget {
+  final MessageModel message;
+  final String currentUserId;
+  final String otherUserId;
+
+  const _ForwardDialog({
+    required this.message,
+    required this.currentUserId,
+    required this.otherUserId,
+  });
+
+  @override
+  State<_ForwardDialog> createState() => _ForwardDialogState();
+}
+
+class _ForwardDialogState extends State<_ForwardDialog> {
+  final ChatService _chatService = ChatService();
+  final UserService _userService = UserService();
+  List<ConversationItem> _conversations = [];
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadConversations();
+  }
+
+  Future<void> _loadConversations() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+
+      // Get conversations stream
+      final stream = _chatService.getConversationsStream();
+      await for (final chats in stream) {
+        if (!mounted) return;
+        
+        final List<ConversationItem> items = [];
+        
+        for (var chat in chats) {
+          try {
+            // Get other participant's ID
+            final otherParticipantId = chat.participant1Id == widget.currentUserId
+                ? chat.participant2Id
+                : chat.participant1Id;
+            
+            // Skip if it's the same conversation
+            if (otherParticipantId == widget.otherUserId) {
+              continue;
+            }
+            
+            // Get user data
+            final otherUser = await _userService.getUserById(otherParticipantId);
+            
+            // Get unread count
+            final unreadCount = chat.unreadCount?[widget.currentUserId] ?? 0;
+            
+            items.add(ConversationItem(
+              chat: chat,
+              otherUser: otherUser,
+              unreadCount: unreadCount,
+              lastMessagePreview: chat.lastMessage,
+              lastMessageTime: chat.lastMessageTime != null
+                  ? DateTime.fromMillisecondsSinceEpoch(chat.lastMessageTime!)
+                  : null,
+            ));
+          } catch (e) {
+            continue;
+          }
+        }
+        
+        if (mounted) {
+          setState(() {
+            _conversations = items;
+            _isLoading = false;
+          });
+        }
+        
+        // Only take first emission
+        break;
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Failed to load conversations: ${e.toString()}';
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _forwardToUser(String receiverId) async {
+    try {
+      await _chatService.forwardMessage(
+        originalMessage: widget.message,
+        receiverId: receiverId,
+      );
+      
+      if (mounted) {
+        Navigator.pop(context);
+        Get.snackbar(
+          'Success',
+          'Message forwarded',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: AppColors.success,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 2),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        Get.snackbar(
+          'Error',
+          'Failed to forward message: ${e.toString()}',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: AppColors.error,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 2),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.7,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                children: [
+                  const AppText(
+                    'Forward to',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textDark,
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: AppColors.textDark),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            // Content
+            Expanded(
+              child: _isLoading
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.primary,
+                      ),
+                    )
+                  : _errorMessage != null
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: AppText(
+                              _errorMessage!,
+                              style: const TextStyle(
+                                color: AppColors.error,
+                                fontSize: 14,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        )
+                      : _conversations.isEmpty
+                          ? Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(20),
+                                child: const AppText(
+                                  'No conversations available',
+                                  style: TextStyle(
+                                    color: AppColors.textGrey,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : ListView.builder(
+                              shrinkWrap: true,
+                              itemCount: _conversations.length,
+                              itemBuilder: (context, index) {
+                                final conversation = _conversations[index];
+                                final otherUser = conversation.otherUser;
+                                final userName = otherUser?.name ?? 'Unknown User';
+                                final userImageUrl = otherUser?.imageUrl;
+
+                                return ListTile(
+                                  leading: Container(
+                                    width: 48,
+                                    height: 48,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: AppColors.lightBackground,
+                                      image: userImageUrl != null &&
+                                              userImageUrl.isNotEmpty
+                                          ? DecorationImage(
+                                              image: NetworkImage(userImageUrl),
+                                              fit: BoxFit.cover,
+                                            )
+                                          : null,
+                                    ),
+                                    child: userImageUrl == null ||
+                                            userImageUrl.isEmpty
+                                        ? const Icon(
+                                            Icons.person,
+                                            color: AppColors.iconGrey,
+                                          )
+                                        : null,
+                                  ),
+                                  title: AppText(
+                                    userName,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.textDark,
+                                    ),
+                                  ),
+                                  onTap: () {
+                                    if (otherUser != null) {
+                                      _forwardToUser(otherUser.userId);
+                                    }
+                                  },
+                                );
+                              },
+                            ),
+            ),
+          ],
+        ),
       ),
     );
   }

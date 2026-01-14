@@ -175,6 +175,59 @@ class ChatService {
     await _database.child('chats/$chatId/messages/$messageId').remove();
   }
 
+  /// Forward a message to another user
+  Future<void> forwardMessage({
+    required MessageModel originalMessage,
+    required String receiverId,
+  }) async {
+    if (_currentUserId == null) {
+      throw Exception('User not authenticated');
+    }
+
+    // Don't forward to the same chat
+    if (receiverId == originalMessage.receiverId || receiverId == originalMessage.senderId) {
+      throw Exception('Cannot forward message to the same conversation');
+    }
+
+    final chatId = _generateChatId(_currentUserId!, receiverId);
+    final messagesRef = _database.child('chats/$chatId/messages');
+    final messageRef = messagesRef.push();
+
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+
+    // Create forwarded message data
+    final messageData = {
+      'senderId': _currentUserId,
+      'receiverId': receiverId,
+      'text': originalMessage.text,
+      'timestamp': timestamp,
+      'isRead': false,
+      'type': MessageModel.typeToString(originalMessage.type),
+      if (originalMessage.imageUrl != null) 'imageUrl': originalMessage.imageUrl,
+      if (originalMessage.fileName != null) 'fileName': originalMessage.fileName,
+    };
+
+    await messageRef.set(messageData);
+
+    // Update chat metadata
+    await _updateChatMetadata(
+      chatId: chatId,
+      participant1Id: chatId.split('_')[0],
+      participant2Id: chatId.split('_')[1],
+      lastMessage: originalMessage.text,
+      lastMessageTime: timestamp,
+    );
+
+    // Update unread count for receiver
+    await _database
+        .child('chats/$chatId/unreadCount/$receiverId')
+        .set(ServerValue.increment(1));
+
+    // Update userChats for both users
+    await _database.child('userChats/$_currentUserId/$chatId').set(true);
+    await _database.child('userChats/$receiverId/$chatId').set(true);
+  }
+
   // ---------- CONVERSATIONS ----------
 
   /// Get conversations list stream (real-time updates)

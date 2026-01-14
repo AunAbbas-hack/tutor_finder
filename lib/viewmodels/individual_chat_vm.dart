@@ -429,6 +429,35 @@ class IndividualChatViewModel extends ChangeNotifier {
     }
   }
 
+  // Delete message
+  Future<bool> deleteMessage(String messageId) async {
+    try {
+      _errorMessage = null;
+      await _chatService.deleteMessage(otherUserId, messageId);
+      return true;
+    } catch (e) {
+      _errorMessage = 'Failed to delete message: ${e.toString()}';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // Forward message
+  Future<bool> forwardMessage(MessageModel message, String receiverId) async {
+    try {
+      _errorMessage = null;
+      await _chatService.forwardMessage(
+        originalMessage: message,
+        receiverId: receiverId,
+      );
+      return true;
+    } catch (e) {
+      _errorMessage = 'Failed to forward message: ${e.toString()}';
+      notifyListeners();
+      return false;
+    }
+  }
+
   void _setLoading(bool value) {
     _isLoading = value;
     notifyListeners();

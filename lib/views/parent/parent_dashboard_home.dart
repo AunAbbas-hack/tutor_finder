@@ -323,7 +323,7 @@ class _DashboardContent extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         SizedBox(
-          height: 200,
+          height: 220,
           child: vm.nearbyTutors.isEmpty
               ? const Center(
                   child: AppText(

@@ -75,21 +75,34 @@ class PaymentService {
 
       // 2. User ko Stripe payment page par redirect karein
       final uri = Uri.parse(sessionUrl);
-      if (await canLaunchUrl(uri)) {
-        // Use in-app webview for better UX (user app se bahar nahi jayega)
+      
+      try {
+        // Try in-app webview first (better UX - user app se bahar nahi jayega)
         await launchUrl(
           uri,
-          mode: LaunchMode.inAppWebView, // Changed from externalApplication to inAppWebView
+          mode: LaunchMode.inAppWebView,
           webViewConfiguration: const WebViewConfiguration(
             enableJavaScript: true,
             enableDomStorage: true,
           ),
         );
         return true;
-      } else {
-        throw Exception(
-          'Unable to open payment page. Please ensure your device can open web pages.'
-        );
+      } catch (e) {
+        // If in-app webview fails, try external browser as fallback
+        if (kDebugMode) {
+          print('⚠️ In-app webview failed, trying external browser: $e');
+        }
+        try {
+          await launchUrl(
+            uri,
+            mode: LaunchMode.externalApplication,
+          );
+          return true;
+        } catch (e2) {
+          throw Exception(
+            'Unable to open payment page. Please ensure your device can open web pages.\nError: ${e2.toString()}'
+          );
+        }
       }
     } catch (e) {
       // Re-throw exceptions so they can be caught by ViewModel

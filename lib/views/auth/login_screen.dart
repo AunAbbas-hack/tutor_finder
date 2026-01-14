@@ -7,7 +7,6 @@ import 'package:tutor_finder/views/initial/role_selection_screen.dart';
 import '../../core/widgets/app_primary_button.dart';
 import '../../core/widgets/app_text.dart';
 import '../../core/widgets/app_textfield.dart';
-import '../../core/widgets/social_login_button.dart';
 import '../../parent_viewmodels/auth_vm.dart';
 import 'forgot_password_screen.dart';
 
@@ -244,31 +243,7 @@ class _LoginViewState extends State<_LoginView> {
               const SizedBox(height: 24),
 
               // Google button
-              SocialLoginButton(
-                icon: Image.asset(
-                  'assets/images/icons-google-logo.png', // apni asset path ke mutabiq change karo
-                  height: 20,
-                  width: 20,
-                ),
-                label: 'Continue with Google',
-                onPressed: () {
-                  // TODO: Google sign-in
-                },
-              ),
 
-              const SizedBox(height: 12),
-
-              // Facebook button
-              SocialLoginButton(
-                icon: const Icon(
-                  Icons.facebook,
-                  color: Color(0xFF1877F2),
-                ),
-                label: 'Continue with Facebook',
-                onPressed: () {
-                  // TODO: Facebook sign-in
-                },
-              ),
 
               const SizedBox(height: 24),
 
