@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:get/get.dart';
-import 'package:tutor_finder/views/tutor/tutor_main_screen.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_primary_button.dart';
 import '../../../core/widgets/app_text.dart';
 import '../../../core/widgets/app_textfield.dart';
 import '../../../parent_viewmodels/auth_vm.dart';
+import '../login_screen.dart';
 
 
 class TutorSignupScreen extends StatelessWidget {
@@ -431,11 +431,24 @@ class _TutorSignupViewState extends State<_TutorSignupView> {
                   if (!context.mounted) return;
 
                   if (ok) {
-                    // Navigate to tutor main screen and clear navigation stack
-                    // This ensures bottom navigation bar shows immediately
+                    // Navigate to login screen after signup
+                    // User needs to verify email before logging in
                     Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (context) => const TutorMainScreen()),
+                      MaterialPageRoute(builder: (context) => const LoginScreen()),
                       (route) => false,
+                    );
+                    
+                    // Show success message
+                    Get.snackbar(
+                      'Success',
+                      'Account created! Please check your email to verify your account before logging in.',
+                      snackPosition: SnackPosition.BOTTOM,
+                      backgroundColor: AppColors.primary,
+                      colorText: Colors.white,
+                      borderRadius: 12,
+                      margin: const EdgeInsets.all(16),
+                      duration: const Duration(seconds: 4),
+                      icon: const Icon(Icons.check_circle, color: Colors.white),
                     );
                   } else if (vm.errorMessage != null && 
                       vm.tutorFullNameError == null && 

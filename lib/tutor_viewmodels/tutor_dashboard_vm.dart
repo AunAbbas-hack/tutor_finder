@@ -76,6 +76,7 @@ class TutorDashboardViewModel extends ChangeNotifier {
   String? _errorMessage;
   String _userName = '';
   String _userImageUrl = '';
+  UserModel? _user;
 
   // Dashboard metrics
   int _newRequestsCount = 0;
@@ -98,6 +99,8 @@ class TutorDashboardViewModel extends ChangeNotifier {
   int get messagesCount => _messagesCount;
   EarningsData? get earningsData => _earningsData;
   List<StudentFeedback> get latestFeedback => _latestFeedback;
+  UserModel? get user => _user;
+  bool get isProfilePending => _user?.status == UserStatus.pending;
 
   // ---------- Initialize ----------
   Future<void> initialize() async {
@@ -115,6 +118,7 @@ class TutorDashboardViewModel extends ChangeNotifier {
       // Load user data
       final userModel = await _userService.getUserById(user.uid);
       if (userModel != null && !_isDisposed) {
+        _user = userModel;
         _userName = userModel.name;
         _userImageUrl = userModel.imageUrl ?? '';
       }

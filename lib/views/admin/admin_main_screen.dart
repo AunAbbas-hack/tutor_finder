@@ -6,7 +6,7 @@ import '../../core/widgets/admin_bottom_nav_bar.dart';
 import 'admin_dashboard_screen.dart';
 import 'user_management.dart';
 import 'finance_screen.dart';
-// import 'settings_screen.dart';
+import 'settings_screen.dart';
 
 /// Main admin screen with bottom navigation
 class AdminMainScreen extends StatefulWidget {
@@ -25,7 +25,7 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
     const AdminDashboardScreen(), // Home tab
     const UserManagementScreen(), // Users tab
     const FinanceScreen(), // Finance tab
-    _buildComingSoonScreen('Settings'), // Settings tab (placeholder)
+    const AdminSettingsScreen(), // Settings tab
   ];
 
   // Handle tab navigation with history

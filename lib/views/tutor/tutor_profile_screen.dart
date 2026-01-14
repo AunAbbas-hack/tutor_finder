@@ -11,6 +11,8 @@ import 'availability_screen.dart';
 
 class TutorProfileScreen extends StatelessWidget {
   const TutorProfileScreen({super.key});
+  
+  static bool _hasShownPendingSnackbar = false;
 
   @override
   Widget build(BuildContext context) {
@@ -33,6 +35,32 @@ class TutorProfileScreen extends StatelessWidget {
               Expanded(
                 child: Consumer<TutorProfileViewModel>(
                   builder: (context, vm, _) {
+                    // Reset flag if profile is no longer pending
+                    if (!vm.isLoading && !vm.isProfilePending) {
+                      _hasShownPendingSnackbar = false;
+                    }
+                    
+                    // Show snackbar if profile is pending (only once per session)
+                    if (!vm.isLoading && vm.isProfilePending && !_hasShownPendingSnackbar) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        _hasShownPendingSnackbar = true;
+                        Get.snackbar(
+                          'Profile Pending',
+                          'Complete your profile first, So that you can verify from the Admin',
+                          snackPosition: SnackPosition.TOP,
+                          backgroundColor: AppColors.primary,
+                          colorText: Colors.white,
+                          duration: const Duration(seconds: 4),
+                          margin: const EdgeInsets.all(16),
+                          borderRadius: 12,
+                          icon: const Icon(Icons.info_outline, color: Colors.white),
+                          shouldIconPulse: true,
+                          isDismissible: true,
+                          dismissDirection: DismissDirection.horizontal,
+                        );
+                      });
+                    }
+
                     if (vm.isLoading) {
                       return const Center(
                         child: CircularProgressIndicator(

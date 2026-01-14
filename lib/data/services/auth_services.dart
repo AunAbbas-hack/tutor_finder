@@ -37,5 +37,14 @@ class AuthService {
     await _firebaseAuth.sendPasswordResetEmail(email: email);
   }
 
+  // ---------- EMAIL VERIFICATION ----------
+  Future<void> sendEmailVerification(User user) async {
+    await user.sendEmailVerification();
+  }
+
+  Future<void> resendEmailVerification(User user) async {
+    await user.sendEmailVerification();
+  }
+
   User? get currentUser => _firebaseAuth.currentUser;
 }

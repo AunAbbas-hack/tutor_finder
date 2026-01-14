@@ -612,6 +612,8 @@ class AuthViewModel extends ChangeNotifier {
         return 'This email is already registered.';
       case 'weak-password':
         return 'Password is too weak.';
+      case 'email-not-verified':
+        return 'Please verify your email before logging in. Check your inbox for verification email.';
       default:
         if (kDebugMode) {
           print('Firebase Auth error code: ${e.code}');
@@ -637,6 +639,8 @@ class AuthViewModel extends ChangeNotifier {
       return 'This account has been disabled. Please contact support.';
     } else if (message.contains('too-many-requests')) {
       return 'Too many failed attempts. Please try again later.';
+    } else if (message.contains('email-not-verified')) {
+      return 'Please verify your email before logging in. Check your inbox for verification email.';
     }
     if (kDebugMode) {
       print('Firebase error: $message');

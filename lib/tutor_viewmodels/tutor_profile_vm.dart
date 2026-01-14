@@ -61,6 +61,7 @@ class TutorProfileViewModel extends ChangeNotifier {
   double? get hourlyFee => _tutor?.hourlyFee;
   double? get monthlyFee => _tutor?.monthlyFee;
   bool get hasFees => _tutor?.hourlyFee != null || _tutor?.monthlyFee != null;
+  bool get isProfilePending => _user?.status == UserStatus.pending;
   
   // Calculate savings percentage when monthly fee is available
   // Uses standard assumption of 4 sessions per week (16 sessions per month)

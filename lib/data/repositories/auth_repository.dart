@@ -41,7 +41,19 @@ class AuthRepository {
       email: email,
       password: password,
     );
-    return credential.user;
+    final user = credential.user;
+    
+    // Check if email is verified
+    if (user != null && !user.emailVerified) {
+      // Sign out the user since email is not verified
+      await _authService.signOut();
+      throw FirebaseAuthException(
+        code: 'email-not-verified',
+        message: 'Please verify your email before logging in.',
+      );
+    }
+    
+    return user;
   }
 
   // ---------- COMMON USER SIGNUP (for Parent etc.) ----------
@@ -60,6 +72,11 @@ class AuthRepository {
 
     final userWithId = baseUser.copyWith(userId: uid);
     await _userService.createUser(userWithId);
+
+    // Send email verification
+    if (cred.user != null) {
+      await _authService.sendEmailVerification(cred.user!);
+    }
 
     return cred.user;
   }
@@ -86,6 +103,11 @@ class AuthRepository {
     // 3) parents collection
     final parentWithId = parent.copyWith(parentId: uid);
     await _parentService.createParent(parentWithId);
+
+    // 4) Send email verification
+    if (cred.user != null) {
+      await _authService.sendEmailVerification(cred.user!);
+    }
 
     return cred.user;
   }
@@ -156,6 +178,11 @@ class AuthRepository {
       print('✅ Child created successfully with studentId: $studentId');
     }
 
+    // 7) Send email verification
+    if (cred.user != null) {
+      await _authService.sendEmailVerification(cred.user!);
+    }
+
     return cred.user;
   }
 
@@ -180,7 +207,39 @@ class AuthRepository {
     final tutorWithId = tutor.copyWith(tutorId: uid);
     await _tutorService.createTutor(tutorWithId);
 
+    // 4) Send email verification
+    if (cred.user != null) {
+      await _authService.sendEmailVerification(cred.user!);
+    }
+
+    // 5) Sign out user after sending verification email
+    // User needs to verify email before logging in
+    await _authService.signOut();
+
     return cred.user;
+  }
+
+  // ---------- EMAIL VERIFICATION ----------
+  Future<void> resendEmailVerification(String email, String password) async {
+    // First sign in to get the user
+    final credential = await _authService.signInWithEmail(
+      email: email,
+      password: password,
+    );
+    final user = credential.user;
+    
+    if (user != null) {
+      // Reload user to get latest verification status
+      await user.reload();
+      final refreshedUser = _authService.currentUser;
+      
+      if (refreshedUser != null && !refreshedUser.emailVerified) {
+        await _authService.resendEmailVerification(refreshedUser);
+      }
+      
+      // Sign out after sending verification
+      await _authService.signOut();
+    }
   }
 
   // ---------- LOGOUT / CURRENT USER ----------
