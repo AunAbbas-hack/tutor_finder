@@ -9,6 +9,7 @@ import '../../parent_viewmodels/parent_profile_vm.dart';
 import 'manage_children_screen.dart';
 import 'parent_edit_profile_screen.dart';
 import 'payment_history_screen.dart';
+import 'report_screen.dart';
 
 
 class ParentProfileScreen extends StatefulWidget {
@@ -264,6 +265,14 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
           title: 'Payment History',
           onTap: () {
             Get.to(() => const PaymentHistoryScreen());
+          },
+        ),
+        _buildSettingsItem(
+          context,
+          icon: Icons.report_problem_outlined,
+          title: 'Report Issue',
+          onTap: () {
+            Get.to(() => const ReportScreen());
           },
         ),
         // _buildSettingsItem(

@@ -35,7 +35,22 @@ class _ReportScreenState extends State<ReportScreen> {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => ReportViewModel(),
+      create: (_) {
+        final vm = ReportViewModel();
+        // Auto-select report type based on context
+        if (widget.againstUserId != null && widget.bookingId == null) {
+          // Reporting a user (tutor) - auto-select tutor type
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            vm.setReportType(ReportType.tutor);
+          });
+        } else if (widget.bookingId != null) {
+          // Reporting a booking - auto-select booking type
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            vm.setReportType(ReportType.booking);
+          });
+        }
+        return vm;
+      },
       child: Scaffold(
         backgroundColor: AppColors.lightBackground,
         appBar: AppBar(
@@ -68,9 +83,16 @@ class _ReportScreenState extends State<ReportScreen> {
                     const SizedBox(height: 24),
                   ],
 
-                  // Report Type Section
-                  _buildReportTypeSection(vm),
-                  const SizedBox(height: 24),
+                  // Report Type Section (only show if not pre-selected)
+                  if (widget.againstUserId == null && widget.bookingId == null)
+                    _buildReportTypeSection(vm),
+                  if (widget.againstUserId == null && widget.bookingId == null)
+                    const SizedBox(height: 24),
+                  // Show selected type info if pre-selected
+                  if (widget.againstUserId != null || widget.bookingId != null) ...[
+                    _buildPreSelectedTypeInfo(vm),
+                    const SizedBox(height: 24),
+                  ],
 
                   // Description Section
                   _buildDescriptionSection(vm),
@@ -276,6 +298,84 @@ class _ReportScreenState extends State<ReportScreen> {
           description: 'Report other issues',
         ),
       ],
+    );
+  }
+
+  // ---------- Pre-Selected Type Info ----------
+  Widget _buildPreSelectedTypeInfo(ReportViewModel vm) {
+    ReportType? preSelectedType;
+    String typeTitle = '';
+    String typeDescription = '';
+    IconData typeIcon = Icons.report_problem_outlined;
+
+    if (widget.againstUserId != null && widget.bookingId == null) {
+      preSelectedType = ReportType.tutor;
+      typeTitle = 'Tutor';
+      typeDescription = 'You are reporting a tutor';
+      typeIcon = Icons.person_outline;
+    } else if (widget.bookingId != null) {
+      preSelectedType = ReportType.booking;
+      typeTitle = 'Booking';
+      typeDescription = 'You are reporting a booking issue';
+      typeIcon = Icons.calendar_today_outlined;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColors.primary,
+          width: 2,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              typeIcon,
+              color: AppColors.primary,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AppText(
+                  typeTitle,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                AppText(
+                  typeDescription,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textGrey,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Icon(
+            Icons.check_circle,
+            color: AppColors.primary,
+            size: 24,
+          ),
+        ],
+      ),
     );
   }
 

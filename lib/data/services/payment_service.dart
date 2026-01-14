@@ -1,5 +1,6 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:io' show SocketException;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/foundation.dart';
@@ -66,9 +67,9 @@ class PaymentService {
         currency: currency,
       );
 
-      if (sessionUrl == null) {
+      if (sessionUrl == null || sessionUrl.isEmpty) {
         throw Exception(
-          'Failed to create payment session. Please check your internet connection and try again.'
+          'Failed to create payment session. The payment server did not return a valid session URL. Please try again.'
         );
       }
 
@@ -168,15 +169,28 @@ class PaymentService {
           rethrow;
         }
       }
-    } catch (e) {
+    } on SocketException catch (e) {
+      if (kDebugMode) {
+        print('❌ Payment Service SocketException: $e');
+      }
+      throw Exception('Unable to connect to payment server. Please check your internet connection and try again.');
+    } on http.ClientException catch (e) {
+      if (kDebugMode) {
+        print('❌ Payment Service ClientException: $e');
+      }
+      throw Exception('Network error. Please check your internet connection and try again.');
+    } on Exception catch (e) {
+      // Re-throw exceptions that are already properly formatted
       if (kDebugMode) {
         print('❌ Payment Service Exception: $e');
       }
-      // Re-throw network errors for better error handling
-      if (e.toString().contains('timeout') || e.toString().contains('SocketException')) {
-        throw Exception('Network error. Please check your internet connection.');
+      rethrow;
+    } catch (e) {
+      // Catch any other errors and wrap them
+      if (kDebugMode) {
+        print('❌ Payment Service Unknown Error: $e');
       }
-      return null;
+      throw Exception('Payment failed: ${e.toString()}');
     }
   }
 

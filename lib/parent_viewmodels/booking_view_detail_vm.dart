@@ -82,6 +82,9 @@ class BookingViewDetailViewModel extends ChangeNotifier {
   bool get hasParentLocation => _parent?.latitude != null && _parent?.longitude != null;
   double? get parentLatitude => _parent?.latitude;
   double? get parentLongitude => _parent?.longitude;
+  
+  // Check if booking can be cancelled (only approved bookings can be cancelled by parent)
+  bool get canCancelBooking => _booking?.status == BookingStatus.approved;
 
   // ---------- Initialize ----------
   Future<void> initialize(String bookingId) async {
@@ -475,6 +478,51 @@ class BookingViewDetailViewModel extends ChangeNotifier {
   Future<void> refresh() async {
     if (_booking == null) return;
     await initialize(_booking!.bookingId);
+  }
+
+  // ---------- Cancel Booking ----------
+  Future<bool> cancelBooking() async {
+    if (_booking == null || _booking!.status != BookingStatus.approved) {
+      _errorMessage = 'Only approved bookings can be cancelled';
+      notifyListeners();
+      return false;
+    }
+
+    _setLoading(true);
+    _errorMessage = null;
+
+    try {
+      // Cancel booking
+      await _bookingService.cancelBooking(_booking!.bookingId);
+
+      // Send notification to tutor
+      if (_tutor != null && _parent != null) {
+        try {
+          final notificationService = NotificationService();
+          await notificationService.sendBookingCancellationToTutor(
+            tutorId: _tutor!.userId,
+            parentName: _parent!.name,
+          );
+        } catch (e) {
+          // Don't fail cancellation if notification fails
+          if (kDebugMode) {
+            print('⚠️ Failed to send cancellation notification: $e');
+          }
+        }
+      }
+
+      // Reload booking to reflect cancelled status
+      await initialize(_booking!.bookingId);
+
+      _setLoading(false);
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = 'Failed to cancel booking: ${e.toString()}';
+      _setLoading(false);
+      notifyListeners();
+      return false;
+    }
   }
 
   // ---------- Helpers ----------

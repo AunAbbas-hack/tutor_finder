@@ -14,6 +14,7 @@ import '../../data/services/user_services.dart';
 import '../../core/utils/distance_calculator.dart';
 import '../chat/individual_chat_screen.dart';
 import 'review_screen.dart';
+import 'report_screen.dart';
 
 class BookingViewDetailScreen extends StatelessWidget {
   final String bookingId;
@@ -52,10 +53,51 @@ class BookingViewDetailScreen extends StatelessWidget {
           elevation: 0,
           backgroundColor: AppColors.lightBackground,
           actions: [
-            IconButton(
-              icon: const Icon(Icons.more_vert, color: AppColors.textDark),
-              onPressed: () {
-                // TODO: Show options menu
+            Consumer<BookingViewDetailViewModel>(
+              builder: (context, vm, _) {
+                // Only show report option for approved bookings
+                final canReport = vm.booking?.status == BookingStatus.approved;
+                
+                if (!canReport) {
+                  return const SizedBox.shrink(); // Hide menu if booking is not approved
+                }
+                
+                return PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_vert, color: AppColors.textDark),
+                  onSelected: (value) {
+                    if (value == 'report') {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => ReportScreen(
+                            bookingId: bookingId,
+                            againstUserId: vm.booking?.tutorId,
+                            contextName: vm.booking != null 
+                                ? 'Booking #${bookingId.substring(0, 8)}...'
+                                : 'This Booking',
+                          ),
+                        ),
+                      );
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: 'report',
+                      child: Row(
+                        children: [
+                          Icon(Icons.report_problem_outlined, color: AppColors.error, size: 20),
+                          SizedBox(width: 12),
+                          AppText(
+                            'Report Issue',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: AppColors.textDark,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
               },
             ),
           ],
@@ -905,6 +947,107 @@ class BookingViewDetailScreen extends StatelessWidget {
                           ),
                         ],
                       ),
+              ),
+            ),
+          ],
+          // Cancel Button - Show for approved bookings (whether paid or not)
+          if (vm.canCancelBooking) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: vm.isLoading
+                    ? null
+                    : () async {
+                        // Show confirmation dialog
+                        final confirm = await Get.dialog<bool>(
+                          AlertDialog(
+                            title: const AppText(
+                              'Cancel Booking',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textDark,
+                              ),
+                            ),
+                            content: const AppText(
+                              'Are you sure you want to cancel this booking? This action cannot be undone.',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: AppColors.textGrey,
+                              ),
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Get.back(result: false),
+                                child: const AppText(
+                                  'No',
+                                  style: TextStyle(
+                                    color: AppColors.textGrey,
+                                  ),
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () => Get.back(result: true),
+                                child: const AppText(
+                                  'Yes, Cancel',
+                                  style: TextStyle(
+                                    color: AppColors.error,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+
+                        if (confirm == true) {
+                          final success = await vm.cancelBooking();
+                          if (success) {
+                            Get.snackbar(
+                              'Success',
+                              'Booking cancelled successfully',
+                              snackPosition: SnackPosition.BOTTOM,
+                              backgroundColor: AppColors.success,
+                              colorText: Colors.white,
+                              duration: const Duration(seconds: 2),
+                            );
+                            Get.back(); // Go back to bookings list
+                          } else if (vm.errorMessage != null) {
+                            Get.snackbar(
+                              'Error',
+                              vm.errorMessage!,
+                              snackPosition: SnackPosition.BOTTOM,
+                              backgroundColor: AppColors.error,
+                              colorText: Colors.white,
+                              duration: const Duration(seconds: 3),
+                            );
+                          }
+                        }
+                      },
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.error,
+                  side: const BorderSide(color: AppColors.error, width: 1.5),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Icon(Icons.cancel_outlined, size: 20),
+                    SizedBox(width: 8),
+                    AppText(
+                      'Cancel Booking',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.error,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

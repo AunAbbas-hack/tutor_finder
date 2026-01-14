@@ -11,6 +11,7 @@ import '../../viewmodels/tutor_detail_vm.dart';
 import '../chat/individual_chat_screen.dart';
 import '../../core/utils/debug_logger.dart';
 import 'request_booking_screen.dart';
+import 'report_screen.dart';
 
 class TutorDetailScreen extends StatelessWidget {
   final String tutorId;
@@ -79,10 +80,19 @@ class TutorDetailScreen extends StatelessWidget {
                   ),
                   centerTitle: true,
                   actions: [
-                    IconButton(
-                      icon: const Icon(Icons.share, color: AppColors.textDark),
-                      onPressed: () {
-                        // TODO: Implement share functionality
+                    Consumer<TutorDetailViewModel>(
+                      builder: (context, vm, _) {
+                        return IconButton(
+                          icon: const Icon(Icons.report_problem_outlined, color: AppColors.textDark),
+                          onPressed: () {
+                            if (vm.tutorUser != null) {
+                              Get.to(() => ReportScreen(
+                                againstUserId: tutorId,
+                                contextName: vm.tutorUser!.name,
+                              ));
+                            }
+                          },
+                        );
                       },
                     ),
                   ],

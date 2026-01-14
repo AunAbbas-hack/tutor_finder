@@ -1,6 +1,7 @@
 // lib/viewmodels/tutor_detail_vm.dart
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:geocoding/geocoding.dart';
 import '../data/models/user_model.dart';
 import '../data/models/tutor_model.dart';
 import '../data/models/review_model.dart';
@@ -68,17 +69,23 @@ class TutorDetailViewModel extends ChangeNotifier {
   double _averageRating = 0.0;
   int _reviewCount = 0;
 
+  // Location address
+  String? _locationAddress;
+
   List<ReviewModel> get reviews => _reviews;
   double get rating => _averageRating;
   int get reviewCount => _reviewCount;
   double get hourlyFee => _tutor?.hourlyFee ?? 0.0; // Get fee from TutorModel, default to 0 if not set
   List<String> get languages => ['English', 'German']; // TODO: Add languages field to TutorModel
   String get fullAddress {
-    // TODO: Get full address from UserModel or ParentModel
-    // For now, using latitude/longitude to construct address
-    if (_tutorUser?.latitude != null && _tutorUser?.longitude != null) {
-      return '${_tutorUser!.latitude}, ${_tutorUser!.longitude}';
+    if (_locationAddress != null && _locationAddress!.isNotEmpty) {
+      return _locationAddress!;
     }
+    // Never show coordinates - show appropriate message instead
+    if (_isLoading) {
+      return 'Loading address...';
+    }
+    // If address fetch failed or coordinates not available
     return 'Address not available';
   }
 
@@ -172,6 +179,14 @@ class TutorDetailViewModel extends ChangeNotifier {
       // Load availability
       await _loadAvailability();
 
+      // Fetch address from coordinates if location is available
+      if (_tutorUser?.latitude != null && _tutorUser?.longitude != null) {
+        await _fetchAddressFromCoordinates(
+          _tutorUser!.latitude!,
+          _tutorUser!.longitude!,
+        );
+      }
+
       _setLoading(false);
       notifyListeners();
     } catch (e) {
@@ -239,6 +254,47 @@ class TutorDetailViewModel extends ChangeNotifier {
   void _setLoading(bool value) {
     _isLoading = value;
     notifyListeners();
+  }
+
+  /// Fetch address from coordinates using geocoding
+  Future<void> _fetchAddressFromCoordinates(double lat, double lng) async {
+    try {
+      List<Placemark> placemarks = await placemarkFromCoordinates(lat, lng);
+      if (placemarks.isNotEmpty) {
+        final place = placemarks.first;
+        _locationAddress = _formatAddress(place);
+        notifyListeners();
+      }
+    } catch (e) {
+      // Silently fail - address is optional
+      if (kDebugMode) {
+        print('Error fetching address: $e');
+      }
+      _locationAddress = null;
+    }
+  }
+
+  /// Format address from Placemark
+  String _formatAddress(Placemark place) {
+    List<String> parts = [];
+    
+    if (place.street != null && place.street!.isNotEmpty) {
+      parts.add(place.street!);
+    }
+    if (place.subLocality != null && place.subLocality!.isNotEmpty) {
+      parts.add(place.subLocality!);
+    }
+    if (place.locality != null && place.locality!.isNotEmpty) {
+      parts.add(place.locality!);
+    }
+    if (place.administrativeArea != null && place.administrativeArea!.isNotEmpty) {
+      parts.add(place.administrativeArea!);
+    }
+    if (place.country != null && place.country!.isNotEmpty) {
+      parts.add(place.country!);
+    }
+    
+    return parts.isNotEmpty ? parts.join(', ') : 'Unknown location';
   }
 }
 

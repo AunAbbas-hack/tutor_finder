@@ -6,19 +6,23 @@ import '../data/models/user_model.dart';
 import '../data/models/tutor_model.dart';
 import '../data/services/user_services.dart';
 import '../data/services/tutor_services.dart';
+import '../data/repositories/auth_repository.dart';
 
 class TutorProfileViewModel extends ChangeNotifier {
   final UserService _userService;
   final TutorService _tutorService;
   final FirebaseAuth _auth;
+  final AuthRepository _authRepository;
 
   TutorProfileViewModel({
     UserService? userService,
     TutorService? tutorService,
     FirebaseAuth? auth,
+    AuthRepository? authRepository,
   })  : _userService = userService ?? UserService(),
         _tutorService = tutorService ?? TutorService(),
-        _auth = auth ?? FirebaseAuth.instance;
+        _auth = auth ?? FirebaseAuth.instance,
+        _authRepository = authRepository ?? AuthRepository();
 
   // ---------- State ----------
   bool _isLoading = false;
@@ -214,6 +218,20 @@ class TutorProfileViewModel extends ChangeNotifier {
   void toggleFees() {
     _isFeesExpanded = !_isFeesExpanded;
     notifyListeners();
+  }
+
+  // ---------- Logout ----------
+  Future<bool> logout() async {
+    try {
+      _setLoading(true);
+      await _authRepository.logout();
+      _setLoading(false);
+      return true;
+    } catch (e) {
+      _errorMessage = 'Failed to logout: ${e.toString()}';
+      _setLoading(false);
+      return false;
+    }
   }
 
   // ---------- Helpers ----------

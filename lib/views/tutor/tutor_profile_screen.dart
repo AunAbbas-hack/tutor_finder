@@ -121,7 +121,10 @@ class TutorProfileScreen extends StatelessWidget {
                               alignment: Alignment.topLeft,
                               child: _buildAvailabilitySection(),
                             ),
-                            const SizedBox(height: 24),
+                            const SizedBox(height: 32),
+                            // Log Out Button
+                            _buildLogoutButton(context, vm),
+                            const SizedBox(height: 16),
                           ],
                         ),
                       ),
@@ -1068,6 +1071,71 @@ class TutorProfileScreen extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  // ---------- Logout Button ----------
+  Widget _buildLogoutButton(BuildContext context, TutorProfileViewModel vm) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 0),
+      child: SizedBox(
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed: vm.isLoading
+              ? null
+              : () async {
+                  final shouldLogout = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const AppText('Log Out'),
+                      content: const AppText(
+                        'Are you sure you want to log out?',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: const AppText('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          child: const AppText(
+                            'Log Out',
+                            style: TextStyle(color: AppColors.error),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+
+                  if (shouldLogout == true && context.mounted) {
+                    final loggedOut = await vm.logout();
+                    if (loggedOut && context.mounted) {
+                      // Navigation will be handled by AuthWrapper
+                      Navigator.of(context).pushNamedAndRemoveUntil(
+                        '/',
+                        (route) => false,
+                      );
+                    }
+                  }
+                },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.error.withOpacity(0.1),
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            elevation: 0,
+          ),
+          child: const AppText(
+            'Log Out',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: AppColors.error,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

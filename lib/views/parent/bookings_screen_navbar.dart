@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:get/get.dart';
+import 'package:tutor_finder/views/parent/tutor_search_screen.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/app_text.dart';
 import '../../data/models/booking_model.dart';
@@ -301,7 +302,7 @@ class BookingsScreenNavbar extends StatelessWidget {
           'Find Another Tutor',
           AppColors.primary,
           () {
-            // TODO: Navigate to tutor search
+           Get.to(TutorSearchScreen());
             
           },
         );
