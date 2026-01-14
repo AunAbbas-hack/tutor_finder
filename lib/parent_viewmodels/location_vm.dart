@@ -259,11 +259,23 @@ class LocationViewModel extends ChangeNotifier {
       if (placemarks.isNotEmpty) {
         final place = placemarks.first;
         _selectedAddress = _formatAddress(place);
+        if (kDebugMode) {
+          print('✅ Address fetched: $_selectedAddress');
+        }
       } else {
-        _selectedAddress = 'Unknown location';
+        // If no placemarks, show coordinates as fallback
+        _selectedAddress = 'Location: ${lat.toStringAsFixed(6)}, ${lng.toStringAsFixed(6)}';
+        if (kDebugMode) {
+          print('⚠️ No placemarks found, using coordinates');
+        }
       }
     } catch (e) {
-      _selectedAddress = 'Unable to get address';
+      // On error, show coordinates instead of error message
+      _selectedAddress = 'Location: ${lat.toStringAsFixed(6)}, ${lng.toStringAsFixed(6)}';
+      if (kDebugMode) {
+        print('❌ Reverse geocoding failed: $e');
+        print('📍 Using coordinates as fallback: $lat, $lng');
+      }
     }
   }
 

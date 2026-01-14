@@ -9,6 +9,7 @@ import '../../views/auth/login_screen.dart';
 import '../../views/parent/parent_main_screen.dart';
 import '../../views/tutor/tutor_main_screen.dart';
 import '../../views/admin/admin_main_screen.dart';
+import '../../views/student/student_main_screen.dart';
 
 /// AuthWrapper checks if user is logged in and navigates to appropriate screen
 class AuthWrapper extends StatefulWidget {
@@ -212,12 +213,8 @@ class _AuthWrapperState extends State<AuthWrapper> {
                 debugPrint('✅ AuthWrapper: Navigating to AdminMainScreen');
                 return const AdminMainScreen();
               case UserRole.student:
-                // TODO: Return StudentDashboardHome when created
-                return Scaffold(
-                  body: Center(
-                    child: Text('Student Dashboard - Coming Soon\n${userModel.name}'),
-                  ),
-                );
+                debugPrint('✅ AuthWrapper: Navigating to StudentMainScreen');
+                return const StudentMainScreen();
             }
           },
         );

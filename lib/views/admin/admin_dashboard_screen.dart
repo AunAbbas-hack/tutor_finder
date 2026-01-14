@@ -1,6 +1,7 @@
 // lib/views/admin/admin_dashboard_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:get/get.dart';
 import '../../admin_viewmodels/admin_dashboard_vm.dart';
 import '../../core/widgets/app_text.dart';
 import '../../core/theme/app_colors.dart';
@@ -8,6 +9,7 @@ import '../../data/models/activity_model.dart';
 import '../../data/models/pending_approval_model.dart';
 import '../../data/models/dashboard_metrics_model.dart';
 import 'tutor_approve_screen.dart';
+import 'reports_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -90,6 +92,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       const SizedBox(height: 32),
                       // Pending Approvals Section
                       _buildPendingApprovalsSection(context, vm),
+                      const SizedBox(height: 32),
+                      // Reports Section
+                      _buildReportsSection(context, vm),
                       const SizedBox(height: 24),
                     ],
                   ),
@@ -679,6 +684,111 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  // ---------- Reports Section ----------
+  Widget _buildReportsSection(
+    BuildContext context,
+    AdminDashboardViewModel vm,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            AppText(
+              'Reports',
+              style: TextStyle(
+                fontSize: MediaQuery.of(context).size.width > 600 ? 22 : 20,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textDark,
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                Get.to(() => const ReportsScreen());
+              },
+              child: const AppText(
+                'View All',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        InkWell(
+          onTap: () {
+            Get.to(() => const ReportsScreen());
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.shadow,
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: AppColors.warning.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.report_problem_outlined,
+                    color: AppColors.warning,
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const AppText(
+                        'View All Reports',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textDark,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const AppText(
+                        'Manage and review user reports',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textGrey,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(
+                  Icons.arrow_forward_ios,
+                  size: 16,
+                  color: AppColors.iconGrey,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

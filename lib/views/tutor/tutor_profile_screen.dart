@@ -7,6 +7,7 @@ import '../../core/widgets/app_text.dart';
 import '../../data/models/tutor_model.dart';
 import '../../tutor_viewmodels/tutor_profile_vm.dart';
 import 'tutor_profile_screen_edit.dart';
+import 'availability_screen.dart';
 
 class TutorProfileScreen extends StatelessWidget {
   const TutorProfileScreen({super.key});
@@ -113,6 +114,13 @@ class TutorProfileScreen extends StatelessWidget {
                             Align(
                                 alignment: Alignment.topLeft,
                                 child: _buildPortfolioSection(vm)),
+                            const SizedBox(height: 24),
+
+                            // Availability Management Section
+                            Align(
+                              alignment: Alignment.topLeft,
+                              child: _buildAvailabilitySection(),
+                            ),
                             const SizedBox(height: 24),
                           ],
                         ),
@@ -977,6 +985,89 @@ class TutorProfileScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildAvailabilitySection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const AppText(
+          'Availability',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textDark,
+          ),
+        ),
+        const SizedBox(height: 12),
+        InkWell(
+          onTap: () {
+            Get.to(() => const AvailabilityScreen());
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.background,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.shadow,
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.calendar_today,
+                    color: AppColors.primary,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AppText(
+                        'Manage Availability',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textDark,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      AppText(
+                        'Set your weekly schedule and available time slots',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textGrey,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(
+                  Icons.arrow_forward_ios,
+                  size: 16,
+                  color: AppColors.iconGrey,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

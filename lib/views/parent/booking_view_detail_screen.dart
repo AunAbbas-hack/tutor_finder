@@ -633,7 +633,25 @@ class BookingViewDetailScreen extends StatelessWidget {
                                         mapType: MapType.normal,
                                         liteModeEnabled: false,
                                         minMaxZoomPreference: const MinMaxZoomPreference(5.0, 20.0),
+                                        polylines: vm.polylines,
                                         markers: {
+                                          // Parent location marker (green)
+                                          if (vm.hasParentLocation)
+                                            Marker(
+                                              markerId: const MarkerId('parent_location'),
+                                              position: LatLng(
+                                                vm.parentLatitude!,
+                                                vm.parentLongitude!,
+                                              ),
+                                              icon: BitmapDescriptor.defaultMarkerWithHue(
+                                                BitmapDescriptor.hueGreen,
+                                              ),
+                                              infoWindow: InfoWindow(
+                                                title: 'Your Location',
+                                                snippet: vm.parent?.name ?? 'Parent Location',
+                                              ),
+                                            ),
+                                          // Tutor location marker (blue)
                                           Marker(
                                             markerId: const MarkerId('tutor_location'),
                                             position: LatLng(
@@ -642,6 +660,10 @@ class BookingViewDetailScreen extends StatelessWidget {
                                             ),
                                             icon: BitmapDescriptor.defaultMarkerWithHue(
                                               BitmapDescriptor.hueBlue,
+                                            ),
+                                            infoWindow: InfoWindow(
+                                              title: 'Tutor Location',
+                                              snippet: vm.tutor?.name ?? 'Tutor Location',
                                             ),
                                           ),
                                         },

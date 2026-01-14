@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/foundation.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -11,6 +13,7 @@ import '../data/services/parent_services.dart';
 import '../data/services/student_services.dart';
 import '../data/services/payment_service.dart';
 import '../data/services/notification_service.dart';
+import '../data/services/directions_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class BookingViewDetailViewModel extends ChangeNotifier {
@@ -47,6 +50,13 @@ class BookingViewDetailViewModel extends ChangeNotifier {
   String? _tutorImageUrl;
   GoogleMapController? _mapController;
   bool _isMapReady = false;
+  
+  // Route/Polyline state
+  Set<Polyline> _polylines = {};
+  bool _isLoadingRoute = false;
+  String? _routeDistance;
+  String? _routeDuration;
+  final DirectionsService _directionsService = DirectionsService();
 
   // Getters
   bool get isLoading => _isLoading;
@@ -60,11 +70,18 @@ class BookingViewDetailViewModel extends ChangeNotifier {
   String? get tutorImageUrl => _tutorImageUrl;
   GoogleMapController? get mapController => _mapController;
   bool get isMapReady => _isMapReady;
+  Set<Polyline> get polylines => _polylines;
+  bool get isLoadingRoute => _isLoadingRoute;
+  String? get routeDistance => _routeDistance;
+  String? get routeDuration => _routeDuration;
 
   // Convenience getters
   bool get hasTutorLocation => _tutor?.latitude != null && _tutor?.longitude != null;
   double? get tutorLatitude => _tutor?.latitude;
   double? get tutorLongitude => _tutor?.longitude;
+  bool get hasParentLocation => _parent?.latitude != null && _parent?.longitude != null;
+  double? get parentLatitude => _parent?.latitude;
+  double? get parentLongitude => _parent?.longitude;
 
   // ---------- Initialize ----------
   Future<void> initialize(String bookingId) async {
@@ -96,6 +113,14 @@ class BookingViewDetailViewModel extends ChangeNotifier {
 
       // Load parent info
       _parent = await _userService.getUserById(_booking!.parentId);
+
+      // Load route if both locations are available
+      if (_parent?.latitude != null && 
+          _parent?.longitude != null &&
+          _tutor?.latitude != null && 
+          _tutor?.longitude != null) {
+        await _loadRoute();
+      }
 
       // Load students if childrenIds exist
       if (_booking!.childrenIds != null && _booking!.childrenIds!.isNotEmpty) {
@@ -351,6 +376,60 @@ class BookingViewDetailViewModel extends ChangeNotifier {
       _setLoading(false);
       notifyListeners();
       return false;
+    }
+  }
+
+  // ---------- Route/Polyline ----------
+  
+  /// Load route between parent and tutor locations
+  Future<void> _loadRoute() async {
+    if (_parent?.latitude == null || 
+        _parent?.longitude == null ||
+        _tutor?.latitude == null || 
+        _tutor?.longitude == null) {
+      return;
+    }
+
+    _isLoadingRoute = true;
+    notifyListeners();
+
+    try {
+      final origin = LatLng(_parent!.latitude!, _parent!.longitude!);
+      final destination = LatLng(_tutor!.latitude!, _tutor!.longitude!);
+      
+      final directions = await _directionsService.getDirections(
+        origin: origin,
+        destination: destination,
+      );
+
+      if (directions != null && directions.polylinePoints.isNotEmpty) {
+        _polylines = {
+          Polyline(
+            polylineId: const PolylineId('route'),
+            points: directions.polylinePoints,
+            color: const Color(0xFF2196F3), // Blue color
+            width: 5,
+            patterns: [],
+          ),
+        };
+        _routeDistance = directions.distance;
+        _routeDuration = directions.duration;
+      } else {
+        // Clear polylines if route not found
+        _polylines = {};
+        _routeDistance = null;
+        _routeDuration = null;
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error loading route: $e');
+      }
+      _polylines = {};
+      _routeDistance = null;
+      _routeDuration = null;
+    } finally {
+      _isLoadingRoute = false;
+      notifyListeners();
     }
   }
 

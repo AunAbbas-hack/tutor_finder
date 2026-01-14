@@ -7,12 +7,15 @@ import '../data/models/review_model.dart';
 import '../data/services/user_services.dart';
 import '../data/services/tutor_services.dart';
 import '../data/services/review_service.dart';
+import '../data/services/availability_service.dart';
+import '../data/models/availability_model.dart';
 import '../core/utils/debug_logger.dart';
 
 class TutorDetailViewModel extends ChangeNotifier {
   final UserService _userService;
   final TutorService _tutorService;
   final ReviewService _reviewService;
+  final AvailabilityService _availabilityService;
   final FirebaseAuth _auth;
 
   final String tutorId;
@@ -22,10 +25,12 @@ class TutorDetailViewModel extends ChangeNotifier {
     UserService? userService,
     TutorService? tutorService,
     ReviewService? reviewService,
+    AvailabilityService? availabilityService,
     FirebaseAuth? auth,
   })  : _userService = userService ?? UserService(),
         _tutorService = tutorService ?? TutorService(),
         _reviewService = reviewService ?? ReviewService(),
+        _availabilityService = availabilityService ?? AvailabilityService(),
         _auth = auth ?? FirebaseAuth.instance;
 
   // Loading state
@@ -54,6 +59,10 @@ class TutorDetailViewModel extends ChangeNotifier {
   String? _selectedTimeSlot;
   String? get selectedTimeSlot => _selectedTimeSlot;
 
+  // Availability data
+  AvailabilityModel? _availability;
+  AvailabilityModel? get availability => _availability;
+
   // Reviews data
   List<ReviewModel> _reviews = [];
   double _averageRating = 0.0;
@@ -73,11 +82,43 @@ class TutorDetailViewModel extends ChangeNotifier {
     return 'Address not available';
   }
 
-  // Available time slots (mock data - will be fetched from availability/schedule)
-  List<String> getAvailableTimeSlots(DateTime date) {
-    // TODO: Fetch actual time slots from tutor's schedule
-    // Mock data for now
-    return ['10:00 AM', '1:00 PM', '3:00 PM', '5:00 PM'];
+  // Load availability
+  Future<void> _loadAvailability() async {
+    try {
+      _availability = await _availabilityService.getAvailabilityByTutorId(tutorId);
+      if (kDebugMode) {
+        print('✅ Availability loaded for tutor: $tutorId');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ Error loading availability: $e');
+      }
+      _availability = null;
+    }
+  }
+
+  // Get available time slots for a date (with booked slots excluded)
+  Future<List<String>> getAvailableTimeSlots(DateTime date) async {
+    try {
+      final slots = await _availabilityService.getAvailableTimeSlotsForDate(
+        tutorId: tutorId,
+        date: date,
+        excludeBooked: true,
+      );
+      
+      // Convert TimeSlot objects to display strings
+      return slots.map((slot) => slot.displayStartTime).toList();
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ Error getting available time slots: $e');
+      }
+      // Fallback: return from availability model if available
+      if (_availability != null) {
+        final slots = _availability!.getAvailableTimeSlotsForDate(date);
+        return slots.map((slot) => slot.displayStartTime).toList();
+      }
+      return [];
+    }
   }
 
   // Get next 5 days starting from today
@@ -128,6 +169,9 @@ class TutorDetailViewModel extends ChangeNotifier {
       // Load reviews and ratings
       await _loadReviews();
 
+      // Load availability
+      await _loadAvailability();
+
       _setLoading(false);
       notifyListeners();
     } catch (e) {
@@ -151,6 +195,7 @@ class TutorDetailViewModel extends ChangeNotifier {
     _selectedDate = date;
     _selectedTimeSlot = null; // Reset time slot when date changes
     notifyListeners();
+    // Time slots will reload automatically via FutureBuilder in UI
   }
 
   // Select time slot

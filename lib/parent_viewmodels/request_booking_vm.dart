@@ -133,7 +133,10 @@ class RequestBookingViewModel extends ChangeNotifier {
 
   Future<void> _loadChildren(String parentId) async {
     try {
-      _children = await _studentService.getStudentsByParentId(parentId);
+      final allStudents = await _studentService.getStudentsByParentId(parentId);
+      // Filter out the parent's own student record (created during signup where studentId = parentId)
+      // Only show actual children that were added separately
+      _children = allStudents.where((student) => student.studentId != parentId).toList();
       notifyListeners();
     } catch (e) {
       debugPrint('Error loading children: $e');

@@ -8,6 +8,7 @@ import '../data/models/user_model.dart';
 import '../data/services/chat_service.dart';
 import '../data/services/storage_service.dart';
 import '../data/services/user_services.dart';
+import '../data/services/presence_service.dart';
 
 /// Message with date grouping info
 class MessageWithDate {
@@ -26,6 +27,7 @@ class IndividualChatViewModel extends ChangeNotifier {
   final ChatService _chatService;
   final UserService _userService;
   final StorageService _storageService;
+  final PresenceService _presenceService;
   final FirebaseAuth _auth;
 
   final String otherUserId;
@@ -39,15 +41,18 @@ class IndividualChatViewModel extends ChangeNotifier {
     ChatService? chatService,
     UserService? userService,
     StorageService? storageService,
+    PresenceService? presenceService,
     FirebaseAuth? auth,
   })  : _chatService = chatService ?? ChatService(),
         _userService = userService ?? UserService(),
         _storageService = storageService ?? StorageService(),
+        _presenceService = presenceService ?? PresenceService(),
         _auth = auth ?? FirebaseAuth.instance;
 
   // Stream subscriptions
   StreamSubscription? _messagesSubscription;
   StreamSubscription? _typingSubscription;
+  StreamSubscription? _presenceSubscription;
 
   // Current user ID
   String? get currentUserId => _auth.currentUser?.uid;
@@ -106,11 +111,9 @@ class IndividualChatViewModel extends ChangeNotifier {
   UserModel? _otherUser;
   UserModel? get otherUser => _otherUser;
 
-  // Online status (placeholder - will implement with presence system)
-  bool get isOtherUserOnline {
-    // TODO: Implement with Firebase Realtime Database presence
-    return false;
-  }
+  // Online status
+  bool _isOtherUserOnline = false;
+  bool get isOtherUserOnline => _isOtherUserOnline;
 
   // Initialize and load data
   Future<void> initialize() async {
@@ -435,8 +438,11 @@ class IndividualChatViewModel extends ChangeNotifier {
   void dispose() {
     _messagesSubscription?.cancel();
     _typingSubscription?.cancel();
+    _presenceSubscription?.cancel();
     // Stop typing when leaving
     setTyping(false);
+    // Remove presence
+    _presenceService.removePresence();
     super.dispose();
   }
 }

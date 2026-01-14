@@ -109,8 +109,8 @@ class _DashboardContent extends StatelessWidget {
                       _DashboardContent._buildNearbyTutorsSection(vm),
                       const SizedBox(height: 32),
                       // Explore by Subject Section
-                      _DashboardContent._buildExploreBySubjectSection(),
-                      const SizedBox(height: 32),
+                      // _DashboardContent._buildExploreBySubjectSection(),
+                      // const SizedBox(height: 32),
                       // Recommended for You Section
                       _DashboardContent._buildRecommendedSection(vm),
                       const SizedBox(height: 24),
@@ -358,49 +358,49 @@ class _DashboardContent extends StatelessWidget {
   }
 
   // ---------- Explore by Subject Section ----------
-  static Widget _buildExploreBySubjectSection() {
-    final subjects = [
-      {'name': 'Math', 'icon': Icons.calculate},
-      {'name': 'Science', 'icon': Icons.science},
-      {'name': 'History', 'icon': Icons.menu_book},
-      {'name': 'English', 'icon': Icons.language},
-      {'name': 'Physics', 'icon': Icons.bolt},
-      {'name': 'Chemistry', 'icon': Icons.eco},
-    ];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        AppText(
-          'Explore by Subject',
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textDark,
-          ),
-        ),
-        const SizedBox(height: 16),
-        SizedBox(
-          height: 50,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: subjects.length,
-            itemBuilder: (context, index) {
-              final subject = subjects[index];
-              return SubjectButton(
-                subject: subject['name'] as String,
-                icon: subject['icon'] as IconData,
-                isSelected: index == 0, // First one selected by default
-                onTap: () {
-                  // TODO: Filter tutors by subject
-                },
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
+  // static Widget _buildExploreBySubjectSection() {
+  //   final subjects = [
+  //     {'name': 'Math', 'icon': Icons.calculate},
+  //     {'name': 'Science', 'icon': Icons.science},
+  //     {'name': 'History', 'icon': Icons.menu_book},
+  //     {'name': 'English', 'icon': Icons.language},
+  //     {'name': 'Physics', 'icon': Icons.bolt},
+  //     {'name': 'Chemistry', 'icon': Icons.eco},
+  //   ];
+  //
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       AppText(
+  //         'Explore by Subject',
+  //         style: const TextStyle(
+  //           fontSize: 20,
+  //           fontWeight: FontWeight.w700,
+  //           color: AppColors.textDark,
+  //         ),
+  //       ),
+  //       const SizedBox(height: 16),
+  //       SizedBox(
+  //         height: 50,
+  //         child: ListView.builder(
+  //           scrollDirection: Axis.horizontal,
+  //           itemCount: subjects.length,
+  //           itemBuilder: (context, index) {
+  //             final subject = subjects[index];
+  //             return SubjectButton(
+  //               subject: subject['name'] as String,
+  //               icon: subject['icon'] as IconData,
+  //               isSelected: index == 0, // First one selected by default
+  //               onTap: () {
+  //                 // TODO: Filter tutors by subject
+  //               },
+  //             );
+  //           },
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
 
   // ---------- Recommended Section ----------
   static Widget _buildRecommendedSection(ParentDashboardViewModel vm) {

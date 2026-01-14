@@ -1,4 +1,4 @@
-// lib/views/tutor/tutor_detail_screen.dart
+// lib/views/parent/tutor_detail_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
@@ -531,143 +531,191 @@ class TutorDetailScreen extends StatelessWidget {
   }
 
   Widget _buildTimeSlots(TutorDetailViewModel vm) {
-    final timeSlots = vm.getAvailableTimeSlots(vm.selectedDate);
+    return FutureBuilder<List<String>>(
+      future: vm.getAvailableTimeSlots(vm.selectedDate),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(16.0),
+              child: CircularProgressIndicator(
+                color: AppColors.primary,
+                strokeWidth: 2,
+              ),
+            ),
+          );
+        }
 
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
-      children: timeSlots.map((timeSlot) {
-        final isSelected = vm.selectedTimeSlot == timeSlot;
-        return GestureDetector(
-          onTap: () => vm.selectTimeSlot(timeSlot),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        final timeSlots = snapshot.data ?? [];
+
+        if (timeSlots.isEmpty) {
+          return Container(
+            padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: isSelected ? AppColors.primary : Colors.white,
+              color: AppColors.lightBackground,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isSelected ? AppColors.primary : AppColors.border,
-                width: 1,
-              ),
             ),
-            child: AppText(
-              timeSlot,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: isSelected ? Colors.white : AppColors.textDark,
-              ),
+            child: const Column(
+              children: [
+                Icon(
+                  Icons.event_busy,
+                  size: 48,
+                  color: AppColors.iconGrey,
+                ),
+                SizedBox(height: 12),
+                AppText(
+                  'No available slots for this day',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: AppColors.textGrey,
+                  ),
+                ),
+              ],
             ),
+          );
+        }
+
+        return Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: timeSlots.map((timeSlot) {
+            final isSelected = vm.selectedTimeSlot == timeSlot;
+            return GestureDetector(
+              onTap: () => vm.selectTimeSlot(timeSlot),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                decoration: BoxDecoration(
+                  color: isSelected ? AppColors.primary : Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isSelected ? AppColors.primary : AppColors.border,
+                    width: 1,
+                  ),
+                ),
+                child: AppText(
+                  timeSlot,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: isSelected ? Colors.white : AppColors.textDark,
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        );
+      },
+    );
+  }
+
+  Widget _buildReviewsTab(TutorDetailViewModel vm)
+    {
+      if (vm.reviewCount == 0) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.star_border,
+                size: 64,
+                color: AppColors.iconGrey,
+              ),
+              const SizedBox(height: 16),
+              const AppText(
+                'No reviews yet',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textDark,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const AppText(
+                'Be the first to review this tutor',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textGrey,
+                ),
+              ),
+            ],
           ),
         );
-      }).toList(),
-    );
-  }
+      }
 
-  Widget _buildReviewsTab(TutorDetailViewModel vm) {
-    if (vm.reviewCount == 0) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.star_border,
-              size: 64,
-              color: AppColors.iconGrey,
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Rating Summary
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.shadow,
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            const AppText(
-              'No reviews yet',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textDark,
-              ),
+            child: Row(
+              children: [
+                // Average Rating
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        AppText(
+                          vm.rating.toStringAsFixed(1),
+                          style: const TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textDark,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Icon(
+                          Icons.star,
+                          color: Colors.amber,
+                          size: 28,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    AppText(
+                      '${vm.reviewCount} ${vm.reviewCount == 1
+                          ? 'review'
+                          : 'reviews'}',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textGrey,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-            const SizedBox(height: 8),
-            const AppText(
-              'Be the first to review this tutor',
-              style: TextStyle(
-                fontSize: 14,
-                color: AppColors.textGrey,
-              ),
+          ),
+          const SizedBox(height: 16),
+          // Reviews List
+          SizedBox(
+            height: 400, // Fixed height for reviews list
+            child: ListView.builder(
+              itemCount: vm.reviews.length,
+              itemBuilder: (context, index) {
+                final review = vm.reviews[index];
+                return _buildReviewCard(review);
+              },
             ),
-          ],
-        ),
+          ),
+        ],
       );
     }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Rating Summary
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.shadow,
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              // Average Rating
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      AppText(
-                        vm.rating.toStringAsFixed(1),
-                        style: const TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textDark,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      const Icon(
-                        Icons.star,
-                        color: Colors.amber,
-                        size: 28,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  AppText(
-                    '${vm.reviewCount} ${vm.reviewCount == 1 ? 'review' : 'reviews'}',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: AppColors.textGrey,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        // Reviews List
-        Expanded(
-          child: ListView.builder(
-            itemCount: vm.reviews.length,
-            itemBuilder: (context, index) {
-              final review = vm.reviews[index];
-              return _buildReviewCard(review);
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildReviewCard(review) {
+  
+  Widget _buildReviewCard(ReviewModel review) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -798,7 +846,7 @@ class TutorDetailScreen extends StatelessWidget {
       return '${months[date.month - 1]} ${date.day}, ${date.year}';
     }
   }
-
+  
   Widget _buildFooterButtons(TutorDetailViewModel vm, BuildContext context) {
     return Row(
       children: [
