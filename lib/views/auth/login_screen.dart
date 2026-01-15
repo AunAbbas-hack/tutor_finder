@@ -7,6 +7,7 @@ import 'package:tutor_finder/views/initial/role_selection_screen.dart';
 import '../../core/widgets/app_primary_button.dart';
 import '../../core/widgets/app_text.dart';
 import '../../core/widgets/app_textfield.dart';
+import '../../core/theme/app_colors.dart';
 import '../../parent_viewmodels/auth_vm.dart';
 import 'forgot_password_screen.dart';
 
@@ -207,16 +208,22 @@ class _LoginViewState extends State<_LoginView> {
                 onPressed: () async {
                   final success = await vm.login();
                   if (success && mounted) {
+                    // Wait a moment for auth state to update and AuthWrapper to rebuild
+                    // This ensures the StreamBuilder in AuthWrapper picks up the auth state change
+                    await Future.delayed(const Duration(milliseconds: 300));
                     // AuthWrapper automatically handles navigation based on role
-                    // No need to manually navigate here
+                    // The StreamBuilder will detect the auth state change and navigate
                   } else if (vm.errorMessage != null && mounted && vm.emailOrPhoneError == null && vm.passwordError == null) {
                     Get.snackbar(
                       'Error',
                       vm.errorMessage!,
                       snackPosition: SnackPosition.BOTTOM,
-                      backgroundColor: Colors.red,
+                      backgroundColor: AppColors.error,
                       colorText: Colors.white,
+                      borderRadius: 12,
+                      margin: const EdgeInsets.all(16),
                       duration: const Duration(seconds: 3),
+                      icon: const Icon(Icons.error, color: Colors.white),
                     );
                   }
                 },

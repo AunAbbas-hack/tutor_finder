@@ -33,77 +33,16 @@
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
-  <!-- Google Maps JavaScript API - Load before Flutter app initializes -->
+  <!-- Flutter app initialization -->
+  <!-- Note: Using OpenStreetMap for web, so Google Maps API is not required -->
   <script>
     (function() {
-      var flutterInitialized = false;
-      var mapsApiLoaded = false;
-      
-      // Function to initialize Flutter app
-      function initFlutter() {
-        if (flutterInitialized) return;
-        flutterInitialized = true;
-        
-        var flutterScript = document.createElement('script');
-        flutterScript.src = 'flutter_bootstrap.js';
-        flutterScript.type = 'application/javascript';
-        document.body.appendChild(flutterScript);
-      }
-      
-      // Check if Google Maps is already loaded
-      if (window.google && window.google.maps && window.google.maps.MapTypeId) {
-        console.log('✅ Google Maps API already available');
-        mapsApiLoaded = true;
-        initFlutter();
-        return;
-      }
-      
-      // Callback function for when Maps API loads
-      window._onGoogleMapsLoaded = function() {
-        if (window.google && window.google.maps && window.google.maps.MapTypeId) {
-          console.log('✅ Google Maps API loaded successfully');
-          mapsApiLoaded = true;
-          // Store status in global variable for Flutter to check
-          window.googleMapsAvailable = true;
-        } else {
-          console.warn('⚠️ Google Maps callback called but MapTypeId not available');
-          window.googleMapsAvailable = false;
-        }
-        
-        // Clean up callback
-        delete window._onGoogleMapsLoaded;
-        
-        // Initialize Flutter after Maps API is ready
-        initFlutter();
-      };
-      
-      // Load Google Maps API script
-      var script = document.createElement('script');
-      script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyD3drczRNnaKA95wt9kqfBh1OLFIDsNg2I&libraries=places&callback=_onGoogleMapsLoaded';
-      script.async = true;
-      script.defer = false; // Load without defer to ensure it executes before Flutter
-      
-      script.onerror = function() {
-        console.error('❌ Failed to load Google Maps API script - Billing may not be enabled');
-        // Store error status for Flutter to check
-        window.googleMapsAvailable = false;
-        window.googleMapsError = 'BillingNotEnabledMapError: Please enable billing in Google Cloud Console';
-        // Clean up callback
-        delete window._onGoogleMapsLoaded;
-        // Still initialize Flutter app even if Maps fails
-        initFlutter();
-      };
-      
-      // Timeout fallback: Initialize Flutter after 5 seconds even if Maps API hasn't loaded
-      setTimeout(function() {
-        if (!flutterInitialized) {
-          console.warn('⚠️ Google Maps API load timeout, initializing Flutter app anyway');
-          initFlutter();
-        }
-      }, 5000);
-      
-      // Add script to head
-      document.head.appendChild(script);
+      // Initialize Flutter app directly (no need to wait for Google Maps on web)
+      var flutterScript = document.createElement('script');
+      flutterScript.src = 'flutter_bootstrap.js';
+      flutterScript.type = 'application/javascript';
+      document.body.appendChild(flutterScript);
+      console.log('✅ Flutter app initializing with OpenStreetMap support');
     })();
   </script>
 </body>

@@ -114,6 +114,9 @@ class _TutorApproveScreenState extends State<TutorApproveScreen> {
                           // Certifications Section
                           _buildCertifications(context, vm),
                           const SizedBox(height: 24),
+                          // Portfolio & Documents Section
+                          _buildPortfolioSection(context, vm),
+                          const SizedBox(height: 24),
                           // Rejection Reason Section
                           _buildRejectionReason(context, vm),
                           const SizedBox(height: 24),
@@ -268,7 +271,29 @@ class _TutorApproveScreenState extends State<TutorApproveScreen> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                if (tutor.subjects.isNotEmpty)
+                Row(
+                  children: [
+                    Icon(
+                      Icons.email_outlined,
+                      size: isTablet ? 16 : 14,
+                      color: AppColors.textGrey,
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: AppText(
+                        user.email,
+                        style: TextStyle(
+                          fontSize: isTablet ? 14 : 12,
+                          color: AppColors.textGrey,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                if (tutor.subjects.isNotEmpty) ...[
+                  const SizedBox(height: 4),
                   AppText(
                     '${tutor.subjects.first} Tutor',
                     style: TextStyle(
@@ -276,6 +301,7 @@ class _TutorApproveScreenState extends State<TutorApproveScreen> {
                       color: AppColors.textGrey,
                     ),
                   ),
+                ],
                 const SizedBox(height: 8),
                 Row(
                   children: [
@@ -307,22 +333,269 @@ class _TutorApproveScreenState extends State<TutorApproveScreen> {
   // ---------- Identity Verification ----------
   Widget _buildIdentityVerification(BuildContext context, TutorApproveViewModel vm) {
     final tutor = vm.tutor!;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isTablet = screenWidth > 600;
     
     if (tutor.cnicFrontUrl == null && tutor.cnicBackUrl == null) {
       return const SizedBox.shrink();
     }
 
-    return _buildDocumentSection(
-      context: context,
-      title: 'Identity Verification',
-      documentTitle: 'Government ID (CNIC)',
-      uploadDate: DateTime.now().subtract(const Duration(days: 5)), // Mock date
-      fileUrl: tutor.cnicFrontUrl ?? tutor.cnicBackUrl,
-      isApproved: vm.cnicApproved,
-      isRejected: vm.cnicRejected,
-      onApprove: () => vm.approveCnic(),
-      onReject: () => vm.rejectCnic(),
-      icon: Icons.badge_outlined,
+    final hasBoth = tutor.cnicFrontUrl != null && tutor.cnicBackUrl != null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AppText(
+          'Identity Verification',
+          style: TextStyle(
+            fontSize: isTablet ? 20 : 18,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textDark,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          padding: EdgeInsets.all(isTablet ? 20 : 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.shadow,
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.lightBackground,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.badge_outlined,
+                      color: AppColors.primary,
+                      size: isTablet ? 28 : 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        AppText(
+                          'Government ID (CNIC)',
+                          style: TextStyle(
+                            fontSize: isTablet ? 16 : 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textDark,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        AppText(
+                          'Uploaded ${DateFormat('MMM dd, yyyy').format(DateTime.now().subtract(const Duration(days: 5)))}',
+                          style: TextStyle(
+                            fontSize: isTablet ? 13 : 12,
+                            color: AppColors.textGrey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // CNIC Images
+              if (hasBoth) ...[
+                // Front Image
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AppText(
+                      'Front Side',
+                      style: TextStyle(
+                        fontSize: isTablet ? 14 : 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textDark,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    _buildImagePreview(tutor.cnicFrontUrl!, isTablet),
+                    const SizedBox(height: 16),
+                  ],
+                ),
+                // Back Image
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AppText(
+                      'Back Side',
+                      style: TextStyle(
+                        fontSize: isTablet ? 14 : 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textDark,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    _buildImagePreview(tutor.cnicBackUrl!, isTablet),
+                    const SizedBox(height: 16),
+                  ],
+                ),
+              ] else ...[
+                _buildImagePreview(
+                  tutor.cnicFrontUrl ?? tutor.cnicBackUrl!,
+                  isTablet,
+                ),
+                const SizedBox(height: 16),
+              ],
+              // Action Buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: vm.cnicApproved ? null : () => vm.approveCnic(),
+                      icon: const Icon(Icons.check, size: 18),
+                      label: const AppText(
+                        'Approve',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.success,
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(
+                          vertical: isTablet ? 12 : 10,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: vm.cnicRejected ? null : () => vm.rejectCnic(),
+                      icon: const Icon(Icons.close, size: 18),
+                      label: const AppText(
+                        'Reject',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: vm.cnicRejected
+                            ? AppColors.error
+                            : AppColors.textDark,
+                        side: BorderSide(
+                          color: vm.cnicRejected
+                              ? AppColors.error
+                              : AppColors.border,
+                        ),
+                        padding: EdgeInsets.symmetric(
+                          vertical: isTablet ? 12 : 10,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ---------- Image Preview Widget ----------
+  Widget _buildImagePreview(String imageUrl, bool isTablet) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: double.infinity,
+          height: isTablet ? 200 : 150,
+          decoration: BoxDecoration(
+            color: AppColors.lightBackground,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: AppColors.border,
+              width: 1,
+            ),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.network(
+              imageUrl,
+              fit: BoxFit.contain,
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) return child;
+                return Center(
+                  child: CircularProgressIndicator(
+                    value: loadingProgress.expectedTotalBytes != null
+                        ? loadingProgress.cumulativeBytesLoaded /
+                            loadingProgress.expectedTotalBytes!
+                        : null,
+                    color: AppColors.primary,
+                  ),
+                );
+              },
+              errorBuilder: (context, error, stackTrace) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.error_outline,
+                        color: AppColors.error,
+                        size: 32,
+                      ),
+                      const SizedBox(height: 8),
+                      AppText(
+                        'Failed to load image',
+                        style: TextStyle(
+                          fontSize: isTablet ? 14 : 12,
+                          color: AppColors.error,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        InkWell(
+          onTap: () {
+            // TODO: Open full size image/document viewer
+          },
+          child: Row(
+            children: [
+              const Icon(
+                Icons.visibility,
+                color: AppColors.primary,
+                size: 18,
+              ),
+              const SizedBox(width: 6),
+              AppText(
+                'View Full Size',
+                style: TextStyle(
+                  fontSize: isTablet ? 14 : 12,
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -373,6 +646,276 @@ class _TutorApproveScreenState extends State<TutorApproveScreen> {
       onApprove: () => vm.approveCertification(),
       onReject: () => vm.rejectCertification(),
       icon: Icons.verified_outlined,
+    );
+  }
+
+  // ---------- Portfolio & Documents ----------
+  Widget _buildPortfolioSection(BuildContext context, TutorApproveViewModel vm) {
+    final tutor = vm.tutor!;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isTablet = screenWidth > 600;
+    
+    if (tutor.portfolioDocuments.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AppText(
+          'Portfolio & Documents',
+          style: TextStyle(
+            fontSize: isTablet ? 20 : 18,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textDark,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          padding: EdgeInsets.all(isTablet ? 20 : 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.shadow,
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.lightBackground,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.folder_outlined,
+                      color: AppColors.primary,
+                      size: isTablet ? 28 : 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        AppText(
+                          '${tutor.portfolioDocuments.length} Document${tutor.portfolioDocuments.length > 1 ? 's' : ''}',
+                          style: TextStyle(
+                            fontSize: isTablet ? 16 : 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textDark,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        AppText(
+                          'Portfolio files uploaded by tutor',
+                          style: TextStyle(
+                            fontSize: isTablet ? 13 : 12,
+                            color: AppColors.textGrey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // Portfolio Documents List
+              ...tutor.portfolioDocuments.asMap().entries.map((entry) {
+                final index = entry.key;
+                final document = entry.value;
+                return Column(
+                  children: [
+                    _buildPortfolioDocumentItem(document, isTablet),
+                    if (index < tutor.portfolioDocuments.length - 1)
+                      Divider(
+                        height: 24,
+                        color: AppColors.border,
+                        thickness: 1,
+                      ),
+                  ],
+                );
+              }),
+              const SizedBox(height: 16),
+              // Action Buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: vm.portfolioApproved ? null : () => vm.approvePortfolio(),
+                      icon: const Icon(Icons.check, size: 18),
+                      label: const AppText(
+                        'Approve',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.success,
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(
+                          vertical: isTablet ? 12 : 10,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: vm.portfolioRejected ? null : () => vm.rejectPortfolio(),
+                      icon: const Icon(Icons.close, size: 18),
+                      label: const AppText(
+                        'Reject',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: vm.portfolioRejected
+                            ? AppColors.error
+                            : AppColors.textDark,
+                        side: BorderSide(
+                          color: vm.portfolioRejected
+                              ? AppColors.error
+                              : AppColors.border,
+                        ),
+                        padding: EdgeInsets.symmetric(
+                          vertical: isTablet ? 12 : 10,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ---------- Portfolio Document Item ----------
+  Widget _buildPortfolioDocumentItem(PortfolioDocument document, bool isTablet) {
+    IconData iconData;
+    Color iconColor;
+    if (document.fileType.toLowerCase() == 'pdf') {
+      iconData = Icons.picture_as_pdf;
+      iconColor = Colors.red;
+    } else if (document.fileType.toLowerCase().contains('image') ||
+               document.fileType.toLowerCase() == 'jpg' ||
+               document.fileType.toLowerCase() == 'jpeg' ||
+               document.fileType.toLowerCase() == 'png') {
+      iconData = Icons.image;
+      iconColor = AppColors.primary;
+    } else {
+      iconData = Icons.insert_drive_file;
+      iconColor = AppColors.primary;
+    }
+
+    return InkWell(
+      onTap: () {
+        // TODO: Open document viewer or download
+      },
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          children: [
+            Container(
+              width: isTablet ? 48 : 40,
+              height: isTablet ? 48 : 40,
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                iconData,
+                color: iconColor,
+                size: isTablet ? 24 : 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AppText(
+                    document.fileName,
+                    style: TextStyle(
+                      fontSize: isTablet ? 15 : 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textDark,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      AppText(
+                        document.fileSize,
+                        style: TextStyle(
+                          fontSize: isTablet ? 12 : 11,
+                          color: AppColors.textGrey,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.lightBackground,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: AppText(
+                          document.fileType.toUpperCase(),
+                          style: TextStyle(
+                            fontSize: isTablet ? 10 : 9,
+                            color: AppColors.textGrey,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            IconButton(
+              icon: const Icon(
+                Icons.download_outlined,
+                color: AppColors.primary,
+                size: 20,
+              ),
+              onPressed: () {
+                // TODO: Implement download functionality
+              },
+              tooltip: 'Download',
+            ),
+            IconButton(
+              icon: const Icon(
+                Icons.open_in_new,
+                color: AppColors.primary,
+                size: 20,
+              ),
+              onPressed: () {
+                // TODO: Open document in viewer
+              },
+              tooltip: 'View',
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -465,6 +1008,61 @@ class _TutorApproveScreenState extends State<TutorApproveScreen> {
               ),
               if (fileUrl != null) ...[
                 const SizedBox(height: 12),
+                // Image Preview
+                Container(
+                  width: double.infinity,
+                  height: isTablet ? 200 : 150,
+                  decoration: BoxDecoration(
+                    color: AppColors.lightBackground,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: AppColors.border,
+                      width: 1,
+                    ),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      fileUrl!,
+                      fit: BoxFit.contain,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Center(
+                          child: CircularProgressIndicator(
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                    loadingProgress.expectedTotalBytes!
+                                : null,
+                            color: AppColors.primary,
+                          ),
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.error_outline,
+                                color: AppColors.error,
+                                size: 32,
+                              ),
+                              const SizedBox(height: 8),
+                              AppText(
+                                'Failed to load image',
+                                style: TextStyle(
+                                  fontSize: isTablet ? 14 : 12,
+                                  color: AppColors.error,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
                 InkWell(
                   onTap: () {
                     // TODO: Open full size image/document viewer

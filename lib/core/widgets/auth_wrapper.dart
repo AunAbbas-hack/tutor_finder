@@ -36,9 +36,9 @@ class _AuthWrapperState extends State<AuthWrapper> {
       try {
         _auth = FirebaseAuth.instance;
         _userService = UserService();
-        debugPrint('✅ AuthWrapper: Services initialized successfully');
+        debugPrint('  AuthWrapper: Services initialized successfully');
       } catch (e) {
-        debugPrint('❌ AuthWrapper: Error initializing services: $e');
+        debugPrint('   AuthWrapper: Error initializing services: $e');
         // Retry after a short delay
         Future.delayed(const Duration(milliseconds: 500), () {
           if (mounted && Firebase.apps.isNotEmpty) {
@@ -47,9 +47,9 @@ class _AuthWrapperState extends State<AuthWrapper> {
                 _auth = FirebaseAuth.instance;
                 _userService = UserService();
               });
-              debugPrint('✅ AuthWrapper: Services initialized on retry');
+              debugPrint('  AuthWrapper: Services initialized on retry');
             } catch (e2) {
-              debugPrint('❌ AuthWrapper: Error on retry: $e2');
+              debugPrint('   AuthWrapper: Error on retry: $e2');
             }
           }
         });
@@ -64,9 +64,9 @@ class _AuthWrapperState extends State<AuthWrapper> {
               _auth = FirebaseAuth.instance;
               _userService = UserService();
             });
-            debugPrint('✅ AuthWrapper: Services initialized after wait');
+            debugPrint('  AuthWrapper: Services initialized after wait');
           } catch (e) {
-            debugPrint('❌ AuthWrapper: Error after wait: $e');
+            debugPrint('   AuthWrapper: Error after wait: $e');
           }
         }
       });
@@ -118,7 +118,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
             
             // Debug logging
             if (userSnapshot.hasError) {
-              debugPrint('❌ AuthWrapper: Error fetching user data');
+              debugPrint('   AuthWrapper: Error fetching user data');
               debugPrint('   Error: ${userSnapshot.error}');
               debugPrint('   StackTrace: ${userSnapshot.stackTrace}');
             }
@@ -126,7 +126,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
             // If user data not found, show error message
             if (userModel == null) {
               // Debug: Print error for developers
-              debugPrint('❌ AuthWrapper Error: User data not found for userId: $userId');
+              debugPrint('   AuthWrapper Error: User data not found for userId: $userId');
               debugPrint('   Please check Firestore "users" collection for this userId');
               debugPrint('   HasError: ${userSnapshot.hasError}');
               debugPrint('   Error: ${userSnapshot.error}');
@@ -182,7 +182,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
             }
 
             // Debug: Log user info
-            debugPrint('✅ AuthWrapper: User data loaded successfully');
+            debugPrint('  AuthWrapper: User data loaded successfully');
             debugPrint('   UserId: ${userModel.userId}');
             debugPrint('   Name: ${userModel.name}');
             debugPrint('   Email: ${userModel.email}');
@@ -195,7 +195,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
               try {
                 final fcmService = FCMService();
                 await fcmService.initializeToken();
-                debugPrint('✅ FCM token initialized in AuthWrapper');
+                debugPrint('  FCM token initialized in AuthWrapper');
               } catch (e) {
                 debugPrint('⚠️ Failed to initialize FCM token in AuthWrapper: $e');
               }
@@ -204,16 +204,16 @@ class _AuthWrapperState extends State<AuthWrapper> {
             // Navigate based on role
             switch (userModel.role) {
               case UserRole.parent:
-                debugPrint('✅ AuthWrapper: Navigating to ParentMainScreen');
+                debugPrint('  AuthWrapper: Navigating to ParentMainScreen');
                 return const ParentMainScreen();
               case UserRole.tutor:
-                debugPrint('✅ AuthWrapper: Navigating to TutorMainScreen');
+                debugPrint('  AuthWrapper: Navigating to TutorMainScreen');
                 return const TutorMainScreen();
               case UserRole.admin:
-                debugPrint('✅ AuthWrapper: Navigating to AdminMainScreen');
+                debugPrint('  AuthWrapper: Navigating to AdminMainScreen');
                 return const AdminMainScreen();
               case UserRole.student:
-                debugPrint('✅ AuthWrapper: Navigating to StudentMainScreen');
+                debugPrint('  AuthWrapper: Navigating to StudentMainScreen');
                 return const StudentMainScreen();
             }
           },

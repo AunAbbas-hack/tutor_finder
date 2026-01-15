@@ -8,6 +8,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/app_primary_button.dart';
 import '../../core/widgets/app_text.dart';
+import '../../core/widgets/platform_map_widget.dart';
 import '../../parent_viewmodels/auth_vm.dart';
 import '../../parent_viewmodels/location_vm.dart';
 import '../../parent_viewmodels/parent_signup_vm.dart';
@@ -76,30 +77,20 @@ class _LocationSelectionView extends StatelessWidget {
     required this.returnLocation,
   });
 
-  /// Build markers for the map
-  /// Use const constructor where possible to prevent unnecessary rebuilds
-  Set<Marker> _buildMarkers(LocationViewModel vm) {
+  /// Get current map coordinates from ViewModel
+  (double?, double?) _getMapCoordinates(LocationViewModel vm) {
     if (vm.latitude.isEmpty || vm.longitude.isEmpty) {
-      return const {};
+      return (null, null);
     }
 
     final lat = double.tryParse(vm.latitude);
     final lng = double.tryParse(vm.longitude);
 
     if (lat == null || lng == null) {
-      return const {};
+      return (null, null);
     }
 
-    return {
-      Marker(
-        markerId: const MarkerId('selected_location'),
-        position: LatLng(lat, lng),
-        draggable: true,
-        onDragEnd: (LatLng position) {
-          vm.onMapTap(position);
-        },
-      ),
-    };
+    return (lat, lng);
   }
 
   /// Build fallback UI when Google Maps fails to load (e.g., billing issue)
@@ -214,7 +205,7 @@ class _LocationSelectionView extends StatelessWidget {
 
               const SizedBox(height: 30),
 
-              // Google Map with error handling for billing issues
+              // Platform-specific Map (Google Maps on mobile, OpenStreetMap on web)
               ClipRRect(
                 borderRadius: BorderRadius.circular(24),
                 child: Container(
@@ -228,65 +219,66 @@ class _LocationSelectionView extends StatelessWidget {
                   ),
                   child: Builder(
                     builder: (context) {
-                      // For web platform, check if Google Maps is available
-                      if (kIsWeb) {
-                        try {
-                          return Stack(
-                            children: [
-                              GoogleMap(
-                                initialCameraPosition: vm.cameraPosition,
-                                onMapCreated: (GoogleMapController controller) {
-                                  vm.setMapController(controller);
-                                },
-                                onTap: (LatLng position) {
-                                  vm.onMapTap(position);
-                                },
-                                onCameraMove: (CameraPosition position) {
-                                  vm.onCameraMove(position);
-                                },
-                                onCameraIdle: () {
-                                  vm.onCameraIdle();
-                                },
-                                myLocationButtonEnabled: false,
-                                myLocationEnabled: true,
-                                zoomControlsEnabled: true,
-                                zoomGesturesEnabled: true,
-                                mapToolbarEnabled: false,
-                                markers: _buildMarkers(vm),
-                                mapType: MapType.normal,
-                                compassEnabled: false,
-                                rotateGesturesEnabled: true,
-                                scrollGesturesEnabled: true,
-                                tiltGesturesEnabled: false,
-                                gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
-                                  Factory<OneSequenceGestureRecognizer>(() => EagerGestureRecognizer()),
-                                },
-                              ),
-                              Center(
-                                child: Icon(
-                                  Icons.location_on,
-                                  color: AppColors.primary,
-                                  size: 40,
-                                ),
-                              ),
-                            ],
-                          );
-                        } catch (e) {
-                          // Fallback UI if Google Maps fails to load (e.g., billing issue)
-                          return _buildMapErrorFallback(vm, e);
-                        }
-                      } else {
-                        // Mobile platforms - normal map rendering with error handling
-                        // Check if map has error
-                        if (vm.mapError != null) {
-                          return _buildMapErrorFallback(vm, vm.mapError);
-                        }
-                        
-                        return Stack(
-                          children: [
-                            GoogleMap(
-                              initialCameraPosition: vm.cameraPosition,
-                              onMapCreated: (GoogleMapController controller) {
+                      // Check if map has error (for mobile)
+                      if (!kIsWeb && vm.mapError != null) {
+                        return _buildMapErrorFallback(vm, vm.mapError);
+                      }
+
+                      // Get coordinates
+                      final coords = _getMapCoordinates(vm);
+                      final lat = coords.$1;
+                      final lng = coords.$2;
+
+                      // If no coordinates, show default world view
+                      if (lat == null || lng == null) {
+                        return PlatformMapWidget(
+                          latitude: 0.0,
+                          longitude: 0.0,
+                          zoom: 2.0,
+                          showMarker: false,
+                          onTap: (lat, lng) {
+                            vm.onMapTapCoordinates(lat, lng);
+                          },
+                          onCameraMove: (lat, lng) {
+                            vm.onCameraMoveCoordinates(lat, lng);
+                          },
+                          onCameraIdle: (lat, lng) {
+                            vm.onCameraIdleCoordinates(lat, lng);
+                          },
+                          onMapCreated: !kIsWeb
+                              ? (controller) {
+                                  try {
+                                    vm.setMapController(controller);
+                                  } catch (e) {
+                                    if (kDebugMode) {
+                                      print('❌ Error creating map controller: $e');
+                                    }
+                                    vm.setMapError('Failed to initialize map: ${e.toString()}');
+                                  }
+                                }
+                              : null,
+                        );
+                      }
+
+                      // Show map with coordinates
+                      return PlatformMapWidget(
+                        latitude: lat,
+                        longitude: lng,
+                        zoom: 14.0,
+                        showMarker: true,
+                        markerColor: AppColors.primary,
+                        draggable: true,
+                        onTap: (lat, lng) {
+                          vm.onMapTapCoordinates(lat, lng);
+                        },
+                        onCameraMove: (lat, lng) {
+                          vm.onCameraMoveCoordinates(lat, lng);
+                        },
+                        onCameraIdle: (lat, lng) {
+                          vm.onCameraIdleCoordinates(lat, lng);
+                        },
+                        onMapCreated: !kIsWeb
+                            ? (controller) {
                                 try {
                                   vm.setMapController(controller);
                                 } catch (e) {
@@ -295,41 +287,9 @@ class _LocationSelectionView extends StatelessWidget {
                                   }
                                   vm.setMapError('Failed to initialize map: ${e.toString()}');
                                 }
-                              },
-                              onTap: (LatLng position) {
-                                vm.onMapTap(position);
-                              },
-                              onCameraMove: (CameraPosition position) {
-                                vm.onCameraMove(position);
-                              },
-                              onCameraIdle: () {
-                                vm.onCameraIdle();
-                              },
-                              myLocationButtonEnabled: false,
-                              myLocationEnabled: true,
-                              zoomControlsEnabled: true,
-                              zoomGesturesEnabled: true,
-                              mapToolbarEnabled: false,
-                              markers: _buildMarkers(vm),
-                              mapType: MapType.normal,
-                              compassEnabled: false,
-                              rotateGesturesEnabled: true,
-                              scrollGesturesEnabled: true,
-                              tiltGesturesEnabled: false,
-                              gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
-                                Factory<OneSequenceGestureRecognizer>(() => EagerGestureRecognizer()),
-                              },
-                            ),
-                            Center(
-                              child: Icon(
-                                Icons.location_on,
-                                color: AppColors.primary,
-                                size: 40,
-                              ),
-                            ),
-                          ],
-                        );
-                      }
+                              }
+                            : null,
+                      );
                     },
                   ),
                 ),
@@ -402,32 +362,62 @@ class _LocationSelectionView extends StatelessWidget {
                   ),
                 ),
               ],
-              if (vm.selectedAddress != null) ...[
+              // Show selected address (always visible when location is selected)
+              if (vm.selectedAddress != null && vm.selectedAddress!.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                  color: AppColors.lightBackground,
+                    color: AppColors.background,
                     borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppColors.primary.withValues(alpha: 0.2),
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.05),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
                   child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Icon(
                         Icons.location_on,
                         color: AppColors.primary,
-                        size: 20,
+                        size: 24,
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 12),
                       Expanded(
-                  child: AppText(
-                          vm.selectedAddress!,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: AppColors.textDark,
-                    ),
-                  ),
-                ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            AppText(
+                              'Selected Location',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: AppColors.textGrey,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            AppText(
+                              vm.selectedAddress!,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: AppColors.textDark,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                height: 1.4,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
-              ),
+                  ),
                 ),
               ],
               const SizedBox(height: 24),

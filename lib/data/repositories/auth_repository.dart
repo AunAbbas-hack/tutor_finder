@@ -43,17 +43,119 @@ class AuthRepository {
     );
     final user = credential.user;
     
-    // Check if email is verified
-    if (user != null && !user.emailVerified) {
-      // Sign out the user since email is not verified
-      await _authService.signOut();
+    if (user == null) {
       throw FirebaseAuthException(
-        code: 'email-not-verified',
-        message: 'Please verify your email before logging in.',
+        code: 'user-not-found',
+        message: 'User not found after login.',
       );
     }
     
-    return user;
+    // Reload user to get latest email verification status
+    try {
+      await user.reload();
+    } catch (e) {
+      // If reload fails, continue anyway - user is already authenticated
+      if (kDebugMode) {
+        print('⚠️ Could not reload user: $e');
+      }
+    }
+    
+    final refreshedUser = _authService.currentUser ?? user;
+    
+    // Ensure user is properly loaded and auth state is updated
+    try {
+      await refreshedUser.reload();
+      // Get the latest user instance after reload
+      final latestUser = _authService.currentUser ?? refreshedUser;
+      
+      // Check if user exists in Firestore (completed signup)
+      try {
+        final userModel = await _userService.getUserById(latestUser.uid);
+        
+        if (userModel != null) {
+          // User exists in Firestore - allow login regardless of email verification
+          // This allows existing tutor/parent accounts to login
+          if (kDebugMode) {
+            print('✅ User exists in Firestore - allowing login');
+            if (!latestUser.emailVerified) {
+              print('   Note: Email not verified, but user has completed signup');
+            }
+          }
+          return latestUser;
+        } else {
+          // User doesn't exist in Firestore - might be incomplete signup
+          // Check email verification for new/incomplete accounts
+          if (!latestUser.emailVerified) {
+            if (kDebugMode) {
+              print('⚠️ User not found in Firestore and email not verified');
+            }
+            await _authService.signOut();
+            throw FirebaseAuthException(
+              code: 'email-not-verified',
+              message: 'Please verify your email before logging in.',
+            );
+          }
+          // Email is verified but user not in Firestore - allow login
+          // (might be a race condition or data sync issue)
+          if (kDebugMode) {
+            print('⚠️ User not in Firestore but email verified - allowing login');
+          }
+          return latestUser;
+        }
+      } catch (e) {
+        // If error fetching user data, check if it's a FirebaseAuthException
+        if (e is FirebaseAuthException) {
+          rethrow;
+        }
+        
+        // For other errors (network issues, etc.), allow login if email is verified
+        // This prevents blocking legitimate users due to temporary Firestore issues
+        if (latestUser.emailVerified) {
+          if (kDebugMode) {
+            print('⚠️ Could not check user data in Firestore: $e');
+            print('⚠️ Allowing login (email verified)');
+          }
+          return latestUser;
+        }
+        
+        // If email not verified and can't check Firestore, require verification
+        if (kDebugMode) {
+          print('⚠️ Could not check user data and email not verified');
+        }
+        await _authService.signOut();
+        throw FirebaseAuthException(
+          code: 'email-not-verified',
+          message: 'Please verify your email before logging in.',
+        );
+      }
+    } catch (e) {
+      // If reload fails, use the original user
+      if (e is FirebaseAuthException) {
+        rethrow;
+      }
+      if (kDebugMode) {
+        print('⚠️ Could not reload user after login: $e');
+      }
+      // Still check Firestore even if reload failed
+      try {
+        final userModel = await _userService.getUserById(refreshedUser.uid);
+        if (userModel != null) {
+          if (kDebugMode) {
+            print('✅ User exists in Firestore - allowing login (reload failed but user data found)');
+          }
+          return refreshedUser;
+        }
+      } catch (firestoreError) {
+        if (kDebugMode) {
+          print('⚠️ Could not check Firestore: $firestoreError');
+        }
+      }
+      return refreshedUser;
+    }
+    
+    // Final fallback - return the user if we get here
+    // This should not normally be reached, but ensures we always return a user
+    return _authService.currentUser ?? user;
   }
 
   // ---------- COMMON USER SIGNUP (for Parent etc.) ----------

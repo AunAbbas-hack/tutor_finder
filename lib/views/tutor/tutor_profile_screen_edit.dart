@@ -258,22 +258,6 @@ class _TutorProfileScreenState extends State<_TutorProfileView> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Professional Headline
-                  AppTextField(
-                    label: 'Professional Headline',
-                    hintText: 'e.g., PhD in Physics & STEM Enthusiast',
-                    controller: _headlineController,
-                    focusNode: _headlineFocusNode,
-                    onChanged: (value) {
-                      vm.updateProfessionalHeadline(value);
-                    },
-                  ),
-                  const SizedBox(height: 24),
-
-                  // About Me
-                  _buildAboutMeField(vm),
-                  const SizedBox(height: 24),
-
                   // Location
                   _buildLocationSection(vm, context),
                   const SizedBox(height: 24),

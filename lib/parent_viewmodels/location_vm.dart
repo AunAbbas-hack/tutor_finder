@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import '../data/services/nominatim_service.dart';
 
 class LocationViewModel extends ChangeNotifier {
   String _searchQuery = '';
@@ -266,62 +267,158 @@ class LocationViewModel extends ChangeNotifier {
   }
 
   /// Get address from coordinates (reverse geocoding)
+  /// Uses Nominatim API (OpenStreetMap) for better results
   Future<void> _getAddressFromCoordinates(double lat, double lng) async {
+    // Set loading state
+    _selectedAddress = 'Fetching address...';
+    notifyListeners();
+    
     try {
+      // Try Nominatim API first (better results, especially for Pakistan)
+      try {
+        final address = await NominatimService.getAddressFromCoordinates(lat, lng);
+        if (address.isNotEmpty && address != 'Unknown location') {
+          _selectedAddress = address;
+          if (kDebugMode) {
+            print('✅ Address from Nominatim: $_selectedAddress');
+          }
+          notifyListeners();
+          return;
+        }
+      } catch (nominatimError) {
+        if (kDebugMode) {
+          print('⚠️ Nominatim API failed, trying geocoding package: $nominatimError');
+        }
+        // Fall through to geocoding package
+      }
+      
+      // Fallback to geocoding package if Nominatim fails
       List<Placemark> placemarks = await placemarkFromCoordinates(lat, lng);
       
       if (placemarks.isNotEmpty) {
         final place = placemarks.first;
-        _selectedAddress = _formatAddress(place);
-        if (kDebugMode) {
-          print('✅ Address fetched: $_selectedAddress');
+        final formattedAddress = _formatAddress(place);
+        
+        // Only use formatted address if it's meaningful (not just "Unknown location")
+        if (formattedAddress.isNotEmpty && formattedAddress != 'Unknown location') {
+          _selectedAddress = formattedAddress;
+          if (kDebugMode) {
+            print('✅ Address from geocoding: $_selectedAddress');
+          }
+        } else {
+          // Try to get at least city/country
+          _selectedAddress = _formatMinimalAddress(place, lat, lng);
+          if (kDebugMode) {
+            print('⚠️ Minimal address: $_selectedAddress');
+          }
         }
       } else {
-        // If no placemarks, show coordinates as fallback
-        _selectedAddress = 'Location: ${lat.toStringAsFixed(6)}, ${lng.toStringAsFixed(6)}';
+        // If no placemarks, try alternative format
+        _selectedAddress = 'Location at ${lat.toStringAsFixed(4)}, ${lng.toStringAsFixed(4)}';
         if (kDebugMode) {
-          print('⚠️ No placemarks found, using coordinates');
+          print('⚠️ No placemarks found');
         }
       }
     } catch (e) {
-      // On error, show coordinates instead of error message
-      _selectedAddress = 'Location: ${lat.toStringAsFixed(6)}, ${lng.toStringAsFixed(6)}';
+      // On error, show a more user-friendly message
+      _selectedAddress = 'Location at ${lat.toStringAsFixed(4)}, ${lng.toStringAsFixed(4)}';
       if (kDebugMode) {
         print('❌ Reverse geocoding failed: $e');
         print('📍 Using coordinates as fallback: $lat, $lng');
       }
+      
+      // Retry Nominatim after a short delay (sometimes network issues)
+      Future.delayed(const Duration(seconds: 2), () async {
+        try {
+          final retryAddress = await NominatimService.getAddressFromCoordinates(lat, lng);
+          if (retryAddress.isNotEmpty && retryAddress != 'Unknown location') {
+            _selectedAddress = retryAddress;
+            notifyListeners();
+          }
+        } catch (e2) {
+          // Ignore retry errors
+          if (kDebugMode) {
+            print('❌ Retry also failed: $e2');
+          }
+        }
+      });
     }
+    
+    notifyListeners();
   }
 
-  /// Format address from Placemark
+  /// Format address from Placemark (comprehensive)
   String _formatAddress(Placemark place) {
     List<String> parts = [];
     
+    // Street address (most specific)
     if (place.street != null && place.street!.isNotEmpty) {
       parts.add(place.street!);
     }
+    
+    // Sub-locality (neighborhood, area)
     if (place.subLocality != null && place.subLocality!.isNotEmpty) {
       parts.add(place.subLocality!);
     }
+    
+    // Locality (city/town)
     if (place.locality != null && place.locality!.isNotEmpty) {
       parts.add(place.locality!);
     }
+    
+    // Administrative area (state/province)
     if (place.administrativeArea != null && place.administrativeArea!.isNotEmpty) {
       parts.add(place.administrativeArea!);
     }
+    
+    // Country
     if (place.country != null && place.country!.isNotEmpty) {
       parts.add(place.country!);
     }
     
-    return parts.isNotEmpty ? parts.join(', ') : 'Unknown location';
+    return parts.isNotEmpty ? parts.join(', ') : '';
   }
 
-  /// Handle map tap to select location
+  /// Format minimal address when full address is not available
+  String _formatMinimalAddress(Placemark place, double lat, double lng) {
+    List<String> parts = [];
+    
+    // Try to get at least city
+    if (place.locality != null && place.locality!.isNotEmpty) {
+      parts.add(place.locality!);
+    } else if (place.subAdministrativeArea != null && place.subAdministrativeArea!.isNotEmpty) {
+      parts.add(place.subAdministrativeArea!);
+    }
+    
+    // Add state/province if available
+    if (place.administrativeArea != null && place.administrativeArea!.isNotEmpty) {
+      parts.add(place.administrativeArea!);
+    }
+    
+    // Add country if available
+    if (place.country != null && place.country!.isNotEmpty) {
+      parts.add(place.country!);
+    }
+    
+    if (parts.isNotEmpty) {
+      return parts.join(', ');
+    }
+    
+    // Last resort: show coordinates in a more readable format
+    return 'Location at ${lat.toStringAsFixed(4)}, ${lng.toStringAsFixed(4)}';
+  }
+
+  /// Handle map tap to select location (for Google Maps)
   Future<void> onMapTap(LatLng position) async {
     await updateLocation(position.latitude, position.longitude);
   }
 
-  /// Handle camera move (when user drags map)
+  /// Handle map tap to select location (for both platforms - accepts lat/lng directly)
+  Future<void> onMapTapCoordinates(double lat, double lng) async {
+    await updateLocation(lat, lng);
+  }
+
+  /// Handle camera move (when user drags map) - for Google Maps
   /// Don't call notifyListeners here to prevent excessive rebuilds
   void onCameraMove(CameraPosition position) {
     // Only update internal state, don't notify listeners
@@ -329,7 +426,18 @@ class LocationViewModel extends ChangeNotifier {
     _cameraPosition = position;
   }
 
-  /// Handle camera idle (when user stops dragging)
+  /// Handle camera move (when user drags map) - for both platforms
+  /// Accepts lat/lng directly
+  void onCameraMoveCoordinates(double lat, double lng) {
+    // Only update internal state, don't notify listeners
+    // This prevents continuous rebuilds during map dragging
+    _cameraPosition = CameraPosition(
+      target: LatLng(lat, lng),
+      zoom: _cameraPosition.zoom,
+    );
+  }
+
+  /// Handle camera idle (when user stops dragging) - for Google Maps
   /// Only update if user has already selected a location (not on initial load)
   /// Uses debouncing to prevent rapid successive calls
   void onCameraIdle() {
@@ -348,6 +456,31 @@ class LocationViewModel extends ChangeNotifier {
       if (!_isUpdatingCamera && _hasUserSelectedLocation) {
         final lat = _cameraPosition.target.latitude;
         final lng = _cameraPosition.target.longitude;
+        _latitude = lat.toStringAsFixed(6);
+        _longitude = lng.toStringAsFixed(6);
+        
+        // Get address from coordinates (async, but don't await to prevent blocking)
+        _getAddressFromCoordinates(lat, lng).then((_) {
+          notifyListeners();
+        });
+      }
+    });
+  }
+
+  /// Handle camera idle (when user stops dragging) - for both platforms
+  /// Accepts lat/lng directly
+  void onCameraIdleCoordinates(double lat, double lng) {
+    // Cancel any pending timer
+    _cameraIdleTimer?.cancel();
+    
+    // Only update location if user has already selected one and not during programmatic moves
+    if (!_hasUserSelectedLocation || _isUpdatingCamera) {
+      return;
+    }
+    
+    // Debounce: Wait 300ms after camera stops moving before updating
+    _cameraIdleTimer = Timer(const Duration(milliseconds: 300), () async {
+      if (!_isUpdatingCamera && _hasUserSelectedLocation) {
         _latitude = lat.toStringAsFixed(6);
         _longitude = lng.toStringAsFixed(6);
         

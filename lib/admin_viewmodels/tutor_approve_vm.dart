@@ -31,6 +31,8 @@ class TutorApproveViewModel extends ChangeNotifier {
   bool _academicRejected = false;
   bool _certificationApproved = false;
   bool _certificationRejected = false;
+  bool _portfolioApproved = false;
+  bool _portfolioRejected = false;
 
   // Getters
   bool get isLoading => _isLoading;
@@ -45,6 +47,8 @@ class TutorApproveViewModel extends ChangeNotifier {
   bool get academicRejected => _academicRejected;
   bool get certificationApproved => _certificationApproved;
   bool get certificationRejected => _certificationRejected;
+  bool get portfolioApproved => _portfolioApproved;
+  bool get portfolioRejected => _portfolioRejected;
 
   // ---------- Initialize ----------
   Future<void> loadTutorData(String tutorId) async {
@@ -119,6 +123,18 @@ class TutorApproveViewModel extends ChangeNotifier {
   void rejectCertification() {
     _certificationRejected = true;
     _certificationApproved = false;
+    _safeNotifyListeners();
+  }
+
+  void approvePortfolio() {
+    _portfolioApproved = true;
+    _portfolioRejected = false;
+    _safeNotifyListeners();
+  }
+
+  void rejectPortfolio() {
+    _portfolioRejected = true;
+    _portfolioApproved = false;
     _safeNotifyListeners();
   }
 

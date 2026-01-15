@@ -307,7 +307,7 @@ class _TutorDashboardScreenState extends State<TutorDashboardScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const AppText(
-                'This Week\'s Earnings',
+                'Today\'s Earnings',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -316,7 +316,7 @@ class _TutorDashboardScreenState extends State<TutorDashboardScreen> {
               ),
               const SizedBox(height: 8),
               AppText(
-                '\$${earnings.thisWeekEarnings.toStringAsFixed(2)}',
+                '${earnings.thisWeekEarnings.toStringAsFixed(2)}Rs.',
                 style: const TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.w700,
