@@ -57,3 +57,9 @@ assets/service_account.json
 # Admin Credentials Config (contains sensitive admin credentials)
 lib/data/config/admin_credentials.dart
 # Note: admin_credentials.dart.example is kept in git as template
+
+# Firebase Configuration Files (contain API keys and sensitive credentials)
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+macos/Runner/GoogleService-Info.plist
+lib/firebase_options.dart
