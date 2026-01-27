@@ -14,19 +14,19 @@ Flutter-based mobile application for connecting tutors with students.
 
 ### Prerequisites
 
-Pehle yeh software install karo:
+Install the following software first:
 
 - **Git** - [Download Git](https://git-scm.com/downloads)
 - **Flutter SDK** (latest stable version) - [Install Flutter](https://flutter.dev/docs/get-started/install)
-- **Dart SDK** (Flutter ke saath automatically aata hai)
-- **Android Studio** (Android development ke liye) - [Download Android Studio](https://developer.android.com/studio)
+- **Dart SDK** (comes automatically with Flutter)
+- **Android Studio** (for Android development) - [Download Android Studio](https://developer.android.com/studio)
 - **VS Code** (optional, recommended) - [Download VS Code](https://code.visualstudio.com/)
 - **Firebase Account** - [Firebase Console](https://console.firebase.google.com/)
-- **Node.js** (backend ke liye, agar use ho raha ho) - [Download Node.js](https://nodejs.org/)
+- **Node.js** (for backend, if being used) - [Download Node.js](https://nodejs.org/)
 
 ### ✅ Prerequisites Check
 
-Terminal/Command Prompt mein yeh commands run karke verify karo:
+Run these commands in Terminal/Command Prompt to verify:
 
 ```bash
 # Git check
@@ -38,21 +38,21 @@ flutter --version
 # Dart check
 dart --version
 
-# Node.js check (agar backend use ho raha ho)
+# Node.js check (if backend is being used)
 node --version
 npm --version
 ```
 
 ## 📦 Clone Project Steps
 
-### Step 1: Repository Clone Karo
+### Step 1: Clone the Repository
 
 **Windows (PowerShell/Command Prompt):**
 ```bash
-# GitHub repository clone karo
+# Clone GitHub repository
 git clone <YOUR_REPOSITORY_URL>
 
-# Project folder mein jao
+# Navigate to project folder
 cd "Tutor Finder Aun"
 ```
 
@@ -68,101 +68,101 @@ git clone <YOUR_REPOSITORY_URL>
 cd "Tutor Finder Aun"
 ```
 
-### Step 2: Flutter Dependencies Install Karo
+### Step 2: Install Flutter Dependencies
 
 ```bash
-# Flutter packages install karo
+# Install Flutter packages
 flutter pub get
 ```
 
-**Note:** Agar koi error aaye to:
+**Note:** If you encounter any errors:
 ```bash
-# Flutter clean karo
+# Clean Flutter
 flutter clean
 
-# Phir dependencies install karo
+# Then install dependencies again
 flutter pub get
 ```
 
-### Step 3: Backend Dependencies Install Karo (Optional)
+### Step 3: Install Backend Dependencies (Optional)
 
-Agar project mein Node.js backend ho to:
+If the project has a Node.js backend:
 
 ```bash
-# Backend folder mein jao
+# Navigate to backend folder
 cd backend
 
-# NPM packages install karo
+# Install NPM packages
 npm install
 
-# Wapas root folder mein jao
+# Return to root folder
 cd ..
 ```
 
-### Step 4: Flutter Doctor Check Karo
+### Step 4: Run Flutter Doctor Check
 
-Flutter setup verify karne ke liye:
+To verify Flutter setup:
 
 ```bash
 flutter doctor
 ```
 
-Yeh command batayega ke kya kya properly install hai aur kya missing hai.
+This command will show what is properly installed and what is missing.
 
-**Important:** Agar koi issue ho to pehle usko fix karo, phir aage badho.
+**Important:** If there are any issues, fix them first before proceeding.
 
-### Step 5: Missing Files Check Karo
+### Step 5: Check for Missing Files
 
-Clone ke baad yeh files missing hongi (yeh normal hai, kyunki sensitive hain):
+After cloning, these files will be missing (this is normal, as they are sensitive):
 
 - ❌ `android/app/google-services.json`
 - ❌ `ios/Runner/GoogleService-Info.plist`
 - ❌ `macos/Runner/GoogleService-Info.plist`
 - ❌ `lib/firebase_options.dart`
 - ❌ `assets/service_account.json`
-- ❌ `android/local.properties` (yeh automatically generate hogi)
+- ❌ `android/local.properties` (this will be generated automatically)
 
-**Ab aage Firebase configuration setup karo (next section mein).**
+**Now proceed with Firebase configuration setup (in the next section).**
 
 ### 🔐 Firebase Configuration Setup
 
-**⚠️ IMPORTANT:** Ye project Firebase use karta hai. Clone ke baad aapko manually Firebase configuration files add karni hongi. Bina in files ke app run nahi hoga.
+**⚠️ IMPORTANT:** This project uses Firebase. After cloning, you need to manually add Firebase configuration files. The app will not run without these files.
 
-#### Method 1: FlutterFire CLI Use Karna (Recommended - Easiest Way)
+#### Method 1: Using FlutterFire CLI (Recommended - Easiest Way)
 
-**Step 1: FlutterFire CLI Install Karo**
+**Step 1: Install FlutterFire CLI**
 
 ```bash
 dart pub global activate flutterfire_cli
 ```
 
-**Step 2: Firebase Login Karo**
+**Step 2: Login to Firebase**
 
 ```bash
 firebase login
 ```
 
-**Step 3: Firebase Project Configure Karo**
+**Step 3: Configure Firebase Project**
 
 ```bash
 flutterfire configure
 ```
 
-Yeh command:
-- Aapko Firebase project select karne dega
-- Automatically sab platforms ke liye configuration files generate karega
-- `lib/firebase_options.dart` automatically create ho jayega
+This command will:
+- Let you select your Firebase project
+- Automatically generate configuration files for all platforms
+- Automatically create `lib/firebase_options.dart`
 
-**Step 4: Service Account Key Add Karo (Backend ke liye)**
+**Step 4: Add Service Account Key (For Backend)**
 
-1. [Firebase Console](https://console.firebase.google.com/) mein jao
-2. Apna project select karo
-3. **Project Settings** > **Service Accounts** tab mein jao
-4. **"Generate new private key"** button click karo
-5. Download ki hui JSON file ko `assets/service_account.json` mein save karo
+1. Go to [Firebase Console](https://console.firebase.google.com/)
+2. Select your project
+3. Go to **Project Settings** > **Service Accounts** tab
+4. Click **"Generate new private key"** button
+5. Save the downloaded JSON file as `assets/service_account.json`
 
 ```bash
-# Example file copy karo (agar manually banana ho)
+# Copy example file (if creating manually)
 # Windows:
 copy assets\service_account.json.example assets\service_account.json
 
@@ -170,38 +170,38 @@ copy assets\service_account.json.example assets\service_account.json
 cp assets/service_account.json.example assets/service_account.json
 ```
 
-Phir downloaded service account JSON file ko `assets/service_account.json` mein replace karo.
+Then replace the content in `assets/service_account.json` with the downloaded service account JSON file.
 
 ---
 
-#### Method 2: Manual Setup (FlutterFire CLI nahi use karna ho to)
+#### Method 2: Manual Setup (If you don't want to use FlutterFire CLI)
 
-**Step 1: Firebase Console se Files Download Karo**
+**Step 1: Download Files from Firebase Console**
 
-1. [Firebase Console](https://console.firebase.google.com/) mein jao
-2. Apna project select karo (ya naya project banao)
-3. **Project Settings** (⚙️ icon) click karo
-4. **"Your apps"** section mein jao
-5. Har platform ke liye app add karo (agar nahi hai to):
-   - Android app add karo
-   - iOS app add karo
-   - Web app add karo (agar web support chahiye)
+1. Go to [Firebase Console](https://console.firebase.google.com/)
+2. Select your project (or create a new one)
+3. Click **Project Settings** (⚙️ icon)
+4. Go to **"Your apps"** section
+5. Add app for each platform (if not already added):
+   - Add Android app
+   - Add iOS app
+   - Add Web app (if web support is needed)
 
-**Step 2: Configuration Files Download Karo**
+**Step 2: Download Configuration Files**
 
-Har platform ke liye configuration file download karo:
+Download configuration file for each platform:
 
-- **Android:** `google-services.json` download karo
-- **iOS:** `GoogleService-Info.plist` download karo
-- **Web:** Web app configuration details note karo
+- **Android:** Download `google-services.json`
+- **iOS:** Download `GoogleService-Info.plist`
+- **Web:** Note down web app configuration details
 
-**Step 3: Files Project Mein Add Karo**
+**Step 3: Add Files to Project**
 
 **Android Configuration:**
 
 **Windows:**
 ```bash
-# Example file copy karo
+# Copy example file
 copy android\app\google-services.json.example android\app\google-services.json
 ```
 
@@ -210,7 +210,7 @@ copy android\app\google-services.json.example android\app\google-services.json
 cp android/app/google-services.json.example android/app/google-services.json
 ```
 
-Phir downloaded `google-services.json` file ko `android/app/google-services.json` mein replace karo.
+Then replace the content in `android/app/google-services.json` with the downloaded `google-services.json` file.
 
 **iOS Configuration:**
 
@@ -224,9 +224,9 @@ copy ios\Runner\GoogleService-Info.plist.example ios\Runner\GoogleService-Info.p
 cp ios/Runner/GoogleService-Info.plist.example ios/Runner/GoogleService-Info.plist
 ```
 
-Phir downloaded `GoogleService-Info.plist` file ko `ios/Runner/GoogleService-Info.plist` mein replace karo.
+Then replace the content in `ios/Runner/GoogleService-Info.plist` with the downloaded `GoogleService-Info.plist` file.
 
-**macOS Configuration (agar macOS development karni ho):**
+**macOS Configuration (if developing for macOS):**
 
 **Windows:**
 ```bash
@@ -238,7 +238,7 @@ copy macos\Runner\GoogleService-Info.plist.example macos\Runner\GoogleService-In
 cp macos/Runner/GoogleService-Info.plist.example macos/Runner/GoogleService-Info.plist
 ```
 
-Phir downloaded `GoogleService-Info.plist` file ko `macos/Runner/GoogleService-Info.plist` mein replace karo.
+Then replace the content in `macos/Runner/GoogleService-Info.plist` with the downloaded `GoogleService-Info.plist` file.
 
 **Flutter Firebase Options:**
 
@@ -252,21 +252,21 @@ copy lib\firebase_options.dart.example lib\firebase_options.dart
 cp lib/firebase_options.dart.example lib/firebase_options.dart
 ```
 
-Phir `lib/firebase_options.dart` file ko manually edit karo aur Firebase Console se mili hui values se replace karo:
+Then manually edit `lib/firebase_options.dart` file and replace values with those from Firebase Console:
 - `apiKey`
 - `appId`
 - `messagingSenderId`
 - `projectId`
-- `authDomain` (web ke liye)
+- `authDomain` (for web)
 - `databaseURL`
 - `storageBucket`
-- `measurementId` (web ke liye)
+- `measurementId` (for web)
 
-**Service Account (Backend ke liye):**
+**Service Account (For Backend):**
 
 1. Firebase Console > Project Settings > Service Accounts
-2. **"Generate new private key"** click karo
-3. Download ki hui JSON file ko `assets/service_account.json` mein save karo
+2. Click **"Generate new private key"**
+3. Save the downloaded JSON file as `assets/service_account.json`
 
 **Windows:**
 ```bash
@@ -278,13 +278,13 @@ copy assets\service_account.json.example assets\service_account.json
 cp assets/service_account.json.example assets/service_account.json
 ```
 
-Phir downloaded service account JSON file ko `assets/service_account.json` mein replace karo.
+Then replace the content in `assets/service_account.json` with the downloaded service account JSON file.
 
 ### ⚙️ Additional Setup
 
 **Android Local Properties:**
-- `android/local.properties` file automatically generate hoti hai build time par
-- Agar manually banana ho to (Android Studio first time open karne par automatically ban jati hai):
+- `android/local.properties` file is automatically generated at build time
+- If you need to create it manually (Android Studio creates it automatically when you open the project for the first time):
 
 **Windows:**
 ```properties
@@ -298,51 +298,51 @@ sdk.dir=/Users/YOUR_USERNAME/Library/Android/sdk
 flutter.sdk=/path/to/flutter
 ```
 
-**Note:** Usually yeh file automatically ban jati hai, manually banana ki zarurat nahi hoti.
+**Note:** Usually this file is created automatically, you don't need to create it manually.
 
 ### ✅ Setup Verification
 
-Sab kuch setup hone ke baad verify karo:
+After everything is set up, verify:
 
 ```bash
 # Flutter doctor check
 flutter doctor
 
-# Dependencies verify karo
+# Verify dependencies
 flutter pub get
 
-# Build check (agar Android device/emulator connected ho)
+# Build check (if Android device/emulator is connected)
 flutter build apk --debug
 ```
 
 ### 🏃 Running the App
 
-**Step 1: Device/Emulator Ready Karo**
+**Step 1: Prepare Device/Emulator**
 
 **Android:**
-- Android Studio mein emulator start karo, ya
-- Physical Android device USB se connect karo (USB debugging enable karo)
+- Start emulator in Android Studio, or
+- Connect physical Android device via USB (enable USB debugging)
 
 **iOS (Mac only):**
-- Xcode simulator start karo, ya
-- Physical iOS device connect karo
+- Start Xcode simulator, or
+- Connect physical iOS device
 
-**Step 2: Connected Devices Check Karo**
+**Step 2: Check Connected Devices**
 
 ```bash
 flutter devices
 ```
 
-Yeh command dikhayega ke kaunse devices available hain.
+This command will show which devices are available.
 
-**Step 3: App Run Karo**
+**Step 3: Run the App**
 
 **Development Mode (Debug):**
 ```bash
 flutter run
 ```
 
-**Specific Device Select Karke:**
+**Select Specific Device:**
 ```bash
 flutter run -d <device-id>
 ```
@@ -352,7 +352,7 @@ flutter run -d <device-id>
 # Android APK build
 flutter build apk
 
-# Android App Bundle (Play Store ke liye)
+# Android App Bundle (for Play Store)
 flutter build appbundle
 
 # iOS build (Mac only)
@@ -360,16 +360,16 @@ flutter build ios
 ```
 
 **Hot Reload:**
-- App run karte waqt `r` press karo hot reload ke liye
-- `R` press karo hot restart ke liye
-- `q` press karo app band karne ke liye
+- While app is running, press `r` for hot reload
+- Press `R` for hot restart
+- Press `q` to quit the app
 
 ### 📝 Important Notes
 
 #### 🔒 Security & Sensitive Files
 
-**Sensitive Files (GitHub par nahi jati):**
-Ye files `.gitignore` mein ignore hain, isliye GitHub par upload nahi hoti:
+**Sensitive Files (Not uploaded to GitHub):**
+These files are ignored in `.gitignore`, so they are not uploaded to GitHub:
 - ❌ `android/app/google-services.json`
 - ❌ `ios/Runner/GoogleService-Info.plist`
 - ❌ `macos/Runner/GoogleService-Info.plist`
@@ -377,7 +377,7 @@ Ye files `.gitignore` mein ignore hain, isliye GitHub par upload nahi hoti:
 - ❌ `assets/service_account.json`
 - ❌ `android/local.properties`
 
-**Example Files (GitHub par available hain):**
+**Example Files (Available on GitHub):**
 - ✅ `android/app/google-services.json.example`
 - ✅ `ios/Runner/GoogleService-Info.plist.example`
 - ✅ `macos/Runner/GoogleService-Info.plist.example`
@@ -385,122 +385,122 @@ Ye files `.gitignore` mein ignore hain, isliye GitHub par upload nahi hoti:
 - ✅ `assets/service_account.json.example`
 
 **Firebase Security Best Practices:**
-1. 🔐 Firebase API keys ko Firebase Console mein restrict karo (domain/IP restrictions)
-2. 🔐 Firebase Security Rules properly configure karo
-3. 🔐 Service account key ko bilkul private rakho - yeh sabse sensitive file hai
-4. 🔐 API keys ko kabhi bhi publicly share mat karo
-5. 🔐 Production aur development ke liye alag Firebase projects use karo
+1. 🔐 Restrict Firebase API keys in Firebase Console (domain/IP restrictions)
+2. 🔐 Properly configure Firebase Security Rules
+3. 🔐 Keep service account key completely private - this is the most sensitive file
+4. 🔐 Never publicly share API keys
+5. 🔐 Use separate Firebase projects for production and development
 
 #### 📱 Platform-Specific Notes
 
 **Android:**
-- Minimum SDK version check karo `android/app/build.gradle` mein
-- Google Play Services required hain
-- `google-services.json` file `android/app/` folder mein honi chahiye
+- Check minimum SDK version in `android/app/build.gradle`
+- Google Play Services are required
+- `google-services.json` file should be in `android/app/` folder
 
 **iOS:**
-- Xcode 12+ required hai
-- CocoaPods install hona chahiye: `sudo gem install cocoapods`
-- `GoogleService-Info.plist` file `ios/Runner/` folder mein honi chahiye
-- iOS deployment target check karo
+- Xcode 12+ is required
+- CocoaPods should be installed: `sudo gem install cocoapods`
+- `GoogleService-Info.plist` file should be in `ios/Runner/` folder
+- Check iOS deployment target
 
 **Web:**
-- Web support ke liye Firebase Web configuration required hai
-- `firebase_options.dart` mein web configuration honi chahiye
+- Firebase Web configuration is required for web support
+- Web configuration should be in `firebase_options.dart`
 
 ### 🛠️ Troubleshooting
 
-#### Common Issues aur Solutions:
+#### Common Issues and Solutions:
 
-**❌ Issue: "Firebase initialization error" ya "Missing Firebase configuration"**
+**❌ Issue: "Firebase initialization error" or "Missing Firebase configuration"**
 
 **Solution:**
-1. Check karo ke sab configuration files properly add ki hain:
-   - `android/app/google-services.json` (Android ke liye)
-   - `ios/Runner/GoogleService-Info.plist` (iOS ke liye)
-   - `lib/firebase_options.dart` (Flutter ke liye)
-2. Firebase project settings verify karo
-3. Firebase project ID sahi hai ya nahi check karo
-4. Files ke paths sahi hain ya nahi verify karo
+1. Check that all configuration files are properly added:
+   - `android/app/google-services.json` (for Android)
+   - `ios/Runner/GoogleService-Info.plist` (for iOS)
+   - `lib/firebase_options.dart` (for Flutter)
+2. Verify Firebase project settings
+3. Check if Firebase project ID is correct
+4. Verify file paths are correct
 
-**❌ Issue: "Build errors" ya "Gradle build failed"**
+**❌ Issue: "Build errors" or "Gradle build failed"**
 
 **Solution:**
 ```bash
-# Flutter clean karo
+# Clean Flutter
 flutter clean
 
-# Dependencies phir se install karo
+# Reinstall dependencies
 flutter pub get
 
-# Android build cache clear karo
+# Clear Android build cache
 cd android
 ./gradlew clean
 cd ..
 
-# Phir build try karo
+# Then try building again
 flutter build apk
 ```
 
-**❌ Issue: "Package not found" ya "Dependencies error"**
+**❌ Issue: "Package not found" or "Dependencies error"**
 
 **Solution:**
 ```bash
-# Pub cache clear karo
+# Clear pub cache
 flutter pub cache repair
 
-# Dependencies phir se install karo
+# Reinstall dependencies
 flutter pub get
 ```
 
 **❌ Issue: "No devices found"**
 
 **Solution:**
-1. Android: Android Studio mein emulator start karo
-2. USB Debugging enable karo (physical device ke liye)
-3. `flutter devices` command se devices check karo
-4. Device properly connected hai ya nahi verify karo
+1. Android: Start emulator in Android Studio
+2. Enable USB Debugging (for physical device)
+3. Check devices with `flutter devices` command
+4. Verify device is properly connected
 
 **❌ Issue: "Service account file not found"**
 
 **Solution:**
-1. `assets/service_account.json` file exist karti hai ya nahi check karo
-2. File path sahi hai ya nahi verify karo
-3. Agar file missing hai to Firebase Console se download karo
+1. Check if `assets/service_account.json` file exists
+2. Verify file path is correct
+3. If file is missing, download it from Firebase Console
 
 **❌ Issue: "local.properties missing" (Android)**
 
 **Solution:**
-- Usually yeh file automatically ban jati hai
-- Agar nahi bani to Android Studio project ko open karo, automatically ban jayegi
-- Ya manually create karo (see Additional Setup section)
+- Usually this file is created automatically
+- If not created, open the project in Android Studio, it will be created automatically
+- Or create it manually (see Additional Setup section)
 
 **❌ Issue: "Permission denied" errors**
 
 **Solution:**
-- File permissions check karo
-- Windows: Administrator mode mein terminal run karo
-- Mac/Linux: `sudo` use karo (agar zarurat ho)
+- Check file permissions
+- Windows: Run terminal in Administrator mode
+- Mac/Linux: Use `sudo` (if needed)
 
 **❌ Issue: "Flutter version mismatch"**
 
 **Solution:**
 ```bash
-# Flutter version check karo
+# Check Flutter version
 flutter --version
 
-# Flutter upgrade karo
+# Upgrade Flutter
 flutter upgrade
 
-# Phir dependencies install karo
+# Then install dependencies
 flutter pub get
 ```
 
-**Agar koi aur issue ho to:**
-1. `flutter doctor -v` run karo detailed info ke liye
-2. Error message properly read karo
-3. GitHub issues check karo
-4. Flutter documentation refer karo
+**If you encounter any other issues:**
+1. Run `flutter doctor -v` for detailed information
+2. Read error message properly
+3. Check GitHub issues
+4. Refer to Flutter documentation
 
 ### 📚 Project Structure
 
@@ -526,29 +526,29 @@ ios/
 ### 📚 Quick Reference Commands
 
 ```bash
-# Project clone karna
+# Clone project
 git clone <repository-url>
 cd "Tutor Finder Aun"
 
-# Dependencies install
+# Install dependencies
 flutter pub get
 
-# Firebase configure (easiest way)
+# Configure Firebase (easiest way)
 flutterfire configure
 
-# App run karna
+# Run app
 flutter run
 
-# Build karna
+# Build
 flutter build apk        # Android APK
 flutter build appbundle  # Android App Bundle
 flutter build ios        # iOS (Mac only)
 
-# Clean karna
+# Clean
 flutter clean
 flutter pub get
 
-# Devices check karna
+# Check devices
 flutter devices
 
 # Flutter doctor (setup check)
@@ -566,10 +566,10 @@ flutter doctor -v  # Detailed info
 
 ### 📞 Support
 
-Agar koi issue ho ya help chahiye:
-1. README ka Troubleshooting section check karo
-2. GitHub Issues mein search karo
-3. Maintainer se contact karo
+If you encounter any issues or need help:
+1. Check the Troubleshooting section in README
+2. Search in GitHub Issues
+3. Contact the maintainer
 
 ### 📄 License
 
@@ -579,17 +579,17 @@ Agar koi issue ho ya help chahiye:
 
 ## ✅ Setup Checklist
 
-Clone ke baad yeh checklist follow karo:
+Follow this checklist after cloning:
 
-- [ ] Git repository clone ho gaya
-- [ ] Flutter dependencies install ho gaye (`flutter pub get`)
-- [ ] Backend dependencies install ho gaye (agar use ho raha ho)
-- [ ] Firebase project setup ho gaya
-- [ ] `android/app/google-services.json` file add ki
-- [ ] `ios/Runner/GoogleService-Info.plist` file add ki (agar iOS develop karna ho)
-- [ ] `lib/firebase_options.dart` file add ki
-- [ ] `assets/service_account.json` file add ki (agar backend use ho raha ho)
-- [ ] `flutter doctor` se setup verify kiya
-- [ ] App successfully run ho raha hai
+- [ ] Git repository cloned
+- [ ] Flutter dependencies installed (`flutter pub get`)
+- [ ] Backend dependencies installed (if being used)
+- [ ] Firebase project set up
+- [ ] `android/app/google-services.json` file added
+- [ ] `ios/Runner/GoogleService-Info.plist` file added (if developing for iOS)
+- [ ] `lib/firebase_options.dart` file added
+- [ ] `assets/service_account.json` file added (if backend is being used)
+- [ ] Setup verified with `flutter doctor`
+- [ ] App running successfully
 
-**Note:** Agar koi file missing ho ya setup mein issue ho to README ka Troubleshooting section check karo ya maintainer se contact karo.
+**Note:** If any file is missing or you encounter setup issues, check the Troubleshooting section in README or contact the maintainer.
